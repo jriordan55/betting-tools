@@ -209,9 +209,31 @@ parlay multiplication assumes leg independence.
 - [x] `distributions.rs` — Poisson / negative binomial / gamma / lognormal
       samplers, histogram, over-probability, Welford stats
 - [x] `risk_of_ruin.rs` — seeded Monte Carlo, rayon across paths
-- [ ] `poisson.rs`, `nbinom.rs` — score matrices, market derivation
-- [ ] `bayesian.rs`, `regression.rs`, `altline.rs`, `bestline.rs`, `middle.rs`, `teaser_ev.rs`,
-      `parlay_correlation.rs`, `risk_of_ruin.rs`
+- [x] `match_model.rs` — Poisson + negative binomial scorelines, market derivation
+      (one module, not two: `nbinom.ts` was `poisson.ts` with a different marginal)
+- [x] `line.rs` — true-line inversion and alternate-line ladders (`bestline.ts` +
+      `altline.ts`, which was built entirely on the former)
+- [x] `regression.rs` — shrinkage, intervals, convergence series
+- [ ] `bayesian.rs`, `middle.rs`, `teaser_ev.rs`, `parlay_correlation.rs`
+
+**More bugs found:**
+
+5. **`impliedTrueLine` never removed the vig.** It fed the raw implied
+   probability into `Φ⁻¹`. A team at -10.5 priced -110 in a -110/-110 market has
+   a fair cover probability of 0.50 and a true line of exactly -10.5; the TS
+   computed `Φ⁻¹(0.5238)` and reported **-11.33**. Eight tenths of a point of
+   pure hold, presented as market information. It cancels when comparing two
+   books at identical prices — presumably why it survived — but every line value
+   displayed was shifted, and `altline.ts` built its whole ladder on top of it.
+6. **Score matrices were never renormalised.** Truncating the grid at
+   `max_score` drops real probability mass; at baseball rates (μ≈4.5, max 10)
+   about 0.7% falls off the edge, so every derived price was biased low.
+   `truncation_mass()` now reports it so the grid size can be checked.
+7. **Spread and total pushes were dropped.** `margin > spread` went to home,
+   `margin < spread` to away, and an exact tie went nowhere — so the two sides
+   silently failed to sum to 1 on whole-number lines.
+8. **`convergenceSeries` accumulated a float step** and rounded, so a max of
+   150 produced sample sizes 0, 2, 3, 5, 6, 8 — duplicates and gaps on the axis.
 - [ ] Sport config tables
 - [x] `rayon` for the Monte Carlo paths
 - [ ] Benchmark vs the JS to quantify the win

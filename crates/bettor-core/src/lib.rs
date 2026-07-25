@@ -14,9 +14,12 @@ pub mod clv;
 pub mod devig;
 pub mod distributions;
 pub mod hold;
+pub mod line;
+pub mod match_model;
 pub mod odds;
 pub mod parlay;
 pub mod probability;
+pub mod regression;
 pub mod risk_of_ruin;
 pub mod wager;
 

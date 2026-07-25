@@ -13,7 +13,8 @@
     "rs:test": "cargo test --workspace",
     "rs:lint": "cargo clippy --workspace --all-targets -- -D warnings",
     "rs:fmt": "cargo fmt --all",
-    "verify": "pnpm rs:lint && pnpm rs:test && pnpm check && pnpm build"
+    "verify": "pnpm rs:lint && pnpm rs:test && pnpm check && pnpm build",
+    "bench": "cargo run --release --example bench -p bettor-core && node tools/bench-ts.mjs"
   },
   "license": "MIT",
   "dependencies": {

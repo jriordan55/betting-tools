@@ -395,7 +395,47 @@ Techniques worth keeping:
   stripping does not, and the module fails to instantiate. That is a real latent
   bug in the reference repo, but not ours to edit.
 - [x] `rayon` for the Monte Carlo paths
-- [ ] Benchmark vs the JS to quantify the win
+- [x] Benchmark vs the JS to quantify the win — `pnpm bench`
+
+**And the answer is that there mostly is not one.** M-series Mac, Node 25.8.1,
+`--release`, both harnesses cycling inputs so neither runtime can hoist a
+constant call out of its loop:
+
+Medians of three runs each; the small cases move ±20% run to run, so only the
+large ratios mean anything.
+
+| Workload | Rust | TypeScript | |
+|---|---|---|---|
+| `normal_cdf` | 7.4 ns | 8.9 ns | 1.2× — a tie |
+| `american_to_decimal` | 28.3 ns | 19.0 ns | **0.7×** |
+| `devig_or` (2-way) | 742 ns | 1,050 ns | 1.4× |
+| `devig_all` (5 methods) | 2.39 µs | 6.06 µs | 2.5× |
+| `score_matrix` 16×16 | 1.01 µs | 12.3 µs | **12.2×** |
+| `risk_of_ruin` 1k × 500 | 1.12 ms | 6.93 ms | 6.2× |
+| `devig_shin` (2-way) | 655 ns | 4,282 ns | *not comparable* |
+
+Read it honestly:
+
+- **Scalar work is a wash or slightly worse.** A JIT is very good at a handful
+  of floating-point operations in a hot loop. `american_to_decimal` is the
+  clearest loss: Rust range-checks the input and returns a `Result` where the
+  TypeScript returns `null` and hopes, and that check is most of the 9 ns gap.
+  It is also the check that stopped `toDecimal("-1.5", "american")` returning
+  67.67, so the trade was made on purpose.
+- **Array and matrix work is where it shows** — 12× on a 16×16 score matrix,
+  which is 256 allocations-free multiply-accumulates against 256 boxed doubles.
+- **The Monte Carlo figure is parallelism, not language.** Eleven cores against
+  Node's one, so a 6.2× wall-clock win is roughly *half* the per-core speed —
+  `Math.random()` is xorshift128+ and this crate uses ChaCha8 on purpose, so a
+  seed reproduces a run exactly. Reproducibility was worth the cycles, and the
+  wall clock still improved because the work parallelises.
+- **`devig_shin` is not a race.** The reference's bisection had no interior root
+  and ran a fixed hundred iterations of nothing. Faster than a broken solver is
+  not a claim.
+
+The port's justification was never speed. It was nineteen-plus bugs, all of
+them seams. This benchmark is the evidence that nothing else was being bought,
+and it is worth having written down rather than assumed in either direction.
 
 **Simulation code cannot be parity-tested.** The TS calls `Math.random()`, so
 its output is not reproducible even against itself. These modules get

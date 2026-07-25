@@ -21,13 +21,10 @@ system, the shared UI kit, and the `Async` reactive pattern settled in Phase 4.
 Nothing from `~/Code/bettor-calculator-main` is unported. `ParlayCorrelation` is
 a deliberate cut — see *Deliberately not built*, below.
 
-**Phases 5, 6 and 7 are done.** What is left:
+**Every planned phase is complete.** What is left:
 
 - **Phase 2 leftover** — the JS-vs-Rust benchmark. The speed claim is currently
   unquantified.
-- **Icons** — still the Tauri template's. Needs a source PNG; `pnpm tauri icon`
-  generates the set from one 1024×1024 image. The name stays `bettor-desktop`,
-  settled 2026-07-25.
 *(Nothing else. Both open items were settled 2026-07-25: the name stays
 `bettor-desktop`, and the reference library is bundled.)*
 
@@ -759,6 +756,27 @@ by what can actually break here rather than by coverage:
 `pnpm verify` has to run without one. The math is not tested here at all — it
 is tested in Rust, where it lives.
 
+### Icon  ← COMPLETE
+
+`src-tauri/icons/icon.svg` is the source and is committed; everything else in
+that directory is generated from it by `pnpm tauri icon`. A normal distribution
+graded against a line — the shape every model in the app reduces to, and the
+one picture that says why a price is not the same thing as an edge.
+
+The curve is a real Gaussian, emitted from `exp(-½((x-μ)/σ)²)` rather than
+drawn by hand, which is the least this repo could do.
+
+Two things were only visible after rasterising, which is why the 32px render
+was checked before generating the set: a dashed threshold rule turned into
+detached dots that read as debris and would have disappeared entirely at icon
+size, and the shaded tail at 0.22 opacity was invisible against the near-black
+tile. Solid rule, 0.34 fill.
+
+Rasterised with headless Chrome — no `rsvg-convert`, ImageMagick or Inkscape on
+this machine, and Chrome renders SVG exactly and is already installed. The
+generated `android/` and `ios/` sets were deleted: this is a desktop app and
+they are derived files for platforms it does not build.
+
 ### Reference library  ← COMPLETE
 
 The 15 blog posts ship inside the binary as `/docs`, rendered from markdown
@@ -883,7 +901,9 @@ exists, `ParlayCalculator` states plainly that it prices straight parlays only
 and does not claim to price a same-game parlay.
 
 ## Open questions
-- App name / bundle identifier / icon — `bettor-desktop` / `com.bettorcalculator.desktop` are placeholders
+- ~~App name / bundle identifier / icon~~ — settled 2026-07-25: the name stays
+  `bettor-desktop`, the identifier stays `com.bettorcalculator.desktop`, and
+  the icon is drawn from `src-tauri/icons/icon.svg`
 - Keep the 22 MDX blog posts as in-app reference docs, or leave them on the web?
 - Does the web app stay live alongside this, or is it eventually replaced?
 

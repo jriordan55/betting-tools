@@ -215,7 +215,46 @@ parlay multiplication assumes leg independence.
       `altline.ts`, which was built entirely on the former)
 - [x] `regression.rs` — shrinkage, intervals, convergence series
 - [x] `middle.rs` — middles and traps
-- [ ] `bayesian.rs`, `teaser_ev.rs`, `parlay_correlation.rs`
+- [x] `teaser.rs` — teasers, key numbers, EV against the book's price
+- [x] `correlation.rs` — Gaussian copula over equicorrelated legs
+- [ ] `bayesian.rs`
+
+**`teaserEv.ts`:** `analyzeTeaser([])` reduced over no legs with an initial
+value of 1, so an empty teaser reported a certainty and an enormous positive
+EV. Fewer than two legs is now an error.
+
+**The limitation worth surfacing, not a bug:** teaser cover probabilities come
+from a normal, which cannot see that football margins pile up on 3 and 7.
+Roughly 15% of NFL games end with a margin of exactly 3 and ~9% with exactly 7;
+a normal at σ≈13.9 puts under 3% on each. So the model prices the textbook
+two-team Wong teaser (-7.5 and -8.5, six points) at 44.6% against a 52.4%
+breakeven and calls it -EV, while those legs are commonly reported hitting in
+the low seventies. The TS displayed `keyNumbersCrossed` beside a probability
+that ignored them, which reads as though the crossing were priced in.
+`Teaser::model_ignores_key_numbers` now says plainly that it is not. Pricing
+the discrete mass needs an empirical margin distribution per sport — a data
+problem, and its own change.
+
+**`parlayCorrelation.ts` — Monte Carlo where a closed form exists.** For
+non-negative equicorrelation the copula factors through a single latent
+variable:
+
+```
+Xᵢ = √ρ·Y + √(1−ρ)·εᵢ
+P(all win) = ∫ φ(y) · Π Φ((tᵢ − √ρ·y)/√(1−ρ)) dy
+```
+
+One smooth integral, evaluated by Simpson's rule. The TS drew 50,000 samples
+for a figure carrying ~0.2% sampling noise and returned a different answer on
+every run. Negative correlation has no such factorisation and still simulates,
+now seeded. Verified against the exact bivariate orthant
+`P = ¼ + arcsin(ρ)/2π` — the integrated path matches to 5e-7, which is the
+accuracy of `normal_cdf` itself, not of the integration.
+
+Also: an equicorrelated matrix is only positive definite for `ρ > −1/(n−1)`,
+so five legs cannot be more negatively correlated than −0.25. The TS clamped
+silently and answered a question the caller had not asked;
+`correlation_was_clamped` now reports it.
 
 **The most serious bug found so far — `middle.ts` on spreads.**
 

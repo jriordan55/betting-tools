@@ -11,6 +11,7 @@
 
 pub mod arbitrage;
 pub mod clv;
+pub mod correlation;
 pub mod devig;
 pub mod distributions;
 pub mod hold;
@@ -22,6 +23,7 @@ pub mod parlay;
 pub mod probability;
 pub mod regression;
 pub mod risk_of_ruin;
+pub mod teaser;
 pub mod wager;
 
 /// Version of the math engine, surfaced in the UI so a reported result can

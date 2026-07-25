@@ -10,6 +10,7 @@
 //! diverges from that source, the divergence is documented at the definition.
 
 pub mod arbitrage;
+pub mod bayesian;
 pub mod clv;
 pub mod correlation;
 pub mod devig;

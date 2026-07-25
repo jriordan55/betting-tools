@@ -217,7 +217,33 @@ parlay multiplication assumes leg independence.
 - [x] `middle.rs` — middles and traps
 - [x] `teaser.rs` — teasers, key numbers, EV against the book's price
 - [x] `correlation.rs` — Gaussian copula over equicorrelated legs
-- [ ] `bayesian.rs`
+- [x] `bayesian.rs` — Beta, Dirichlet, and precision-weighted updates
+
+**`bayesian.ts` carried two duplicate implementations of code that already
+existed elsewhere in the same codebase**, one of them missing a guard:
+
+- `removeVig` / `removeVig3Way` were proportional devigging — a third and
+  fourth copy of `devigMPTO`. Deleted; callers use `devig::DevigMethod::Mpto`
+  and get the other four methods for free.
+- `calculateMLEdge` reimplemented the American conversion **without** the clamp
+  that `impliedToAmerican` has, so a posterior of 0 or 1 returned `Infinity`.
+
+Also fixed:
+- `bayesianSpreadUpdate` clamped a zero standard deviation to 0.001 — a
+  precision of a million, which hands that source the answer outright and
+  discards the other without a word. Now an error.
+- A negative `marketN` produced negative Beta parameters and a posterior
+  outside `[0, 1]`.
+- `dirichletProbUpdate` never checked that the market probabilities summed to
+  1, so a set that had not been devigged was accepted as a prior and silently
+  misweighted it.
+- The Dirichlet update was hard-coded to exactly three outcomes; nothing in the
+  mathematics requires that.
+
+### Phase 2 — remaining
+- [ ] Sport config tables (`sportDefaults.ts`, `poissonConfig.ts`,
+      `nbinomConfig.ts`, `propSimConfig.ts`, `regressionConfig.ts`) — presets
+      rather than math; they parameterise the models but contain no logic
 
 **`teaserEv.ts`:** `analyzeTeaser([])` reduced over no legs with an initial
 value of 1, so an empty teaser reported a certainty and an enormous positive

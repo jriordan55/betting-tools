@@ -8,39 +8,36 @@ No math ships in TypeScript. No Python anywhere.
 
 ---
 
-## ⏸ RESUME HERE — paused 2026-07-24, after Phase 3
+## ⏸ RESUME HERE — 2026-07-25, after Phases 4 and 8
 
-**State:** working tree clean at `c3338a7`. `pnpm verify` green — 190 unit tests,
-10 parity suites, 1 bindings export, svelte-check 0/0, clippy `-D warnings` clean.
+**State:** `pnpm verify` green — 217 tests (206 unit, 10 parity, 1 bindings
+export), svelte-check 0/0, clippy `-D warnings` clean, `vite build` clean.
 
-**The math engine is done. The UI is not built.** `src/routes/+page.svelte` is a
-single smoke-test page proving the typed IPC boundary works end to end; that is
-the entire frontend.
+**The port is complete.** All 21 reference calculators ship, against the design
+system, the shared UI kit, and the `Async` reactive pattern settled in Phase 4.
+Nothing from `~/Code/bettor-calculator-main` is unported. `ParlayCorrelation` is
+a deliberate cut — see *Deliberately not built*, below.
 
-**Next: Phase 4** — design system, shared components, calculator registry, four
-calculators end to end. This is the **architecture gate**: the patterns settled
-here are what the other 17 calculators get built against, so stop and review
-before mass-porting.
+**What is left is everything the port was a prerequisite for:**
 
-**Two decisions waiting before Phase 4 starts:**
-
-1. **The vertical slice's fourth calculator does not exist yet.** The slice names
-   Odds Converter, Devig, Risk of Ruin, and Odds-Range Variance. The first three
-   have Rust behind them; the fourth is the original idea, and its `variance.rs`
-   is Phase 5 work. Either fold Phase 5's core forward into Phase 4, or
-   substitute something already built (Kelly is the natural stand-in).
-   **Recommendation: fold it forward.** It is the reason the project exists, and
-   building the chart surface against a real module beats building it twice.
-2. **Sport config tables** land in Phase 4, deferred from Phase 2 on the grounds
-   that a mistranscribed λ is invisible in a unit test and obvious in a dropdown.
+- **Phase 5 — odds-range / variance.** No `variance.rs` exists. This is the
+  original idea and the only planned module with no Rust behind it.
+- **Phase 6 — SQLite bet log.** No `rusqlite` dependency. Feeds Phase 5 a real
+  bet mix rather than a hypothetical one.
+- **Phase 7 — probability visualizer.** `~/Code/probabilites-main` untouched.
+- **Phase 2 leftover** — the JS-vs-Rust benchmark. The speed claim is currently
+  unquantified.
+- **Ship chrome** — default Tauri template icons, placeholder `productName`.
+- **No frontend tests.** `pnpm verify` type-checks and builds the UI but never
+  executes it.
 
 **Also unresolved, from the Phase 1 findings:** the Shin fix changes real
 numbers — longshot fair probabilities were overstated ~20% relative. Worth
 telling the Discord group, since people may have acted on the old output.
 
-**Documentation written at the pause:** `CLAUDE.md` (working rules), `README.md`,
+**Documentation:** `CLAUDE.md` (working rules), `README.md`,
 `docs/DIVERGENCES.md` (every bug found in the reference TS), `docs/TESTING.md`
-(the parity harness and how not to defeat it).
+(the parity harness and how not to defeat it), `tasks/lessons.md`.
 
 ---
 
@@ -231,9 +228,13 @@ and every divergence below is asserted by a named test.
 4. **`ParlayCalculator` silently dropped unparseable legs** and priced the
    parlay from the survivors — enter five legs, typo one, get a four-leg price
    presented as yours. Now an error.
-5. **`ArbitrageCalculator` reported "guaranteed profit" on markets that do not
-   arb** — a confidently-labelled negative number. Now `Option`, gated on
-   `is_arb()`.
+5. **`HedgeCalculator` reported "Guaranteed Profit" on a hedge that locks in a
+   loss** — `HedgeCalculator.tsx:141` renders that label whenever the mode is
+   `guarantee` and only changes colour when the number is negative. Now
+   `Option`, gated on `is_arb()`, so the guarantee is in the type rather than in
+   each caller's render logic. *(Corrected 2026-07-25: this originally named
+   `ArbitrageCalculator`, which did gate the row on `isArbitrage` and never
+   actually displayed the negative number.)*
 6. **`if (!stake)` passed negative stakes** in EV, Kelly, Arbitrage, and Hedge,
    since `!(-500)` is `false`.
 
@@ -277,9 +278,12 @@ Also fixed:
   mathematics requires that.
 
 ### Phase 2 — remaining
-- [ ] Sport config tables (`sportDefaults.ts`, `poissonConfig.ts`,
+- [x] Sport config tables (`sportDefaults.ts`, `poissonConfig.ts`,
       `nbinomConfig.ts`, `propSimConfig.ts`, `regressionConfig.ts`) — presets
-      rather than math; they parameterise the models but contain no logic
+      rather than math; they parameterise the models but contain no logic.
+      Landed as `config.rs` during Phase 4, where a mistranscribed λ is visible
+      in a dropdown. `poissonConfig.ts` and `nbinomConfig.ts` turned out to be
+      the same table twice, differing only in `defaultR` / `rHint`; merged.
 
 **`teaserEv.ts`:** `analyzeTeaser([])` reduced over no legs with an initial
 value of 1, so an empty teaser reported a certainty and an enormous positive
@@ -352,9 +356,13 @@ else happens, so `+7.5` and `-7.5` describe the same bet.
    books at identical prices — presumably why it survived — but every line value
    displayed was shifted, and `altline.ts` built its whole ladder on top of it.
 6. **Score matrices were never renormalised.** Truncating the grid at
-   `max_score` drops real probability mass; at baseball rates (μ≈4.5, max 10)
-   about 0.7% falls off the edge, so every derived price was biased low.
-   `truncation_mass()` now reports it so the grid size can be checked.
+   `max_score` drops real probability mass, so every derived price was biased
+   low. How much depends entirely on the grid: at baseball rates (μ≈4.5 and
+   4.2) a max of 10 drops **1.07%** of the joint distribution, while the 16
+   that `config.rs` ships drops 0.0007%. `truncation_mass()` now reports it so
+   the grid size can be checked, and a test pins both figures.
+   *(Corrected 2026-07-25: this originally read ~0.7%, which is a single
+   marginal's tail rather than the joint truncation the code reports.)*
 7. **Spread and total pushes were dropped.** `margin > spread` went to home,
    `margin < spread` to away, and an exact tie went nowhere — so the two sides
    silently failed to sum to 1 on whole-number lines.
@@ -390,7 +398,6 @@ Techniques worth keeping:
   value imports when both are type aliases — a bundler elides them, native type
   stripping does not, and the module fails to instantiate. That is a real latent
   bug in the reference repo, but not ours to edit.
-- [ ] Sport config tables
 - [x] `rayon` for the Monte Carlo paths
 - [ ] Benchmark vs the JS to quantify the win
 
@@ -457,19 +464,57 @@ Also caught: `arbitrage::Leg` and `middle::Leg` collide in TypeScript's flat
 namespace. Disambiguated on export with `specta(rename)`, leaving the Rust
 names idiomatic.
 
-### Phase 4 — Frontend shell + vertical slice
-- [ ] Port the design system: CSS variables from `globals.css` (`--bg-primary` #0a0a0f,
+### Phase 4 — Frontend shell + vertical slice  ← COMPLETE
+- [x] Port the design system: CSS variables from `globals.css` (`--bg-primary` #0a0a0f,
       `--accent-green` #2ed573, `--accent-cyan` #00d4aa, …), JetBrains Mono / IBM Plex Sans,
       14px base — **plus a light mode**, which the web app lacks
-- [ ] Port shared UI: `InputCard`, `FormRow`, `FormGroup`, `OutputSection`, `ResultRow`,
-      `ResultLarge`, `EmptyState`, `InfoSection` → Svelte 5
-- [ ] Calculator registry + routing
-- [ ] **Four calculators end-to-end**, chosen to exercise every IPC shape:
-      - Odds Converter — trivial sync, scalar in/out
-      - Devig Calculator — array in, multi-method array out
-      - Risk of Ruin — async Monte Carlo, progress events, survival chart
-      - Odds-Range Variance — new module, heaviest chart surface
-- [ ] **Gate: review the architecture here before mass-porting the other 17**
+- [x] Port shared UI: `InputCard`, `FormRow`, `FormGroup`, `OutputSection`, `ResultRow`,
+      `ResultLarge`, `EmptyState`, `InfoSection` → Svelte 5 (+ `ToggleGroup`, `ErrorNote`)
+- [x] Calculator registry + routing (`src/lib/calculators.ts`, lazy `import()` per slug)
+- [x] Calculators end-to-end covering every IPC shape: Odds Converter (sync scalar),
+      Devig (array in, multi-method out), Risk of Ruin (async Monte Carlo + chart)
+- [x] **Gate reviewed before mass-porting** — the patterns below are what the rest
+      were built against
+
+**The fourth slice calculator was dropped, not folded forward.** The pause note
+recommended pulling Phase 5's `variance.rs` into Phase 4 so the chart surface got
+built against a real module. It was not: the slice shipped three calculators and
+went straight to the mass port. So the chart components (`LineChart`,
+`Histogram`) are proven against Risk of Ruin and the prop simulator only, and
+Phase 5 is the first thing to stress them. Expect to extend them there rather
+than to find them ready.
+
+**Patterns settled here, which the other 18 are built against:**
+
+- **`Async<D, T>`** (`src/lib/async.svelte.ts`) is how every calculator talks to
+  Rust. A deps function returns the inputs, a run function awaits the command.
+  It exists because `$effect` only tracks state read *synchronously before the
+  first `await`* — reading inputs inside the async callback silently produces an
+  effect that never re-runs. The deps function makes the tracked read
+  unmissable.
+- **All-or-nothing parsing.** `parseAll` in `src/lib/odds.ts` returns `null` if
+  any leg fails, which is the frontend half of the Phase 1.5 parlay bug: never
+  price a subset of what the user typed and present it as theirs.
+- **`describeError`** (`src/lib/errors.ts`) switches on `MathError.kind`. No
+  string parsing crosses the boundary.
+- **`src/lib/format.ts` is display-only.** `pct`, `money`, `american`, `points`.
+  Every one takes a number and returns a string; none of them computes.
+
+### Phase 4 addendum — the whole design system was the gate
+
+Three layout bugs, all from porting responsive web assumptions into a fixed
+desktop window:
+
+1. `@media (max-width: 820px)` collapsed the sidebar over the content, and the
+   Tauri window defaulted to 800×600 — *below the breakpoint*, so the app
+   launched permanently in its mobile layout. Breakpoint removed; the sidebar is
+   `clamp(178px, 20vw, 250px)` at every width. Window is now 1280×880.
+2. Collapsing the sidebar set `grid-template-columns: 0 minmax(0,1fr)` *and*
+   `display: none` on it. `display: none` removes the element from the grid, so
+   `main` became the first item and landed in the zero-width track. Collapsing
+   now drops to a single-column grid.
+3. Light mode needed its own accents. `#2ed573` on white is ~1.9:1, and those
+   are the colours the numbers that matter are printed in.
 
 ### Phase 5 — Odds-range / variance module (new)
 The original idea. All simulation in Rust.
@@ -492,12 +537,84 @@ The original idea. All simulation in Rust.
       scoring models, spread↔probability curve, EV-by-true-probability
 - [ ] Math to Rust, D3 for render
 
-### Phase 8 — Mass port
-- [ ] Remaining 17 calculators against the settled Phase 4 architecture
-- [ ] Drop the free/premium split — desktop app, everything unlocked
+### Phase 8 — Mass port  ← COMPLETE
+- [x] Remaining 18 calculators against the settled Phase 4 architecture
+      (18, not 17: the slice shipped three rather than four)
+- [x] Drop the free/premium split — desktop app, everything unlocked
 - [ ] Blog/MDX content: decide keep (bundled reference) or drop
 
+**21 calculators ship**, 1:1 with the reference's live set. `BetterLine` is
+`BestLineCalculator` renamed; `MatchPredictor.svelte` is shared by `PoissonMatch`
+and `NBinomMatch`, which in the reference were two components over what turned
+out to be one model with two marginals.
+
+**Bugs found and fixed during the port itself** (beyond the reference's, above):
+
+1. **`RiskOfRuin` displayed `RuinResult.edge` as "Edge" in points.** That field
+   is `ev_per_bet / bet_size` — a return per unit staked, not a win-rate
+   surplus. At the defaults it reads 5.00% one way and 2.62 pts the other.
+   Exactly the scale conflation the port exists to eliminate, reintroduced at
+   the render layer. Relabelled "Return per bet".
+2. **`PropSimulator` kept stale results across a stat switch**, so a yardage
+   histogram was relabelled as touchdowns. The preset-sync effect now clears the
+   simulation, ladder, fair odds and error together.
+3. **`VigComparison` bailed on the first unparseable book**, blanking the whole
+   table and contradicting its own explanatory text. Unreadable books are now
+   listed as rows; the readable ones still rank.
+4. **Two CLAUDE.md rule-1 violations** — arithmetic that had crept into
+   TypeScript. `PropSimulator` computed `1 - overProb` three times, and
+   `BayesianCalculator` computed `1 - a - b` to close a simplex. Both are now
+   Rust: `PropSimulation::under_prob` and `probability::complete_simplex`, the
+   latter of which also rejects a partial set that already sums past 1.
+
+**Explanatory copy is code too.** Four InfoSections stated numbers the app
+contradicted on screen: the hold definition (4.55% vs the 4.76% displayed), the
+alt-line ladder's main rung, the score-matrix truncation figure, and a bug
+attributed to the wrong calculator. A test now pins the truncation figure — the
+old assertion was `> 1e-3`, which is true of both the right answer and the wrong
+one, and that is why the wrong one survived.
+
 ---
+
+## Deliberately not built
+
+### Parlay correlation — cut, and it is to stay cut
+
+`correlation.rs`, the `correlated_parlay` command, and their tests remain in the
+core: the module is correct, well-tested, and cost nothing sitting there. **There
+is no calculator in front of it, and adding one is a mistake.** This is recorded
+because the reference repo left `ParlayCorrelation.tsx` on disk with no note —
+505 lines, in no registry and no route — so the port re-added it on the
+assumption that the omission was an oversight. It was not.
+
+Adam had cut it after building both directions and finding neither works:
+
+1. **Forward — type in ρ, get a price.** ρ is a free parameter with nothing
+   anchoring it. The user guesses `0.2`, a genuinely correct integral runs, and
+   four decimal places of false precision come back. Against the plain parlay
+   calculator it adds one unsourced knob.
+2. **Inverse — fit ρ from the book's SGP price.** Tried; the fitted ρ varied by
+   bet type, player and team with nothing consistent about it. That is not a
+   noisy fit, it is an unidentifiable parameter:
+   - **One ρ cannot describe a real same-game parlay.** Equicorrelation forces
+     every pair to share a dependence, but QB pass yards ↔ WR1 receiving is
+     strongly positive while QB pass yards ↔ own RB rushing is negative on game
+     script. The scalar lands wherever the mismatch pushes it, so it moves with
+     the roster.
+   - **One equation, two unknowns.** An SGP price carries correlation *and*
+     margin, and SGP margin is fat, combo-dependent, and layered with hand-set
+     book rules. The fit cannot separate "correlated 0.4" from "correlated 0.25
+     and the book took another 6%".
+   - **A Gaussian copula has zero tail dependence; props are tail events.** It
+     couples the middle of two distributions and decouples the tails, so it
+     misprices a threshold event — and misprices it by an amount that depends on
+     how deep the line sits. Two legs at -110 fit one ρ, the same players at
+     +250 fit another. This alone reproduces the drift across bet types.
+
+Doing it honestly needs per-pair correlations from play-by-play and a copula
+with tail dependence. Both are data projects, not calculators. Until that data
+exists, `ParlayCalculator` states plainly that it prices straight parlays only
+and does not claim to price a same-game parlay.
 
 ## Open questions
 - App name / bundle identifier / icon — `bettor-desktop` / `com.bettorcalculator.desktop` are placeholders

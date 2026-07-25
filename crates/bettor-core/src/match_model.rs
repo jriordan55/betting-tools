@@ -13,11 +13,16 @@
 //!
 //! 1. **The truncated grid is renormalised.** Both builders cut the grid off
 //!    at `max_score` and used it as-is, so the probabilities summed to less
-//!    than one and every derived price was biased low. At baseball rates
-//!    (μ ≈ 4.5, `max_score` = 10) roughly 0.7% of the distribution fell off the
-//!    edge. The mass lost is renormalised away and reported as
-//!    [`ScoreMatrix::truncation_mass`] so the choice of `max_score` can be
-//!    checked rather than trusted.
+//!    than one and every derived price was biased low. How much is lost depends
+//!    entirely on the grid: at baseball rates (μ ≈ 4.5 and 4.2) a `max_score`
+//!    of 10 drops **1.07%** of the joint distribution, while the 16 that
+//!    `crate::config` actually ships for baseball drops 0.0007%. The mass lost
+//!    is renormalised away and reported as [`ScoreMatrix::truncation_mass`] so
+//!    the choice of `max_score` can be checked rather than trusted.
+//!
+//!    (An earlier revision of this note quoted 0.7% for the `max_score` = 10
+//!    case. That was a single marginal's tail, not the joint truncation this
+//!    module reports.)
 //! 2. **Pushes are counted.** The TS assigned a scoreline to `homeCovers` when
 //!    `margin > spread` and `awayCovers` when `margin < spread`, silently
 //!    dropping exact ties on an integer line. The two sides then failed to sum
@@ -469,6 +474,20 @@ mod tests {
             "expected material truncation, got {}",
             loose.truncation_mass()
         );
+    }
+
+    #[test]
+    fn truncation_mass_matches_the_figures_quoted_in_the_docs() {
+        // Pinned because the module docs, DIVERGENCES.md and the UI all quote
+        // these numbers to users, and a loose `> 1e-3` bound let an incorrect
+        // 0.7% sit in all three unchallenged. 1 - Σ₀¹⁰P(4.5) × Σ₀¹⁰P(4.2).
+        let undersized = ScoreMatrix::poisson(4.5, 4.2, 10).unwrap();
+        assert_relative_eq!(undersized.truncation_mass(), 0.010_71, epsilon = 1e-5);
+
+        // And the grid `crate::config` actually ships for baseball, where the
+        // loss is three orders of magnitude smaller.
+        let shipped = ScoreMatrix::poisson(4.5, 4.2, 16).unwrap();
+        assert_relative_eq!(shipped.truncation_mass(), 0.000_007, epsilon = 1e-6);
     }
 
     #[test]

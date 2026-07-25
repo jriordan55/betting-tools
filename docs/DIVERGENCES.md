@@ -144,11 +144,11 @@ than guessing.
 | # | Bug | Effect |
 |---|---|---|
 | 15 | `ParlayCalculator` dropped unparseable legs | Enter five legs, typo one, get a four-leg price presented as yours. |
-| 16 | Score matrices were never renormalised | Truncating the grid at `max_score` drops real mass — ~0.7% at baseball rates (μ≈4.5, max 10) — so every derived price was biased low. `truncation_mass()` now reports it. |
+| 16 | Score matrices were never renormalised | Truncating the grid at `max_score` drops real mass, so every derived price was biased low. How much depends on the grid: at baseball rates (μ≈4.5 and 4.2) a max of 10 drops **1.07%** of the joint distribution; the 16 shipped in `config.rs` drops 0.0007%. `truncation_mass()` now reports it. *(Corrected: this row previously read ~0.7%, which was a single marginal's tail rather than the joint truncation.)* |
 | 17 | Spread and total **pushes** were dropped | `margin > spread` → home, `margin < spread` → away, exact tie → nowhere. The two sides silently failed to sum to 1 on whole-number lines. |
 | 18 | `devigOR` gave up at `c > 50` with a bracket capped at `hi < 100` | Returned `null` for markets whose true exponent was larger. `[0.9999, 0.9999]` has the perfectly ordinary answer `[0.5, 0.5]` (true c ≈ 6931). |
 | 19 | Solvers never reported non-convergence | They returned the last bisection iterate either way. `MathError::NoConvergence` now carries the residual. |
-| 20 | `ArbitrageCalculator` reported "guaranteed profit" on non-arbs | A confidently-labelled negative number. Now `Option`, gated on `is_arb()`. |
+| 20 | `HedgeCalculator` reported "Guaranteed Profit" on a hedge that locks in a loss | `HedgeCalculator.tsx:141` renders that label whenever the mode is `guarantee`, changing only the colour when the number is negative. Now `Option`, gated on `is_arb()` / `worst_case`, so the guarantee lives in the type rather than in each caller's render logic. *(Corrected: this row previously named `ArbitrageCalculator`, which did gate the row on `isArbitrage` and never displayed it.)* |
 | 21 | `convergenceSeries` accumulated a float step and rounded | Whenever `maxSample/100` was not whole, the x-axis came out unevenly spaced: a max of 150 gives 0, 2, 3, 5, 6, 8, 9, 11 — alternating gaps of 2 and 1. |
 
 ### 22. `samplePoisson` used a rounded normal above λ = 30

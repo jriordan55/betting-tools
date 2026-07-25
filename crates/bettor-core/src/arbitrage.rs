@@ -54,8 +54,14 @@ impl Arbitrage {
 
     /// Locked-in profit, or `None` when the market does not arb.
     ///
-    /// The TS reported this number unconditionally, so a market that could not
-    /// be arbed still displayed a "guaranteed profit" — a negative one.
+    /// `ArbitrageCalculator.tsx` computed this unconditionally but did gate the
+    /// *display* behind `isArbitrage`, so the negative number never reached the
+    /// screen there. `HedgeCalculator.tsx` is where it did: that one labels the
+    /// row "Guaranteed Profit" whenever the mode is `guarantee`, changing only
+    /// the colour when the figure is negative. Making the value itself an
+    /// `Option` puts the guarantee in the type rather than in each caller's
+    /// render logic, so a future caller cannot repeat the hedge calculator's
+    /// mistake.
     #[must_use]
     pub fn guaranteed_profit(&self) -> Option<f64> {
         self.is_arb().then_some(self.profit)
@@ -219,7 +225,9 @@ mod tests {
 
     #[test]
     fn a_vigged_market_is_not_reported_as_guaranteed_profit() {
-        // The TS labelled this negative number "guaranteed profit".
+        // `HedgeCalculator.tsx` labelled this kind of negative number
+        // "Guaranteed Profit"; the arbitrage screen gated the row on
+        // `isArbitrage`. `Option` makes the gate impossible to forget.
         let a = arbitrage(&[1.91, 1.91], 1_000.0).unwrap();
         assert!(!a.is_arb());
         assert!(a.profit < 0.0);

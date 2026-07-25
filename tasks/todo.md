@@ -756,6 +756,24 @@ by what can actually break here rather than by coverage:
 `pnpm verify` has to run without one. The math is not tested here at all — it
 is tested in Rust, where it lives.
 
+### README, CLAUDE.md, marketing page  ← COMPLETE
+
+- `README.md` rewritten for a finished app rather than a port in progress.
+  Every figure in it was measured, not remembered: 305 Rust tests, 67 frontend,
+  803 vectors, 21 core modules, 53 commands, 26 calculators.
+- `CLAUDE.md` gained rule 9 (a number in prose is a claim and gets a test), the
+  frontend-patterns section, the cents-axis rule, and the note that agreement to
+  1e-12 means an identity rather than corroboration.
+- `site/index.html` — a single self-contained page for GitHub Pages, deployed by
+  `.github/workflows/pages.yml`. **One-time setup: Settings → Pages → Source:
+  "GitHub Actions".**
+
+The page leads with the thesis rather than the feature list, and the honest
+version of it: same edge, four and a half times the evidence. No download
+button, because there are no releases — the call to action is `pnpm tauri dev`.
+Rendered and checked in both colour schemes before committing rather than
+after.
+
 ### Icon  ← COMPLETE
 
 `src-tauri/icons/icon.svg` is the source and is committed; everything else in

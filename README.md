@@ -1,7 +1,10 @@
 # bettor-desktop
 
 Sports betting calculators and simulations. A Tauri v2 desktop app with a Rust
-math engine.
+math engine — 26 calculators, a bet log, and a bundled reference library, all
+offline.
+
+![Bettor Desktop](site/assets/screenshot.png)
 
 The point of the project is one specific demonstration: **how the range of odds
 you bet drives your breakeven and your variance — even when every bet is +EV and
@@ -10,9 +13,20 @@ long drawdowns with a genuine edge, purely because of the mix of prices you took
 A +400 winner that closed +350 is not the same result as a -110 winner that
 closed -130, and the usual way of reporting CLV actively hides that.
 
+Two numbers make the case. At a 5% edge:
+
+| Price | SD per unit | Bets before the edge clears 2σ |
+|---|---|---|
+| -110 | 0.95 | ~1,440 |
+| +400 | 2.04 | ~6,640 |
+
+Same expectation. Four and a half times the evidence.
+
 ---
 
 ## Status
+
+Every planned phase is complete.
 
 | Phase | | |
 |---|---|---|
@@ -20,27 +34,60 @@ closed -130, and the usual way of reporting CLV actively hides that.
 | 1 | Core math, tier 1 — odds, probability, hold, devig | ✅ |
 | 1.5 | Math extracted from the React components | ✅ |
 | 2 | Core math, tier 2 — distributions, models, simulation | ✅ |
-| 3 | Typed IPC — 32 commands, generated bindings | ✅ |
-| 4 | Design system + four calculators end-to-end | ⏭ next |
-| 5 | Odds-range / variance module | |
-| 6 | SQLite bet log | |
-| 7 | Probability visualizer | |
-| 8 | Mass port of the remaining 17 calculators | |
-
-**The math engine is done and tested. The UI is not built yet.** `src/routes/`
-currently holds a single smoke-test page that proves the typed IPC boundary
-works end to end. Phase 4 is the architecture gate — the patterns settled there
-are what the other 17 calculators get built against.
-
-Current test surface:
+| 3 | Typed IPC — generated bindings | ✅ |
+| 4 | Design system, shared UI, calculator registry | ✅ |
+| 5 | Odds-range / variance module | ✅ |
+| 6 | SQLite bet log | ✅ |
+| 7 | Probability visualizer | ✅ |
+| 8 | Mass port of the remaining calculators | ✅ |
 
 ```
-190  unit tests           crates/bettor-core
- 10  parity suites        803 golden vectors replayed against the TypeScript
-  1  bindings export      regenerates src/lib/bindings.ts
-     svelte-check         180 files, 0 errors, 0 warnings
-     clippy -D warnings   clean
+305  Rust tests          280 core · 15 shell · 10 parity suites
+ 67  frontend tests      formatting, error wording, registry, markdown
+803  golden vectors      replayed against the original TypeScript
+     svelte-check        295 files, 0 errors, 0 warnings
+     clippy -D warnings  clean
 ```
+
+`pnpm verify` runs all of it plus a production build. Nothing lands without it.
+
+---
+
+## What is in it
+
+**26 calculators.** Odds conversion, hold, devig (five methods), EV, Kelly,
+arbitrage, hedging, parlays, CLV, middles, teasers, alternate lines, line
+shopping, Bayesian updating, regression to the mean, prop simulation, Poisson
+and negative-binomial match models, risk of ruin.
+
+**An odds-range and variance module**, which is the original idea:
+
+- **Breakeven ladder** — required win rate across a whole price range, and the
+  sample size each price needs before its edge can be told from noise
+- **CLV translator** — what a cents move is actually worth in probability
+  points. The same twenty cents is worth twenty times more at -110 than at +900
+- **Bet mix builder** — blended breakeven, per-season standard deviation, and
+  which price buckets supply the *swing* rather than the profit
+- **Season simulator** — a Monte Carlo equity-curve fan. A real 3% edge over 200
+  bets ends the year down 32% of the time at -110 and 45% at +600
+
+**A bet log.** SQLite, WAL, local. Records the price you took, the close, and
+the *opposing* close — because without both sides the vig cannot be removed and
+any edge computed from a closing price is overstated by roughly half the hold.
+It reports realised profit, expected profit against the devigged close, and the
+gap between them. That gap is normally the largest number on the page, and
+treating it as skill in either direction is the commonest way a betting record
+is misread.
+
+**A game probability visualizer.** A book posts a spread and a total; their
+standard deviations differ, and the pair pins down two things nobody posts — a
+per-team standard deviation and the correlation between the two teams' scores.
+Football comes out at ρ ≈ −0.27 (game script pulls the scores apart), basketball
+at +0.31 (shared pace). Everything grades on integers, so a push at a
+whole-number line is a real event with a real probability.
+
+**A reference library.** Fifteen explainers bundled into the binary, rendered
+with KaTeX. No network.
 
 ---
 
@@ -80,21 +127,47 @@ Two other things Rust bought that the TypeScript could not have:
   one smooth integral. The TypeScript drew 50,000 samples for a figure carrying
   ~0.2% sampling noise and returned a different answer every run.
 
+### What Rust did *not* buy
+
+Speed, mostly. `pnpm bench` runs the same workloads through both:
+
+| Workload | Rust | TypeScript | |
+|---|---|---|---|
+| `normal_cdf` | 7.4 ns | 8.9 ns | a tie |
+| `american_to_decimal` | 28.3 ns | 19.0 ns | **0.7×** |
+| `devig_all` (5 methods) | 2.39 µs | 6.06 µs | 2.5× |
+| `score_matrix` 16×16 | 1.01 µs | 12.3 µs | **12.2×** |
+| `risk_of_ruin` 1k × 500 | 1.12 ms | 6.93 ms | 6.2× |
+
+Scalar work is a wash or slightly worse — most of the `american_to_decimal` gap
+is the range check that stopped `toDecimal("-1.5", "american")` returning 67.67.
+Array and matrix work is where it shows. The Monte Carlo figure is parallelism
+across eleven cores, not language: per-core it is *slower*, because ChaCha8 is
+slower than xorshift128+ and a reproducible seed was worth the cycles.
+
+The justification was always the bugs.
+
 ---
 
 ## Architecture
 
 ```
 bettor-desktop/
-├─ crates/bettor-core/     pure math — no Tauri, no io, no entropy
-│  ├─ src/                 18 modules
+├─ crates/bettor-core/     pure math — 21 modules, no Tauri, no io, no entropy
+│  ├─ src/
+│  ├─ examples/bench.rs    the Rust half of `pnpm bench`
 │  └─ tests/
 │     ├─ parity.rs         golden-vector replay
 │     └─ fixtures/         803 committed reference vectors
-├─ src-tauri/              shell: windowing, IPC, later SQLite
+├─ src-tauri/              shell: windowing, 53 IPC commands, SQLite bet log
+│  ├─ src/commands.rs      thin adapters — deserialize, call core, serialize
+│  └─ src/betlog.rs        rusqlite, WAL, migrations
 ├─ src/                    SvelteKit (adapter-static, SSR off, Svelte 5)
-│  └─ lib/bindings.ts      GENERATED from the Rust — never hand-edited
-├─ tools/gen-fixtures.mjs  runs the reference TS, dumps golden vectors
+│  ├─ lib/bindings.ts      GENERATED from the Rust — never hand-edited
+│  ├─ lib/calculators/     26 calculators
+│  └─ content/docs/        15 bundled reference articles
+├─ site/                   the GitHub Pages marketing page
+├─ tools/                  fixture generator, TypeScript benchmark
 ├─ tasks/todo.md           the plan and per-phase record
 └─ docs/
 ```
@@ -130,16 +203,20 @@ requires **Node 25+** for native TypeScript type stripping.
 ```bash
 pnpm install
 pnpm tauri dev          # run the app
-pnpm verify             # clippy -D warnings → cargo test → svelte-check
+pnpm verify             # the gate — see below
+pnpm tauri build        # produce a bundle
 ```
 
-`pnpm verify` is the gate; nothing lands without it. Individual pieces:
+`pnpm verify` is clippy → cargo test → svelte-check → vitest → production build.
+Nothing lands without it. Individual pieces:
 
 ```bash
 pnpm rs:test            # cargo test --workspace
 pnpm rs:lint            # cargo clippy --workspace --all-targets -- -D warnings
 pnpm rs:fmt             # cargo fmt --all
 pnpm check              # svelte-check
+pnpm test               # vitest
+pnpm bench              # Rust vs TypeScript, same workloads
 cargo test -p bettor-core   # math only, no Tauri toolchain needed
 ```
 
@@ -152,12 +229,15 @@ node tools/gen-fixtures.mjs
 TS_ROOT=/path/to/bettor-calculator-main/src/lib/math node tools/gen-fixtures.mjs
 ```
 
+The app icon is drawn from a committed SVG (`src-tauri/icons/icon.svg`);
+`pnpm tauri icon <1024.png>` regenerates every size from a rasterised copy.
+
 ---
 
 ## Stack
 
 Tauri v2 · Rust 2021 · SvelteKit (adapter-static, SSR off) · Svelte 5 runes ·
-TypeScript strict · D3 · KaTeX · rusqlite (Phase 6) · pnpm
+TypeScript strict · D3 · KaTeX · marked · rusqlite (bundled, WAL) · vitest · pnpm
 
 `tauri-specta` for Tauri v2 exists only as a release candidate
 (`2.0.0-rc.21`, with `specta` `2.0.0-rc.22`). Both are pinned with `=`. It is the
@@ -169,6 +249,7 @@ standard Tauri v2 solution, but the type-safety backbone does rest on an RC.
 
 - [`CLAUDE.md`](CLAUDE.md) — working rules for the repo, in short form
 - [`tasks/todo.md`](tasks/todo.md) — the plan, and the record of every phase
+- [`tasks/lessons.md`](tasks/lessons.md) — mistakes worth not repeating
 - [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md) — every bug found in the
   reference TypeScript and every deliberate departure from it
 - [`docs/TESTING.md`](docs/TESTING.md) — the parity harness, and how to work

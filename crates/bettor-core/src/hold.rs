@@ -18,6 +18,7 @@ use serde::Serialize;
 
 /// What a book is charging on a two-sided market.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Hold {
     /// Implied probability of side A, as priced.
@@ -80,6 +81,7 @@ pub fn calculate_hold(implied_a: f64, implied_b: f64) -> Result<Hold> {
 
 /// One book's quote on a shared market.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BookQuote {
     /// Book name, carried through to the result for display.

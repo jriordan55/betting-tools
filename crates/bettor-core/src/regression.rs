@@ -80,6 +80,7 @@ pub fn regress_to_mean(
 
 /// A regressed estimate with its uncertainty.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Regressed {
     /// Shrinkage-adjusted estimate of true talent.
@@ -129,6 +130,7 @@ pub fn regress_with_interval(
 
 /// One point on a convergence curve.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct ConvergencePoint {
     /// Sample size at this point.

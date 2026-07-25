@@ -30,6 +30,7 @@ use serde::Serialize;
 
 /// A priced parlay.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Parlay {
     /// Combined decimal price — the product of every leg.

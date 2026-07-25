@@ -17,6 +17,14 @@ rand = "0.9"
 rand_chacha = "0.9"
 rand_distr = "0.5"
 rayon = "1"
+# Optional: type export for the IPC layer. NOT a Tauri dependency — the core
+# still has no idea a desktop app exists, and `cargo test -p bettor-core`
+# does not build it.
+specta = { version = "=2.0.0-rc.22", optional = true, features = ["derive"] }
+
+[features]
+default = []
+specta = ["dep:specta"]
 
 [dev-dependencies]
 approx = "0.5"

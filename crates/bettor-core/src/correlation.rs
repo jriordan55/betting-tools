@@ -45,6 +45,7 @@ const INTEGRATION_STEPS: usize = 4_000;
 
 /// How a correlated parlay prices against its independent counterpart.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Correlated {
     /// Product of the leg probabilities — what a parlay calculator assumes.
@@ -66,6 +67,10 @@ pub struct Correlated {
     /// equicorrelated matrix can represent for this many legs.
     pub correlation_was_clamped: bool,
     /// `None` when solved exactly; `Some(seed)` when simulated.
+    ///
+    /// Crosses the wire as a decimal string — see [`crate::seed_repr`].
+    #[serde(serialize_with = "crate::seed_repr::serialize_option")]
+    #[cfg_attr(feature = "specta", specta(type = Option<String>))]
     pub simulation_seed: Option<u64>,
 }
 

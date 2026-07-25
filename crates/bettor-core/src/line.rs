@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize};
 
 /// Which kind of line is being modelled.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum BetType {
     /// A point spread.
@@ -41,6 +42,7 @@ pub enum BetType {
 
 /// Which side of a total.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum TotalSide {
     /// Betting the game goes over.
@@ -122,6 +124,7 @@ pub fn fair_prob_at_line(true_line: f64, alt_line: f64, std_dev: f64, bet_type: 
 
 /// One rung of an alternate-line ladder.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct LadderRow {
     /// The alternate line.
@@ -134,6 +137,7 @@ pub struct LadderRow {
 
 /// A priced ladder of alternate lines.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Ladder {
     /// The true line backed out of the main market.
@@ -215,6 +219,7 @@ pub fn generate_ladder(
 
 /// Which of two competing lines is better, and by how much.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct LineComparison {
     /// True line implied by the first quote.
@@ -229,6 +234,7 @@ pub struct LineComparison {
 
 /// Identifies one of two compared quotes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum Side {
     /// The first quote.

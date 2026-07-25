@@ -27,6 +27,38 @@ pub mod risk_of_ruin;
 pub mod teaser;
 pub mod wager;
 
+/// Serialization for RNG seeds.
+///
+/// A seed is a `u64`, but JSON numbers are IEEE doubles: anything above 2^53
+/// loses precision in transit, which would quietly break the promise that a
+/// reported result can be reproduced from its seed. Seeds therefore cross the
+/// wire as decimal strings. They are opaque tokens, not quantities — nothing
+/// downstream does arithmetic on them.
+pub mod seed_repr {
+    use serde::Serializer;
+
+    /// Serializes a seed as a decimal string.
+    ///
+    /// # Errors
+    ///
+    /// Propagates the serializer's own failure.
+    pub fn serialize<S: Serializer>(seed: &u64, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&seed.to_string())
+    }
+
+    /// Serializes an optional seed as an optional decimal string.
+    ///
+    /// # Errors
+    ///
+    /// Propagates the serializer's own failure.
+    pub fn serialize_option<S: Serializer>(seed: &Option<u64>, s: S) -> Result<S::Ok, S::Error> {
+        match seed {
+            Some(v) => s.serialize_some(&v.to_string()),
+            None => s.serialize_none(),
+        }
+    }
+}
+
 /// Version of the math engine, surfaced in the UI so a reported result can
 /// always be traced back to the code that produced it.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -38,6 +70,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// converge" into one indistinguishable value. Each gets its own variant here
 /// so the UI can say something useful.
 #[derive(Debug, Clone, PartialEq, thiserror::Error, serde::Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(tag = "kind", content = "detail", rename_all = "camelCase")]
 pub enum MathError {
     /// A string input could not be parsed in the expected odds format.

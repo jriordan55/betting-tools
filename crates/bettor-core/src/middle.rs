@@ -33,7 +33,8 @@ use crate::{MathError, Result};
 use serde::Serialize;
 
 /// Which market the two positions sit on.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum Market {
     /// A point spread. Lines are folded onto the favorite's margin axis, so
@@ -47,7 +48,10 @@ pub enum Market {
 ///
 /// Named for the direction that wins it rather than the team it is on, which
 /// is what stops the two legs drifting into different sign conventions.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[cfg_attr(feature = "specta", specta(rename = "MiddleLeg"))]
+#[serde(rename_all = "camelCase")]
 pub struct Leg {
     /// The number bet, as posted.
     pub line: f64,
@@ -95,6 +99,7 @@ impl Leg {
 
 /// One way the position can resolve.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Outcome {
     /// What happened, for display.
@@ -107,6 +112,7 @@ pub struct Outcome {
 
 /// A middle or trap, priced.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Middle {
     /// True when the gap wins both tickets, false when it loses both.

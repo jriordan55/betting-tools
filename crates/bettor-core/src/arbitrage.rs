@@ -16,6 +16,8 @@ use serde::Serialize;
 
 /// Stake and payout for one leg of an arbitrage.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[cfg_attr(feature = "specta", specta(rename = "ArbitrageLeg"))]
 #[serde(rename_all = "camelCase")]
 pub struct Leg {
     /// Decimal price for this outcome.
@@ -30,6 +32,7 @@ pub struct Leg {
 
 /// An arbitrage opportunity, or the absence of one.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Arbitrage {
     /// Per-outcome stakes, in the order supplied.
@@ -112,6 +115,7 @@ pub fn arbitrage(decimals: &[f64], total_stake: f64) -> Result<Arbitrage> {
 
 /// What to do about an open position when the price has moved.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub enum HedgeGoal {
     /// Equalise the return so the outcome no longer matters.
@@ -122,6 +126,7 @@ pub enum HedgeGoal {
 
 /// A hedge on an open position.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Hedge {
     /// Stake to place on the opposing side.

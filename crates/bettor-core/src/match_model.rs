@@ -220,6 +220,7 @@ impl ScoreMatrix {
 
 /// One exact scoreline and its probability.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Scoreline {
     /// Home team's score.
@@ -232,6 +233,7 @@ pub struct Scoreline {
 
 /// Cover probabilities for one spread.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct SpreadProb {
     /// The line, from the home side's perspective.
@@ -248,6 +250,7 @@ pub struct SpreadProb {
 
 /// Over/under probabilities for one total.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct TotalProb {
     /// The line.
@@ -262,6 +265,7 @@ pub struct TotalProb {
 
 /// Every market derivable from a score matrix.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct MarketProbs {
     /// Probability the home side wins outright.

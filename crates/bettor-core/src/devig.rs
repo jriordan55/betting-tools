@@ -29,6 +29,7 @@ use serde::Serialize;
 
 /// Which assumption to make about where the margin sits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum DevigMethod {
     /// Equal margin — subtract the overround evenly across outcomes.

@@ -387,11 +387,39 @@ Added, not in the original: `longest_losing_streak`, the statistic most
 underestimated at long prices, and `median_max_drawdown` alongside the mean
 (drawdown is skewed, so the mean alone misleads).
 
-### Phase 3 — IPC layer
-- [ ] Tauri commands wrapping every core entry point
-- [ ] `tauri-specta` generating `src/lib/bindings.ts`
-- [ ] Long-running sims as async commands with progress events (not frozen UI)
-- [ ] Error type: `thiserror` in core → serializable enum at the boundary, no stringly-typed errors
+### Phase 3 — IPC layer  ← COMPLETE
+- [x] 32 Tauri commands covering every core entry point
+- [x] `tauri-specta` generating `src/lib/bindings.ts` (1,585 lines), exported by
+      a **test** rather than a build script — so `pnpm verify` refreshes it and a
+      forgotten regeneration shows up as a dirty tree, not a runtime `undefined`
+- [x] Long-running sims (`simulate_prop`, `simulate_ruin`) are `async`, so Tauri
+      runs them off the main thread and the window keeps painting
+- [x] `MathError` serializes as a tagged union — the frontend matches on
+      `kind`, it does not parse strings
+- [x] Frontend calls `commands.clv(...)`, not `invoke("clv")`
+
+**Dependency note:** `tauri-specta` for Tauri v2 only exists as a release
+candidate (`2.0.0-rc.21`, with `specta` `2.0.0-rc.22`). Both are pinned with
+`=`. This is the standard Tauri v2 solution and the plan named it, but it is
+worth knowing the type-safety backbone rests on an RC.
+
+`bettor-core` gained an **optional** `specta` feature for the type exports.
+specta is not Tauri — the core still has no idea a desktop app exists, and
+`cargo test -p bettor-core` does not build it.
+
+**A real bug the type system caught before it shipped.** Seeds are `u64`, and
+`specta` refused to export them: JSON numbers are IEEE doubles, so any seed
+above 2^53 would arrive corrupted. That would have silently broken the entire
+"reproduce this run from its seed" guarantee — a simulation would come back
+with a *different* seed than the one that produced it, and nobody would notice
+until they tried to reproduce a result. Seeds now cross the wire as decimal
+strings (`bettor_core::seed_repr`); they are opaque tokens, and nothing does
+arithmetic on them. The remaining 64-bit values are counts that cannot approach
+2^53, so those export as `number` deliberately.
+
+Also caught: `arbitrage::Leg` and `middle::Leg` collide in TypeScript's flat
+namespace. Disambiguated on export with `specta(rename)`, leaving the Rust
+names idiomatic.
 
 ### Phase 4 — Frontend shell + vertical slice
 - [ ] Port the design system: CSS variables from `globals.css` (`--bg-primary` #0a0a0f,

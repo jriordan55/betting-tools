@@ -105,6 +105,7 @@ pub fn prob_to_spread(p: f64, std_dev: f64) -> f64 {
 
 /// Beta distribution parameters.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct BetaParams {
     /// Pseudo-count of successes.
     pub alpha: f64,

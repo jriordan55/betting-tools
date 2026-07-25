@@ -19,6 +19,7 @@ use serde::Serialize;
 
 /// What a bet is worth at a given price and true probability.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct ExpectedValue {
     /// EV as a fraction of stake. `0.05` is a 5% edge.
@@ -75,6 +76,7 @@ pub fn expected_value(decimal: f64, true_prob: f64, stake: f64) -> Result<Expect
 
 /// Optimal stake under the Kelly criterion.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Kelly {
     /// Full-Kelly fraction of bankroll. Negative means do not bet.

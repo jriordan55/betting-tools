@@ -32,6 +32,7 @@ use serde::{Deserialize, Serialize};
 
 /// Which family to sample from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum Distribution {
     /// Counts with variance equal to the mean. Goals, aces.
@@ -153,6 +154,7 @@ pub fn std_normal(rng: &mut ChaCha8Rng) -> f64 {
 
 /// One bar of a histogram.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct HistogramBin {
     /// Left edge, inclusive.
@@ -312,6 +314,7 @@ pub fn over_prob(samples: &[f64], line: f64) -> f64 {
 
 /// Mean and standard deviation of a sample.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Stats {
     /// Sample mean.

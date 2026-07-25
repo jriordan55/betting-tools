@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 
 /// The three ways a price gets written.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum OddsFormat {
     /// `-110`, `+250`.
@@ -51,6 +52,7 @@ pub const MIN_AMERICAN_MAGNITUDE: f64 = 100.0;
 
 /// A decimal price expressed every other way.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct OddsView {
     /// American price, e.g. `-110`.

@@ -33,6 +33,7 @@ use serde::Serialize;
 
 /// A Beta posterior over a two-way market.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct BetaPosterior {
     /// Prior successes, from the market.
@@ -119,6 +120,7 @@ pub fn beta_update(
 
 /// A Dirichlet posterior over a market with any number of outcomes.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct DirichletPosterior {
     /// Prior concentration per outcome, from the market.
@@ -203,6 +205,7 @@ pub fn dirichlet_update(
 
 /// A precision-weighted combination of two margin estimates.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct MarginPosterior {
     /// Posterior expected margin.
@@ -263,6 +266,7 @@ pub fn margin_update(
 
 /// Which direction an outcome has to go for a bet to win.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum Direction {
     /// Wins when the result comes in above the cover point.
@@ -303,6 +307,7 @@ pub fn cover_prob(
 
 /// What a posterior is worth against a price on offer.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Edge {
     /// Posterior probability minus the price's implied probability, in points.

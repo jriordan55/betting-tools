@@ -40,6 +40,7 @@ use serde::Serialize;
 
 /// Closing line value, measured every way that is defensible.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Clv {
     /// Decimal price taken.

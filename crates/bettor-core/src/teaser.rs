@@ -40,7 +40,9 @@ use serde::Serialize;
 pub const FOOTBALL_KEY_NUMBERS: [f64; 4] = [3.0, 7.0, 10.0, 14.0];
 
 /// One leg of a teaser, as posted.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
 pub struct TeaserLeg {
     /// The spread before teasing, in the bettor's favour when positive.
     pub spread: f64,
@@ -51,6 +53,7 @@ pub struct TeaserLeg {
 
 /// One leg, priced after the points are applied.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct TeaserLegAnalysis {
     /// The spread as posted.
@@ -71,6 +74,7 @@ pub struct TeaserLegAnalysis {
 
 /// A complete teaser, priced.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Teaser {
     /// Per-leg analysis, in the order supplied.

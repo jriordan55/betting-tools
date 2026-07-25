@@ -26,6 +26,7 @@ use serde::{Deserialize, Serialize};
 
 /// Parameters for a survival simulation.
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct RuinInput {
     /// True win probability, 0–1.
@@ -44,6 +45,7 @@ pub struct RuinInput {
 
 /// Fraction of paths still solvent at a given bet number.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct SurvivalPoint {
     /// Bet index.
@@ -54,9 +56,14 @@ pub struct SurvivalPoint {
 
 /// Outcome of a survival simulation.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct RuinResult {
     /// Seed that produced this run. Feed it back to reproduce exactly.
+    ///
+    /// Crosses the wire as a decimal string — see [`crate::seed_repr`].
+    #[serde(serialize_with = "crate::seed_repr::serialize")]
+    #[cfg_attr(feature = "specta", specta(type = String))]
     pub seed: u64,
     /// Fraction of paths that went broke, 0–1.
     pub ruin_prob: f64,

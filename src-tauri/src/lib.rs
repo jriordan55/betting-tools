@@ -1,41 +1,119 @@
 //! Desktop shell for the bettor calculators.
 //!
 //! This crate owns windowing, IPC, and (from Phase 6) the SQLite bet log.
-//! It deliberately owns no math: every command here is a thin adapter that
+//! It deliberately owns no math: every command is a thin adapter that
 //! deserializes input, calls `bettor_core`, and serializes the result.
+//!
+//! # Seeds
+//!
+//! `bettor_core` never reads entropy — that is this crate's job. Simulation
+//! commands take an optional seed and always report back the one they used, so
+//! any figure a user quotes can be reproduced exactly.
 
-/// Build and version information for the math engine.
+pub mod commands;
+
+use tauri_specta::{collect_commands, Builder};
+
+/// Draws a fresh seed for a simulation the caller did not pin.
 ///
-/// Rendered in the UI so any result a user reports can be tied to the exact
-/// engine that produced it.
-#[derive(Debug, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct EngineInfo {
-    /// Version of the `bettor-core` math crate.
-    pub core_version: &'static str,
-    /// Version of this desktop shell.
-    pub shell_version: &'static str,
-    /// Whether the engine was compiled with optimizations. Monte Carlo results
-    /// from an unoptimized build are correct but far slower.
-    pub optimized: bool,
+/// The only entropy in the application. Kept here rather than in the math
+/// crate so that `bettor-core` stays a pure function of its inputs.
+#[must_use]
+pub fn fresh_seed() -> u64 {
+    use std::hash::{BuildHasher, Hasher};
+    std::collections::hash_map::RandomState::new()
+        .build_hasher()
+        .finish()
 }
 
-/// Reports the math engine's version. Phase 0 smoke test for the IPC path.
-#[tauri::command]
-fn engine_info() -> EngineInfo {
-    EngineInfo {
-        core_version: bettor_core::VERSION,
-        shell_version: env!("CARGO_PKG_VERSION"),
-        optimized: !cfg!(debug_assertions),
-    }
+/// Assembles the typed command registry.
+///
+/// Shared by [`run`] and by the binding-export test, so the generated
+/// TypeScript can never describe a different set of commands than the ones the
+/// application actually registers.
+fn builder() -> Builder {
+    Builder::<tauri::Wry>::new().commands(collect_commands![
+        commands::engine_info,
+        commands::to_decimal,
+        commands::from_decimal,
+        commands::implied_to_american,
+        commands::calculate_hold,
+        commands::compare_vig,
+        commands::devig_all,
+        commands::ev_vs_fair,
+        commands::expected_value,
+        commands::kelly,
+        commands::arbitrage,
+        commands::hedge,
+        commands::parlay,
+        commands::clv,
+        commands::fair_cover_prob,
+        commands::implied_true_line,
+        commands::generate_ladder,
+        commands::compare_lines,
+        commands::derive_markets,
+        commands::regress,
+        commands::convergence_series,
+        commands::calculate_middle,
+        commands::analyze_teaser,
+        commands::correlated_parlay,
+        commands::beta_update,
+        commands::dirichlet_update,
+        commands::margin_update,
+        commands::edge_vs_price,
+        commands::simulate_prop,
+        commands::simulate_ruin,
+        commands::normal_cdf,
+        commands::prob_to_spread,
+    ])
 }
 
 /// Starts the desktop application.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let builder = builder();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![engine_info])
+        .invoke_handler(builder.invoke_handler())
+        .setup(move |app| {
+            builder.mount_events(app);
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regenerates `src/lib/bindings.ts` from the command registry.
+    ///
+    /// Running this as a test rather than a build script means the bindings
+    /// are refreshed by `cargo test`, which `pnpm verify` already runs, and a
+    /// forgotten regeneration shows up as a dirty working tree rather than as
+    /// a runtime `undefined` in the frontend.
+    #[test]
+    fn export_typescript_bindings() {
+        use specta_typescript::{BigIntExportBehavior, Typescript};
+
+        builder()
+            .export(
+                Typescript::default()
+                    // The remaining 64-bit values are all counts — histogram
+                    // bins, parlay legs, losing-streak lengths — which cannot
+                    // approach 2^53. The one genuinely unsafe case was the RNG
+                    // seed, and that already crosses the wire as a decimal
+                    // string (see `bettor_core::seed_repr`), because a seed
+                    // silently rounded by JSON would break reproducibility.
+                    .bigint(BigIntExportBehavior::Number)
+                    .header(
+                        "// AUTO-GENERATED by `cargo test -p bettor-desktop`. Do not edit.\n\
+                         // Source of truth: src-tauri/src/commands.rs\n",
+                    ),
+                "../src/lib/bindings.ts",
+            )
+            .expect("failed to export TypeScript bindings");
+    }
 }

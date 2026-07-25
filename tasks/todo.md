@@ -28,10 +28,6 @@ a deliberate cut — see *Deliberately not built*, below.
 *(Nothing else. Both open items were settled 2026-07-25: the name stays
 `bettor-desktop`, and the reference library is bundled.)*
 
-**Also unresolved, from the Phase 1 findings:** the Shin fix changes real
-numbers — longshot fair probabilities were overstated ~20% relative. Worth
-telling the Discord group, since people may have acted on the old output.
-
 **Documentation:** `CLAUDE.md` (working rules), `README.md`,
 `docs/DIVERGENCES.md` (every bug found in the reference TS), `docs/TESTING.md`
 (the parity harness and how not to defeat it), `tasks/lessons.md`.

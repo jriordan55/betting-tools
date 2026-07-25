@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 authors = ["Adam Wickwire"]
-repository = "https://github.com/adamwickwire/bettor-desktop"
+repository = "https://github.com/WalrusQuant/bettor-desktop"
 
 # Baseline for every crate. `bettor-core` opts into a much stricter set of its
 # own (see its Cargo.toml) — the shell crate can't, because the Tauri macros

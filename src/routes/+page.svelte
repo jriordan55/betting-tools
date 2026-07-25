@@ -1,161 +1,156 @@
 <script lang="ts">
-  // Typed bindings, generated from the Rust command signatures by
-  // `cargo test -p bettor-desktop`. Nothing here re-declares a shape the
-  // Rust already knows, so drift is a compile error rather than a runtime
-  // `undefined`.
-  import { commands, type EngineInfo, type Clv } from "$lib/bindings";
+	import { onMount } from 'svelte';
+	import { commands, type EngineInfo } from '$lib/bindings';
+	import { byCategory, CATEGORY_LABELS, CALCULATORS } from '$lib/calculators';
 
-  let info = $state<EngineInfo | null>(null);
-  let error = $state<string | null>(null);
-  let clv = $state<Clv | null>(null);
+	let info = $state<EngineInfo | null>(null);
 
-  $effect(() => {
-    commands
-      .engineInfo()
-      .then((res) => (info = res))
-      .catch((e) => (error = String(e)));
+	onMount(async () => {
+		info = await commands.engineInfo();
+	});
 
-    // Phase 3 smoke test: a real math command through the typed boundary.
-    // -110 bet into a -130 close, with the other side at +110 so the vig
-    // can actually be removed.
-    commands.clv(1.909090909090909, 1.7692307692307692, 2.1).then((res) => {
-      if (res.status === "ok") clv = res.data;
-      else error = res.error.kind;
-    });
-  });
-
-  const pct = (v: number) => `${(v * 100).toFixed(2)}%`;
+	const groups = byCategory();
 </script>
 
-<main>
-  <h1>bettor<span>-desktop</span></h1>
+<div class="container-wide">
+	<header class="hero">
+		<h1>Bettor Desktop</h1>
+		<p class="tagline">
+			{CALCULATORS.length} calculators. Every number computed in Rust — the same engine the parity
+			suite tests, not a second implementation in the UI.
+		</p>
+		{#if info}
+			<p class="engine">
+				<span class="dot" class:warn={!info.optimized}></span>
+				bettor-core {info.coreVersion} · shell {info.shellVersion} ·
+				{info.optimized ? 'optimized' : 'debug build — simulations will be slow'}
+			</p>
+		{/if}
+	</header>
 
-  {#if error}
-    <p class="status err">IPC failed — {error}</p>
-  {:else if info}
-    <p class="status ok">Rust engine connected</p>
-    <dl>
-      <dt>math engine</dt>
-      <dd>bettor-core {info.coreVersion}</dd>
-      <dt>shell</dt>
-      <dd>{info.shellVersion}</dd>
-      <dt>build</dt>
-      <dd>{info.optimized ? "optimized" : "debug (sims will be slow)"}</dd>
-    </dl>
-  {:else}
-    <p class="status">connecting…</p>
-  {/if}
-
-  {#if clv}
-    <h2>CLV on a -110 bet that closed -130</h2>
-    <dl>
-      <dt>as a ratio</dt>
-      <dd>
-        {pct(clv.ratio)}
-        <span class="note">what the web app showed under three names</span>
-      </dd>
-      <dt>probability points</dt>
-      <dd>
-        {pct(clv.probPoints)}
-        <span class="note">the measure that compares across prices</span>
-      </dd>
-      <dt>cents</dt>
-      <dd>{clv.cents}</dd>
-      <dt>EV vs raw close</dt>
-      <dd>
-        {pct(clv.evVsRawClose)}
-        <span class="note">vig still in — overstated</span>
-      </dd>
-      <dt>EV vs fair close</dt>
-      <dd>{clv.evVsFair === null ? "—" : pct(clv.evVsFair)}</dd>
-    </dl>
-  {/if}
-
-  <p class="phase">Phase 3 — typed IPC. 32 commands, bindings generated from Rust.</p>
-</main>
+	{#each groups as group (group.category)}
+		<section>
+			<h2>{CATEGORY_LABELS[group.category]}</h2>
+			<div class="grid">
+				{#each group.items as calc (calc.slug)}
+					<a class="card" href="/calculators/{calc.slug}">
+						<div class="card-icon">{calc.icon}</div>
+						<div class="card-body">
+							<div class="card-title">{calc.title}</div>
+							<div class="card-desc">{calc.description}</div>
+						</div>
+					</a>
+				{/each}
+			</div>
+		</section>
+	{/each}
+</div>
 
 <style>
-  :global(:root) {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --text-primary: #e8e8ed;
-    --text-muted: #6b6b7b;
-    --accent-green: #2ed573;
-    --accent-red: #ff4757;
-    --accent-cyan: #00d4aa;
-    color-scheme: dark;
-  }
+	.hero {
+		margin-bottom: 2.5rem;
+	}
 
-  :global(body) {
-    margin: 0;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: ui-monospace, "JetBrains Mono", SFMono-Regular, monospace;
-    font-size: 14px;
-  }
+	h1 {
+		font-size: 1.9rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+	}
 
-  main {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 4rem 1.5rem;
-  }
+	.tagline {
+		color: var(--text-secondary);
+		font-size: 0.9rem;
+		max-width: 62ch;
+		margin-top: 0.4rem;
+	}
 
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    margin: 0 0 2rem;
-  }
+	.engine {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin-top: 0.85rem;
+		font-size: 0.75rem;
+		color: var(--text-muted);
+	}
 
-  h1 span {
-    color: var(--text-muted);
-  }
+	.dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--accent-green);
+	}
 
-  .status {
-    margin: 0 0 1.5rem;
-  }
+	.dot.warn {
+		background: var(--accent-amber);
+	}
 
-  .status.ok::before {
-    content: "● ";
-    color: var(--accent-green);
-  }
+	section {
+		margin-bottom: 2rem;
+	}
 
-  .status.err {
-    color: var(--accent-red);
-  }
+	h2 {
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--text-muted);
+		margin-bottom: 0.75rem;
+	}
 
-  dl {
-    display: grid;
-    grid-template-columns: 10rem 1fr;
-    gap: 0.5rem 1rem;
-    margin: 0;
-    padding: 1.25rem;
-    background: var(--bg-secondary);
-    border-radius: 6px;
-  }
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 0.75rem;
+	}
 
-  dt {
-    color: var(--text-muted);
-  }
+	.card {
+		display: flex;
+		gap: 0.85rem;
+		align-items: flex-start;
+		padding: 0.9rem 1rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		background: var(--bg-secondary);
+		color: var(--text-primary);
+		transition: border-color 0.15s ease, background 0.15s ease;
+	}
 
-  dd {
-    margin: 0;
-    color: var(--accent-cyan);
-  }
+	.card:hover {
+		opacity: 1;
+		border-color: var(--accent-cyan);
+		background: var(--bg-tertiary);
+	}
 
-  h2 {
-    font-size: 1rem;
-    font-weight: 500;
-    margin: 2rem 0 1rem;
-  }
+	.card-icon {
+		flex: 0 0 2.1rem;
+		height: 2.1rem;
+		display: grid;
+		place-items: center;
+		border-radius: var(--radius-sm);
+		background: var(--bg-tertiary);
+		border: 1px solid var(--border);
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: var(--accent-cyan);
+	}
 
-  .note {
-    color: var(--text-muted);
-    font-size: 0.85em;
-  }
+	.card:hover .card-icon {
+		background: var(--bg-secondary);
+	}
 
-  .phase {
-    margin-top: 2rem;
-    color: var(--text-muted);
-  }
+	.card-body {
+		min-width: 0;
+	}
+
+	.card-title {
+		font-size: 0.88rem;
+		font-weight: 600;
+		margin-bottom: 0.2rem;
+	}
+
+	.card-desc {
+		font-size: 0.76rem;
+		color: var(--text-muted);
+		line-height: 1.5;
+	}
 </style>

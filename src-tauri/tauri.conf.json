@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "bettor-desktop",
-        "width": 800,
-        "height": 600
+        "title": "Bettor Desktop",
+        "width": 1280,
+        "height": 880,
+        "minWidth": 720,
+        "minHeight": 560
       }
     ],
     "security": {

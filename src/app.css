@@ -1,0 +1,227 @@
+/* Design system — ported from bettor-calculator-main/src/app/globals.css.
+   The web app is dark-only; this adds a light theme. Theme is chosen by
+   `data-theme` on <html>, set by src/lib/theme.svelte.ts before first paint. */
+
+:root,
+:root[data-theme='dark'] {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a24;
+  --border: #2a2a3a;
+  --border-strong: #3a3a4a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --accent-green: #2ed573;
+  --accent-red: #ff4757;
+  --accent-amber: #ffa502;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #00d4aa;
+
+  color-scheme: dark;
+}
+
+/* Light mode. The accents are darkened to hold contrast on a light surface —
+   #2ed573 on white is about 1.9:1, well under the 4.5:1 WCAG AA needs, and
+   these are the colours the numbers that matter are printed in. */
+:root[data-theme='light'] {
+  --bg-primary: #fbfbfd;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f2f2f6;
+  --border: #dcdce4;
+  --border-strong: #c2c2cc;
+  --text-primary: #16161d;
+  --text-secondary: #5a5a68;
+  --text-muted: #8a8a99;
+  --accent-green: #12924d;
+  --accent-red: #d32236;
+  --accent-amber: #a86500;
+  --accent-blue: #2563eb;
+  --accent-cyan: #00796b;
+
+  color-scheme: light;
+}
+
+:root {
+  --container-max: 900px;
+  --radius: 4px;
+  --radius-sm: 4px;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata',
+    'Roboto Mono', ui-monospace, monospace;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    system-ui, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* Desktop app: the window chrome is the title bar, so text selection on
+   labels and chrome reads as a bug rather than a feature. Values stay
+   selectable — people copy numbers out of these. */
+body {
+  user-select: none;
+}
+input,
+textarea,
+.selectable,
+[data-selectable] {
+  user-select: text;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+main {
+  padding-left: clamp(1.25rem, 5vw, 2rem);
+  padding-right: clamp(1.25rem, 5vw, 2rem);
+}
+
+.container {
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.container-wide {
+  max-width: 1180px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  width: 100%;
+  text-align: center;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--accent-red);
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  padding-right: 1.75rem;
+}
+
+button {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--border);
+  border-color: var(--accent-cyan);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.text-green {
+  color: var(--accent-green);
+}
+.text-red {
+  color: var(--accent-red);
+}
+.text-amber {
+  color: var(--accent-amber);
+}
+.text-blue {
+  color: var(--accent-blue);
+}
+.text-cyan {
+  color: var(--accent-cyan);
+}
+.text-muted {
+  color: var(--text-muted);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  main {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}

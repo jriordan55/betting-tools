@@ -79,6 +79,17 @@ pub fn implied_to_american(prob: f64) -> i32 {
     odds::implied_to_american(prob)
 }
 
+/// Converts a probability to the decimal price implying it.
+///
+/// The frontend needs this to show fair odds beside a devigged or modelled
+/// probability. It cannot compute `1 / p` itself — that is math, and math
+/// lives in the core.
+#[tauri::command]
+#[specta::specta]
+pub fn implied_to_decimal(prob: f64) -> CmdResult<f64> {
+    odds::implied_to_decimal(prob)
+}
+
 // ------------------------------------------------------------------- hold
 
 /// Computes the hold on a two-sided market.
@@ -287,6 +298,38 @@ pub fn compare_lines(
     line::compare_lines(line_a, fair_prob_a, line_b, fair_prob_b, std_dev, bet_type)
 }
 
+/// Completes a partially-entered set of probabilities with the leftover one.
+#[tauri::command]
+#[specta::specta]
+pub fn complete_simplex(partial: Vec<f64>) -> CmdResult<Vec<f64>> {
+    probability::complete_simplex(&partial)
+}
+
+/// Total implied probability of a market, before any devig.
+#[tauri::command]
+#[specta::specta]
+pub fn market_overround(implied_probs: Vec<f64>) -> CmdResult<f64> {
+    devig::overround(&implied_probs)
+}
+
+/// Every sport preset the frontend populates its pickers from.
+///
+/// Returned from the core rather than re-declared in TypeScript: a
+/// mistranscribed σ or regression constant is invisible in a unit test and
+/// wrong in every number the calculator prints.
+#[tauri::command]
+#[specta::specta]
+pub fn sport_config() -> bettor_core::config::SportConfig {
+    bettor_core::config::sport_config()
+}
+
+/// Splits a total around a spread into each side's projected score.
+#[tauri::command]
+#[specta::specta]
+pub fn implied_scores(spread: f64, total: f64) -> CmdResult<line::ImpliedScores> {
+    line::implied_scores(spread, total)
+}
+
 /// How a match model was parameterised.
 #[derive(Debug, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase", tag = "kind")]
@@ -492,6 +535,13 @@ pub struct PropSimulation {
     pub stats: distributions::Stats,
     /// Probability the prop goes over the line, 0–1.
     pub over_prob: f64,
+    /// Probability it does not, 0–1.
+    ///
+    /// Reported rather than left as `1 - over_prob` for the caller to work
+    /// out. The frontend does not compute, and a complement derived on the
+    /// far side of the IPC boundary would silently stop agreeing with this
+    /// side the moment pushes at the line are handled differently.
+    pub under_prob: f64,
     /// Fair American price for the over.
     pub over_fair_odds: i32,
     /// Fair American price for the under.
@@ -522,6 +572,7 @@ pub async fn simulate_prop(
         histogram: distributions::histogram(&samples, distribution, None),
         stats: distributions::stats(&samples),
         over_prob,
+        under_prob: 1.0 - over_prob,
         over_fair_odds: odds::implied_to_american(over_prob),
         under_fair_odds: odds::implied_to_american(1.0 - over_prob),
     })

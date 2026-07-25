@@ -141,15 +141,85 @@ pub fn prob_to_beta(p: f64, n: f64) -> Result<BetaParams> {
     })
 }
 
+/// Completes a set of probabilities by supplying the outcome left over.
+///
+/// A three-way market entered as "home 62%, draw 22%" implies away 16%. That
+/// last figure is a derivation, not data entry, so it belongs here rather than
+/// in whatever is collecting the input — which is how `dirichletProbUpdate`
+/// came to accept a prior that had never been checked for summing to 1.
+///
+/// # Errors
+///
+/// [`MathError::ShapeError`] if `partial` is empty, and
+/// [`MathError::ProbabilityOutOfRange`] if any element is outside `(0, 1)` or
+/// the supplied outcomes already account for all the probability there is —
+/// which would leave the final outcome at zero or below, and an outcome that
+/// cannot happen has no price.
+pub fn complete_simplex(partial: &[f64]) -> Result<Vec<f64>> {
+    if partial.is_empty() {
+        return Err(MathError::ShapeError {
+            what: "outcomes",
+            expected: "at least 1",
+            got: 0,
+        });
+    }
+
+    let mut remaining = 1.0;
+    for &p in partial {
+        if !p.is_finite() || p <= 0.0 || p >= 1.0 {
+            return Err(MathError::ProbabilityOutOfRange {
+                value: p,
+                reason: "every outcome must be strictly between 0 and 1",
+            });
+        }
+        remaining -= p;
+    }
+
+    if remaining <= 0.0 {
+        return Err(MathError::ProbabilityOutOfRange {
+            value: remaining,
+            reason: "the outcomes given already sum to 1 or more, leaving nothing for the last one",
+        });
+    }
+
+    let mut full = partial.to_vec();
+    full.push(remaining);
+    Ok(full)
+}
+
 #[cfg(test)]
 #[allow(
     clippy::unwrap_used,
     clippy::float_cmp,
+    clippy::indexing_slicing,
     reason = "test code; the float comparisons here are against exact infinities"
 )]
 mod tests {
     use super::*;
     use approx::assert_relative_eq;
+
+    #[test]
+    fn complete_simplex_supplies_the_leftover_outcome() {
+        let full = complete_simplex(&[0.62, 0.22]).unwrap();
+        assert_eq!(full.len(), 3);
+        assert_relative_eq!(full[2], 0.16, epsilon = 1e-12);
+        assert_relative_eq!(full.iter().sum::<f64>(), 1.0, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn complete_simplex_rejects_a_set_with_nothing_left_over() {
+        // 70% + 45% leaves -15% for the third outcome. The TS accepted this
+        // shape and misweighted the prior rather than saying so.
+        assert!(complete_simplex(&[0.70, 0.45]).is_err());
+        assert!(complete_simplex(&[0.5, 0.5]).is_err());
+    }
+
+    #[test]
+    fn complete_simplex_rejects_a_degenerate_outcome() {
+        assert!(complete_simplex(&[0.0]).is_err());
+        assert!(complete_simplex(&[1.0]).is_err());
+        assert!(complete_simplex(&[]).is_err());
+    }
 
     #[test]
     fn cdf_is_symmetric_about_zero() {

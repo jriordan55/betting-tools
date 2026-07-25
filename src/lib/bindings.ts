@@ -42,6 +42,21 @@ async impliedToAmerican(prob: number) : Promise<number> {
     return await TAURI_INVOKE("implied_to_american", { prob });
 },
 /**
+ * Converts a probability to the decimal price implying it.
+ * 
+ * The frontend needs this to show fair odds beside a devigged or modelled
+ * probability. It cannot compute `1 / p` itself — that is math, and math
+ * lives in the core.
+ */
+async impliedToDecimal(prob: number) : Promise<Result<number, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("implied_to_decimal", { prob }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Computes the hold on a two-sided market.
  */
 async calculateHold(impliedA: number, impliedB: number) : Promise<Result<Hold, MathError>> {
@@ -66,6 +81,28 @@ async compareVig(books: BookInput[]) : Promise<BookRow[]> {
  */
 async devigAll(impliedProbs: number[]) : Promise<DevigRow[]> {
     return await TAURI_INVOKE("devig_all", { impliedProbs });
+},
+/**
+ * Total implied probability of a market, before any devig.
+ */
+async marketOverround(impliedProbs: number[]) : Promise<Result<number, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("market_overround", { impliedProbs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Completes a partially-entered set of probabilities with the leftover one.
+ */
+async completeSimplex(partial: number[]) : Promise<Result<number[], MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("complete_simplex", { partial }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 /**
  * Expected value of a bet against a fair probability.
@@ -187,6 +224,27 @@ async compareLines(lineA: number, fairProbA: number, lineB: number, fairProbB: n
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Splits a total around a spread into each side's projected score.
+ */
+async impliedScores(spread: number, total: number) : Promise<Result<ImpliedScores, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("implied_scores", { spread, total }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Every sport preset the frontend populates its pickers from.
+ * 
+ * Returned from the core rather than re-declared in TypeScript: a
+ * mistranscribed σ or regression constant is invisible in a unit test and
+ * wrong in every number the calculator prints.
+ */
+async sportConfig() : Promise<SportConfig> {
+    return await TAURI_INVOKE("sport_config");
 },
 /**
  * Prices every market implied by a scoreline model.
@@ -821,6 +879,18 @@ noVigProbA: number;
  */
 noVigProbB: number }
 /**
+ * The projected score line behind a spread and total.
+ */
+export type ImpliedScores = { 
+/**
+ * Points projected for the home team.
+ */
+home: number; 
+/**
+ * Points projected for the away team.
+ */
+away: number }
+/**
  * Optimal stake under the Kelly criterion.
  */
 export type Kelly = { 
@@ -902,6 +972,34 @@ better: Side | null;
  * Distance between the two implied true lines, in points.
  */
 diff: number }
+/**
+ * Scoring variance for one sport, and the markets it posts.
+ */
+export type LineSport = { 
+/**
+ * Stable identifier, e.g. `"nba"`.
+ */
+key: string; 
+/**
+ * Display name, e.g. `"NBA"`.
+ */
+label: string; 
+/**
+ * Standard deviation of the margin of victory, in points.
+ */
+spreadStd: number; 
+/**
+ * Standard deviation of the game total, in points.
+ */
+totalStd: number; 
+/**
+ * Which markets this sport is usually priced on.
+ */
+markets: Market[]; 
+/**
+ * True where a draw is a distinct moneyline outcome.
+ */
+threeWayMoneyline: boolean }
 /**
  * A precision-weighted combination of two margin estimates.
  */
@@ -990,6 +1088,58 @@ export type MatchModel =
  * Overdispersed scoring, for blowout-prone matchups.
  */
 { kind: "negativeBinomial"; mean_home: number; mean_away: number; r_home: number; r_away: number }
+/**
+ * Scoring rates and line menus for the match models.
+ */
+export type MatchSport = { 
+/**
+ * Stable identifier, e.g. `"soccer"`.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * What a unit of scoring is called — "Goals", "Runs".
+ */
+scoreLabel: string; 
+/**
+ * Typical home scoring rate.
+ */
+defaultHome: number; 
+/**
+ * Typical away scoring rate.
+ */
+defaultAway: number; 
+/**
+ * Negative binomial dispersion. Smaller means more overdispersed.
+ */
+defaultR: number; 
+/**
+ * Guidance on choosing `r`, shown beside the input.
+ */
+rHint: string; 
+/**
+ * Largest score the matrix is evaluated to.
+ * 
+ * Truncating drops real probability mass — see
+ * [`crate::match_model::MatchMarkets::truncation_mass`], which reports
+ * how much, so this can be checked rather than assumed.
+ */
+maxScore: number; 
+/**
+ * Spread lines worth pricing.
+ */
+spreadLines: number[]; 
+/**
+ * Total lines worth pricing.
+ */
+totalLines: number[]; 
+/**
+ * True where a draw is a possible result.
+ */
+allowDraw: boolean }
 /**
  * Errors produced by invalid input to a math routine.
  * 
@@ -1212,6 +1362,22 @@ profit: number;
  */
 legCount: number }
 /**
+ * One position within a sport.
+ */
+export type PropPosition = { 
+/**
+ * Stable identifier.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * Stats commonly posted for this position.
+ */
+stats: PropStat[] }
+/**
  * A prop simulation: samples, summarised.
  */
 export type PropSimulation = { 
@@ -1234,6 +1400,15 @@ stats: Stats;
  */
 overProb: number; 
 /**
+ * Probability it does not, 0–1.
+ * 
+ * Reported rather than left as `1 - over_prob` for the caller to work
+ * out. The frontend does not compute, and a complement derived on the
+ * far side of the IPC boundary would silently stop agreeing with this
+ * side the moment pushes at the line are handled differently.
+ */
+underProb: number; 
+/**
  * Fair American price for the over.
  */
 overFairOdds: number; 
@@ -1241,6 +1416,50 @@ overFairOdds: number;
  * Fair American price for the under.
  */
 underFairOdds: number }
+/**
+ * Prop presets for one sport.
+ */
+export type PropSport = { 
+/**
+ * Stable identifier.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * Positions this sport prices props for.
+ */
+positions: PropPosition[] }
+/**
+ * One prop market, and the distribution that fits its shape.
+ */
+export type PropStat = { 
+/**
+ * Stable identifier.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * The distribution this stat is simulated from.
+ */
+distribution: Distribution; 
+/**
+ * A typical projection.
+ */
+defaultProjection: number; 
+/**
+ * A typical posted line.
+ */
+defaultLine: number; 
+/**
+ * What the numbers are measured in.
+ */
+unit: string }
 /**
  * A regressed estimate with its uncertainty.
  */
@@ -1261,6 +1480,58 @@ lower: number;
  * Upper bound of the 90% interval.
  */
 upper: number }
+/**
+ * Regression presets for one sport.
+ */
+export type RegressionSport = { 
+/**
+ * Stable identifier.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * Stats with published regression constants.
+ */
+stats: RegressionStat[] }
+/**
+ * One regressable stat.
+ */
+export type RegressionStat = { 
+/**
+ * Stable identifier.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * Sample size at which observed and league average carry equal weight.
+ */
+regressionConstant: number; 
+/**
+ * The population mean this stat regresses toward.
+ */
+leagueAverage: number; 
+/**
+ * An illustrative hot-start observation.
+ */
+defaultObserved: number; 
+/**
+ * An illustrative sample size.
+ */
+defaultSampleSize: number; 
+/**
+ * What the stat is measured in.
+ */
+unit: string; 
+/**
+ * What the sample is counted in — plate appearances, shots, attempts.
+ */
+sampleUnit: string }
 /**
  * Parameters for a survival simulation.
  */
@@ -1373,6 +1644,26 @@ export type Side =
  * The second quote.
  */
 "b"
+/**
+ * Everything the frontend needs to populate its sport pickers.
+ */
+export type SportConfig = { 
+/**
+ * Scoring spreads for line inversion and alternate-line ladders.
+ */
+lines: LineSport[]; 
+/**
+ * Scoring rates for the match models.
+ */
+matches: MatchSport[]; 
+/**
+ * Player prop presets, by sport and position.
+ */
+props: PropSport[]; 
+/**
+ * Regression constants and league averages, by sport and stat.
+ */
+regression: RegressionSport[] }
 /**
  * Cover probabilities for one spread.
  */

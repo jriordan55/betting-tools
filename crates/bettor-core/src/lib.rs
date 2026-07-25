@@ -12,6 +12,7 @@
 pub mod arbitrage;
 pub mod bayesian;
 pub mod clv;
+pub mod config;
 pub mod correlation;
 pub mod devig;
 pub mod distributions;

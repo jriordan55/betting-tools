@@ -106,6 +106,22 @@ fn validate(probs: &[f64]) -> Result<f64> {
     Ok(sum)
 }
 
+/// Total implied probability of a market — its overround.
+///
+/// Subtract 1.0 for the margin. Exposed so a caller can report the market's
+/// shape without summing the probabilities itself, and so a book that does
+/// not actually carry vig reports *why* rather than returning a number below
+/// 1.0 for the caller to notice.
+///
+/// # Errors
+///
+/// The same conditions as [`devig`]: fewer than two outcomes, a probability
+/// outside `(0, 1)`, or a book summing below 1.0 — which is an arb, not a
+/// vigged market.
+pub fn overround(probs: &[f64]) -> Result<f64> {
+    validate(probs)
+}
+
 /// Removes the margin using the chosen method.
 ///
 /// # Errors

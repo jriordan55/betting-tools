@@ -320,6 +320,30 @@ pub fn implied_to_american(prob: f64) -> i32 {
     to_i32(raw)
 }
 
+/// Converts a probability to the decimal price that implies it.
+///
+/// The exact inverse of [`decimal_to_implied`], and unlike
+/// [`implied_to_american`] it does not clamp or round — a fair price derived
+/// from a devig or a model is quoted to more precision than the American
+/// integer scale can hold, and rounding it before display would move the
+/// number the caller is about to compare against a book.
+///
+/// # Errors
+///
+/// [`MathError::ProbabilityOutOfRange`] unless `0 < prob < 1`. A certainty has
+/// no price, and returning `inf` for one is how the TS produced `Infinity` in
+/// `calculateMLEdge`.
+pub fn implied_to_decimal(prob: f64) -> Result<f64> {
+    if prob > 0.0 && prob < 1.0 {
+        Ok(1.0 / prob)
+    } else {
+        Err(MathError::ProbabilityOutOfRange {
+            value: prob,
+            reason: "must be strictly between 0 and 1 to have a price",
+        })
+    }
+}
+
 /// Implied probability from a price string in American or decimal format.
 ///
 /// # Errors
@@ -334,6 +358,31 @@ pub fn odds_to_implied(value: &str, format: OddsFormat) -> Result<f64> {
 mod tests {
     use super::*;
     use approx::assert_relative_eq;
+
+    #[test]
+    fn implied_to_decimal_inverts_decimal_to_implied() {
+        for decimal in [1.01, 1.5, 1.909_090_909, 2.0, 3.75, 51.0] {
+            let prob = decimal_to_implied(decimal).unwrap();
+            assert_relative_eq!(implied_to_decimal(prob).unwrap(), decimal, epsilon = 1e-12);
+        }
+    }
+
+    #[test]
+    fn implied_to_decimal_rejects_certainty() {
+        // The TS returned Infinity here and priced a bet off it.
+        assert!(implied_to_decimal(0.0).is_err());
+        assert!(implied_to_decimal(1.0).is_err());
+        assert!(implied_to_decimal(-0.1).is_err());
+    }
+
+    #[test]
+    fn implied_to_decimal_does_not_round_like_american() {
+        // 0.5238 is a -110 side before the vig comes out. The American scale
+        // rounds it to -110 flat; the decimal price keeps the precision that
+        // makes a fair-odds comparison meaningful.
+        let fair = implied_to_decimal(0.523_809_5).unwrap();
+        assert_relative_eq!(fair, 1.909_090_9, epsilon = 1e-6);
+    }
 
     #[test]
     fn american_round_trips_through_decimal() {

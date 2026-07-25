@@ -283,6 +283,52 @@ pub fn compare_lines(
     })
 }
 
+/// The score each side is projected for, given a spread and a total.
+///
+/// Solves the pair `home + away = total`, `away - home = spread` — the spread
+/// is signed from the home team's perspective, so `-3` means home is favoured
+/// by three.
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] if `total` is not positive, or if the spread is
+/// wide enough to project a negative score. The TS guarded the total but not
+/// the spread, so a -60 spread on a 40-point total projected the away team for
+/// -10 points.
+pub fn implied_scores(spread: f64, total: f64) -> Result<ImpliedScores> {
+    if total <= 0.0 {
+        return Err(MathError::DomainError {
+            param: "total",
+            constraint: "greater than zero",
+            value: total,
+        });
+    }
+
+    let home = (total - spread) / 2.0;
+    let away = (total + spread) / 2.0;
+
+    if home < 0.0 || away < 0.0 {
+        return Err(MathError::DomainError {
+            param: "spread",
+            constraint: "narrow enough that neither side projects below zero",
+            value: spread,
+        });
+    }
+
+    Ok(ImpliedScores { home, away })
+}
+
+/// The projected score line behind a spread and total.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct ImpliedScores {
+    /// Points projected for the home team.
+    pub home: f64,
+    /// Points projected for the away team.
+    pub away: f64,
+}
+
 #[cfg(test)]
 #[allow(
     clippy::unwrap_used,
@@ -295,6 +341,29 @@ mod tests {
     use approx::assert_relative_eq;
 
     const NFL_STD: f64 = 13.86;
+
+    #[test]
+    fn implied_scores_split_the_total_around_the_spread() {
+        let scores = implied_scores(-3.0, 47.5).unwrap();
+        assert_relative_eq!(scores.home, 25.25, epsilon = 1e-12);
+        assert_relative_eq!(scores.away, 22.25, epsilon = 1e-12);
+        assert_relative_eq!(scores.home + scores.away, 47.5, epsilon = 1e-12);
+        assert_relative_eq!(scores.away - scores.home, -3.0, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn a_pickem_splits_the_total_evenly() {
+        let scores = implied_scores(0.0, 44.0).unwrap();
+        assert_relative_eq!(scores.home, 22.0, epsilon = 1e-12);
+        assert_relative_eq!(scores.away, 22.0, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn a_negative_projected_score_is_an_error() {
+        // The TS returned -10 here and rendered it as an implied score.
+        assert!(implied_scores(-60.0, 40.0).is_err());
+        assert!(implied_scores(0.0, -1.0).is_err());
+    }
 
     #[test]
     fn a_fair_market_implies_the_posted_line_exactly() {

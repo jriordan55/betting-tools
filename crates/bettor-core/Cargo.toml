@@ -1,0 +1,45 @@
+[package]
+name = "bettor-core"
+description = "Sports betting math: odds conversion, devig, distributions, EV, and Monte Carlo simulation."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# NOTE: this crate must never depend on `tauri`, on io, or on global state.
+# It is the product; the desktop shell is merely one caller of it.
+# `cargo test -p bettor-core` must pass without a webview anywhere in sight.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+rand = "0.9"
+rand_chacha = "0.9"
+rand_distr = "0.5"
+rayon = "1"
+
+[dev-dependencies]
+approx = "0.5"
+proptest = "1"
+serde_json = "1"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+
+[lints.clippy]
+# A panic here is a crash in a desktop app, triggered by whatever the user
+# typed into a text box. Bad input must return `MathError`, never unwind.
+# Tests opt out at the top of each file.
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+panic = "deny"
+# Comparing floats with `==` is almost always a bug in numeric code.
+float_cmp = "deny"
+# Casts that lose information are sometimes correct (a bin count to f64) and
+# sometimes a silent bug. Warn so each one is a deliberate, visible choice.
+cast_precision_loss = "warn"
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"

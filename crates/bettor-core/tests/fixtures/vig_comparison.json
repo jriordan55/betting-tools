@@ -1,0 +1,157 @@
+{
+  "_generated_by": "tools/gen-fixtures.mjs",
+  "_source": "vig_comparison.ts (bettor-calculator-main)",
+  "_warning": "COMMITTED REFERENCE DATA. Do not regenerate to silence a test.",
+  "compare_vig": [
+    {
+      "books": [
+        {
+          "name": "Pinnacle",
+          "implied_a": 0.5155,
+          "implied_b": 0.4975
+        },
+        {
+          "name": "DraftKings",
+          "implied_a": 0.5238,
+          "implied_b": 0.5238
+        },
+        {
+          "name": "FanDuel",
+          "implied_a": 0.5263,
+          "implied_b": 0.5217
+        }
+      ],
+      "out": [
+        {
+          "name": "Pinnacle",
+          "implied_a": 0.5155,
+          "implied_b": 0.4975,
+          "total_implied": 1.013,
+          "vig_pct": 1.29999999999999,
+          "no_vig_prob_a": 0.5088845014807503,
+          "no_vig_prob_b": 0.4911154985192498
+        },
+        {
+          "name": "DraftKings",
+          "implied_a": 0.5238,
+          "implied_b": 0.5238,
+          "total_implied": 1.0476,
+          "vig_pct": 4.760000000000009,
+          "no_vig_prob_a": 0.5,
+          "no_vig_prob_b": 0.5
+        },
+        {
+          "name": "FanDuel",
+          "implied_a": 0.5263,
+          "implied_b": 0.5217,
+          "total_implied": 1.048,
+          "vig_pct": 4.800000000000004,
+          "no_vig_prob_a": 0.5021946564885496,
+          "no_vig_prob_b": 0.4978053435114504
+        }
+      ]
+    },
+    {
+      "books": [
+        {
+          "name": "A",
+          "implied_a": 0.5,
+          "implied_b": 0.5
+        },
+        {
+          "name": "B",
+          "implied_a": 0.52,
+          "implied_b": 0.52
+        }
+      ],
+      "out": [
+        {
+          "name": "A",
+          "implied_a": 0.5,
+          "implied_b": 0.5,
+          "total_implied": 1,
+          "vig_pct": 0,
+          "no_vig_prob_a": 0.5,
+          "no_vig_prob_b": 0.5
+        },
+        {
+          "name": "B",
+          "implied_a": 0.52,
+          "implied_b": 0.52,
+          "total_implied": 1.04,
+          "vig_pct": 4.0000000000000036,
+          "no_vig_prob_a": 0.5,
+          "no_vig_prob_b": 0.5
+        }
+      ]
+    },
+    {
+      "books": [
+        {
+          "name": "Valid",
+          "implied_a": 0.51,
+          "implied_b": 0.52
+        },
+        {
+          "name": "ZeroA",
+          "implied_a": 0,
+          "implied_b": 0.5
+        },
+        {
+          "name": "NegB",
+          "implied_a": 0.5,
+          "implied_b": -0.2
+        }
+      ],
+      "out": [
+        {
+          "name": "Valid",
+          "implied_a": 0.51,
+          "implied_b": 0.52,
+          "total_implied": 1.03,
+          "vig_pct": 3.0000000000000027,
+          "no_vig_prob_a": 0.49514563106796117,
+          "no_vig_prob_b": 0.5048543689320388
+        }
+      ]
+    },
+    {
+      "books": [
+        {
+          "name": "First",
+          "implied_a": 0.52,
+          "implied_b": 0.52
+        },
+        {
+          "name": "Second",
+          "implied_a": 0.53,
+          "implied_b": 0.51
+        }
+      ],
+      "out": [
+        {
+          "name": "First",
+          "implied_a": 0.52,
+          "implied_b": 0.52,
+          "total_implied": 1.04,
+          "vig_pct": 4.0000000000000036,
+          "no_vig_prob_a": 0.5,
+          "no_vig_prob_b": 0.5
+        },
+        {
+          "name": "Second",
+          "implied_a": 0.53,
+          "implied_b": 0.51,
+          "total_implied": 1.04,
+          "vig_pct": 4.0000000000000036,
+          "no_vig_prob_a": 0.5096153846153846,
+          "no_vig_prob_b": 0.49038461538461536
+        }
+      ]
+    },
+    {
+      "books": [],
+      "out": []
+    }
+  ]
+}

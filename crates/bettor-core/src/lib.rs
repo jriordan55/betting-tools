@@ -1,0 +1,90 @@
+//! Sports betting math.
+//!
+//! This crate is a pure library: no io, no global state, no Tauri. Every public
+//! function is deterministic given its inputs — simulations take an explicit
+//! seed rather than reaching for a thread-local RNG, so a result can always be
+//! reproduced from the values that produced it.
+//!
+//! The reference implementation being ported is the TypeScript in
+//! `bettor-calculator-main/src/lib/math/`. Where behavior here intentionally
+//! diverges from that source, the divergence is documented at the definition.
+
+pub mod arbitrage;
+pub mod clv;
+pub mod devig;
+pub mod hold;
+pub mod odds;
+pub mod parlay;
+pub mod probability;
+pub mod wager;
+
+/// Version of the math engine, surfaced in the UI so a reported result can
+/// always be traced back to the code that produced it.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Errors produced by invalid input to a math routine.
+///
+/// The TypeScript returns `null` on bad input, which collapses "you typed a
+/// letter", "that probability is out of range", and "this solver did not
+/// converge" into one indistinguishable value. Each gets its own variant here
+/// so the UI can say something useful.
+#[derive(Debug, Clone, PartialEq, thiserror::Error, serde::Serialize)]
+#[serde(tag = "kind", content = "detail", rename_all = "camelCase")]
+pub enum MathError {
+    /// A string input could not be parsed in the expected odds format.
+    #[error("could not parse {value:?} as {format} odds")]
+    ParseOdds {
+        /// The offending input, echoed back so the UI can highlight it.
+        value: String,
+        /// The format that was expected: `"american"`, `"decimal"`, `"fractional"`.
+        format: &'static str,
+    },
+
+    /// A probability fell outside the range a routine accepts.
+    #[error("probability {value} is out of range: {reason}")]
+    ProbabilityOutOfRange {
+        /// The probability that was rejected.
+        value: f64,
+        /// Why it was rejected, e.g. `"must be strictly between 0 and 1"`.
+        reason: &'static str,
+    },
+
+    /// A numeric argument was outside the domain the routine accepts.
+    #[error("{param} must be {constraint}, got {value}")]
+    DomainError {
+        /// Name of the parameter, matching the public API's argument name.
+        param: &'static str,
+        /// The constraint that was violated, e.g. `"greater than zero"`.
+        constraint: &'static str,
+        /// The value supplied.
+        value: f64,
+    },
+
+    /// A collection argument had the wrong shape (too few legs, mismatched lengths).
+    #[error("expected {expected} {what}, got {got}")]
+    ShapeError {
+        /// What was being counted, e.g. `"parlay legs"`.
+        what: &'static str,
+        /// The requirement, e.g. `"at least 2"`.
+        expected: &'static str,
+        /// The count actually supplied.
+        got: usize,
+    },
+
+    /// An iterative solver ran out of iterations without meeting its tolerance.
+    ///
+    /// Reported rather than swallowed: a devig method that silently returns its
+    /// last un-converged iterate is worse than one that admits it failed.
+    #[error("{solver} failed to converge within {iterations} iterations (residual {residual:e})")]
+    NoConvergence {
+        /// Which solver gave up, e.g. `"shin"`.
+        solver: &'static str,
+        /// The iteration cap it hit.
+        iterations: u32,
+        /// How far from tolerance it still was when it stopped.
+        residual: f64,
+    },
+}
+
+/// Convenience alias for fallible math.
+pub type Result<T> = core::result::Result<T, MathError>;

@@ -1,0 +1,31 @@
+[workspace]
+members = ["crates/bettor-core", "src-tauri"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Adam Wickwire"]
+repository = "https://github.com/adamwickwire/bettor-desktop"
+
+# Baseline for every crate. `bettor-core` opts into a much stricter set of its
+# own (see its Cargo.toml) — the shell crate can't, because the Tauri macros
+# generate code in our namespace that trips the restriction lints.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+# Monte Carlo workloads. `panic = "abort"` is deliberately NOT set here: it
+# would break `cargo test --release`, and the test harness needs unwind.
+[profile.release]
+codegen-units = 1
+lto = true
+
+# Simulations are unusably slow in an unoptimized build. Optimize dependencies
+# and the math crate even in dev so `tauri dev` stays responsive.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev.package.bettor-core]
+opt-level = 3

@@ -1,0 +1,166 @@
+{
+  "_generated_by": "tools/gen-fixtures.mjs",
+  "_source": "hold.ts (bettor-calculator-main)",
+  "_warning": "COMMITTED REFERENCE DATA. Do not regenerate to silence a test.",
+  "calculate_hold": [
+    {
+      "implied_a": 0.5238,
+      "implied_b": 0.5238,
+      "out": {
+        "impliedA": 0.5238,
+        "impliedB": 0.5238,
+        "totalImplied": 1.0476,
+        "holdPct": 4.760000000000009,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0.5,
+      "implied_b": 0.5,
+      "out": {
+        "impliedA": 0.5,
+        "impliedB": 0.5,
+        "totalImplied": 1,
+        "holdPct": 0,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0.55,
+      "implied_b": 0.5,
+      "out": {
+        "impliedA": 0.55,
+        "impliedB": 0.5,
+        "totalImplied": 1.05,
+        "holdPct": 5.000000000000004,
+        "noVigProbA": 0.5238095238095238,
+        "noVigProbB": 0.47619047619047616
+      }
+    },
+    {
+      "implied_a": 0.6,
+      "implied_b": 0.45,
+      "out": {
+        "impliedA": 0.6,
+        "impliedB": 0.45,
+        "totalImplied": 1.05,
+        "holdPct": 5.000000000000004,
+        "noVigProbA": 0.5714285714285714,
+        "noVigProbB": 0.42857142857142855
+      }
+    },
+    {
+      "implied_a": 0.9091,
+      "implied_b": 0.1667,
+      "out": {
+        "impliedA": 0.9091,
+        "impliedB": 0.1667,
+        "totalImplied": 1.0758,
+        "holdPct": 7.580000000000009,
+        "noVigProbA": 0.8450455474995352,
+        "noVigProbB": 0.15495445250046475
+      }
+    },
+    {
+      "implied_a": 0.4762,
+      "implied_b": 0.4762,
+      "out": {
+        "impliedA": 0.4762,
+        "impliedB": 0.4762,
+        "totalImplied": 0.9524,
+        "holdPct": -4.759999999999998,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0.5238,
+      "implied_b": 0.4762,
+      "out": {
+        "impliedA": 0.5238,
+        "impliedB": 0.4762,
+        "totalImplied": 1,
+        "holdPct": 0,
+        "noVigProbA": 0.5238,
+        "noVigProbB": 0.4762
+      }
+    },
+    {
+      "implied_a": 0.48,
+      "implied_b": 0.48,
+      "out": {
+        "impliedA": 0.48,
+        "impliedB": 0.48,
+        "totalImplied": 0.96,
+        "holdPct": -4.0000000000000036,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0.3,
+      "implied_b": 0.3,
+      "out": {
+        "impliedA": 0.3,
+        "impliedB": 0.3,
+        "totalImplied": 0.6,
+        "holdPct": -40,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0.99,
+      "implied_b": 0.99,
+      "out": {
+        "impliedA": 0.99,
+        "impliedB": 0.99,
+        "totalImplied": 1.98,
+        "holdPct": 98,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0.0001,
+      "implied_b": 0.9999,
+      "out": {
+        "impliedA": 0.0001,
+        "impliedB": 0.9999,
+        "totalImplied": 1,
+        "holdPct": 0,
+        "noVigProbA": 0.0001,
+        "noVigProbB": 0.9999
+      }
+    },
+    {
+      "implied_a": 1,
+      "implied_b": 1,
+      "out": {
+        "impliedA": 1,
+        "impliedB": 1,
+        "totalImplied": 2,
+        "holdPct": 100,
+        "noVigProbA": 0.5,
+        "noVigProbB": 0.5
+      }
+    },
+    {
+      "implied_a": 0,
+      "implied_b": 0.5,
+      "out": null
+    },
+    {
+      "implied_a": 0.5,
+      "implied_b": 0,
+      "out": null
+    },
+    {
+      "implied_a": -0.1,
+      "implied_b": 0.5,
+      "out": null
+    }
+  ]
+}

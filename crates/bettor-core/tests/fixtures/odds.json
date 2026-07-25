@@ -1,0 +1,1406 @@
+{
+  "_generated_by": "tools/gen-fixtures.mjs",
+  "_source": "odds.ts (bettor-calculator-main)",
+  "_warning": "COMMITTED REFERENCE DATA. Do not regenerate to silence a test.",
+  "to_decimal": [
+    {
+      "value": "-10000",
+      "format": "american",
+      "out": 1.01
+    },
+    {
+      "value": "-1000",
+      "format": "american",
+      "out": 1.1
+    },
+    {
+      "value": "-500",
+      "format": "american",
+      "out": 1.2
+    },
+    {
+      "value": "-300",
+      "format": "american",
+      "out": 1.3333333333333333
+    },
+    {
+      "value": "-250",
+      "format": "american",
+      "out": 1.4
+    },
+    {
+      "value": "-200",
+      "format": "american",
+      "out": 1.5
+    },
+    {
+      "value": "-150",
+      "format": "american",
+      "out": 1.6666666666666665
+    },
+    {
+      "value": "-130",
+      "format": "american",
+      "out": 1.7692307692307692
+    },
+    {
+      "value": "-120",
+      "format": "american",
+      "out": 1.8333333333333335
+    },
+    {
+      "value": "-110",
+      "format": "american",
+      "out": 1.9090909090909092
+    },
+    {
+      "value": "-105",
+      "format": "american",
+      "out": 1.9523809523809523
+    },
+    {
+      "value": "-101",
+      "format": "american",
+      "out": 1.99009900990099
+    },
+    {
+      "value": "-100",
+      "format": "american",
+      "out": 2
+    },
+    {
+      "value": "100",
+      "format": "american",
+      "out": 2
+    },
+    {
+      "value": "101",
+      "format": "american",
+      "out": 2.01
+    },
+    {
+      "value": "105",
+      "format": "american",
+      "out": 2.05
+    },
+    {
+      "value": "110",
+      "format": "american",
+      "out": 2.1
+    },
+    {
+      "value": "120",
+      "format": "american",
+      "out": 2.2
+    },
+    {
+      "value": "150",
+      "format": "american",
+      "out": 2.5
+    },
+    {
+      "value": "200",
+      "format": "american",
+      "out": 3
+    },
+    {
+      "value": "250",
+      "format": "american",
+      "out": 3.5
+    },
+    {
+      "value": "300",
+      "format": "american",
+      "out": 4
+    },
+    {
+      "value": "350",
+      "format": "american",
+      "out": 4.5
+    },
+    {
+      "value": "400",
+      "format": "american",
+      "out": 5
+    },
+    {
+      "value": "500",
+      "format": "american",
+      "out": 6
+    },
+    {
+      "value": "1000",
+      "format": "american",
+      "out": 11
+    },
+    {
+      "value": "2500",
+      "format": "american",
+      "out": 26
+    },
+    {
+      "value": "10000",
+      "format": "american",
+      "out": 101
+    },
+    {
+      "value": "0",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "-0",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "50",
+      "format": "american",
+      "out": 1.5
+    },
+    {
+      "value": "-50",
+      "format": "american",
+      "out": 3
+    },
+    {
+      "value": "99",
+      "format": "american",
+      "out": 1.99
+    },
+    {
+      "value": "-99",
+      "format": "american",
+      "out": 2.0101010101010104
+    },
+    {
+      "value": "1.5",
+      "format": "american",
+      "out": 1.015
+    },
+    {
+      "value": "-1.5",
+      "format": "american",
+      "out": 67.66666666666667
+    },
+    {
+      "value": "",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "abc",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "+150",
+      "format": "american",
+      "out": 2.5
+    },
+    {
+      "value": " -110 ",
+      "format": "american",
+      "out": 1.9090909090909092
+    },
+    {
+      "value": "1e3",
+      "format": "american",
+      "out": 11
+    },
+    {
+      "value": "NaN",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "Infinity",
+      "format": "american",
+      "out": "Infinity"
+    },
+    {
+      "value": "1",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "1.0",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "1.01",
+      "format": "decimal",
+      "out": 1.01
+    },
+    {
+      "value": "1.1",
+      "format": "decimal",
+      "out": 1.1
+    },
+    {
+      "value": "1.5",
+      "format": "decimal",
+      "out": 1.5
+    },
+    {
+      "value": "1.909",
+      "format": "decimal",
+      "out": 1.909
+    },
+    {
+      "value": "2",
+      "format": "decimal",
+      "out": 2
+    },
+    {
+      "value": "2.5",
+      "format": "decimal",
+      "out": 2.5
+    },
+    {
+      "value": "3",
+      "format": "decimal",
+      "out": 3
+    },
+    {
+      "value": "5",
+      "format": "decimal",
+      "out": 5
+    },
+    {
+      "value": "11",
+      "format": "decimal",
+      "out": 11
+    },
+    {
+      "value": "51",
+      "format": "decimal",
+      "out": 51
+    },
+    {
+      "value": "101",
+      "format": "decimal",
+      "out": 101
+    },
+    {
+      "value": "0",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "0.5",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "-2",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "abc",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "1/2",
+      "format": "fractional",
+      "out": 1.5
+    },
+    {
+      "value": "1/1",
+      "format": "fractional",
+      "out": 2
+    },
+    {
+      "value": "5/1",
+      "format": "fractional",
+      "out": 6
+    },
+    {
+      "value": "2/5",
+      "format": "fractional",
+      "out": 1.4
+    },
+    {
+      "value": "10/11",
+      "format": "fractional",
+      "out": 1.9090909090909092
+    },
+    {
+      "value": "100/30",
+      "format": "fractional",
+      "out": 4.333333333333334
+    },
+    {
+      "value": "85/40",
+      "format": "fractional",
+      "out": 3.125
+    },
+    {
+      "value": "4/6",
+      "format": "fractional",
+      "out": 1.6666666666666665
+    },
+    {
+      "value": "20/1",
+      "format": "fractional",
+      "out": 21
+    },
+    {
+      "value": "0/1",
+      "format": "fractional",
+      "out": 1
+    },
+    {
+      "value": "1/0",
+      "format": "fractional",
+      "out": null
+    },
+    {
+      "value": "abc/2",
+      "format": "fractional",
+      "out": null
+    },
+    {
+      "value": "2/abc",
+      "format": "fractional",
+      "out": null
+    },
+    {
+      "value": "3",
+      "format": "fractional",
+      "out": null
+    },
+    {
+      "value": "",
+      "format": "fractional",
+      "out": null
+    },
+    {
+      "value": "1/2/3",
+      "format": "fractional",
+      "out": 1.5
+    },
+    {
+      "value": "-1/2",
+      "format": "fractional",
+      "out": 0.5
+    }
+  ],
+  "to_american": [
+    {
+      "decimal": 1,
+      "out": null
+    },
+    {
+      "decimal": 1.0001,
+      "out": "-1000000"
+    },
+    {
+      "decimal": 1.01,
+      "out": "-10000"
+    },
+    {
+      "decimal": 1.1,
+      "out": "-1000"
+    },
+    {
+      "decimal": 1.25,
+      "out": "-400"
+    },
+    {
+      "decimal": 1.5,
+      "out": "-200"
+    },
+    {
+      "decimal": 1.6667,
+      "out": "-150"
+    },
+    {
+      "decimal": 1.8182,
+      "out": "-122"
+    },
+    {
+      "decimal": 1.909090909090909,
+      "out": "-110"
+    },
+    {
+      "decimal": 2,
+      "out": "+100"
+    },
+    {
+      "decimal": 2.1,
+      "out": "+110"
+    },
+    {
+      "decimal": 2.5,
+      "out": "+150"
+    },
+    {
+      "decimal": 3,
+      "out": "+200"
+    },
+    {
+      "decimal": 3.5,
+      "out": "+250"
+    },
+    {
+      "decimal": 4,
+      "out": "+300"
+    },
+    {
+      "decimal": 5,
+      "out": "+400"
+    },
+    {
+      "decimal": 6,
+      "out": "+500"
+    },
+    {
+      "decimal": 8,
+      "out": "+700"
+    },
+    {
+      "decimal": 11,
+      "out": "+1000"
+    },
+    {
+      "decimal": 21,
+      "out": "+2000"
+    },
+    {
+      "decimal": 51,
+      "out": "+5000"
+    },
+    {
+      "decimal": 101,
+      "out": "+10000"
+    },
+    {
+      "decimal": 0,
+      "out": null
+    },
+    {
+      "decimal": 0.5,
+      "out": null
+    },
+    {
+      "decimal": -2,
+      "out": null
+    }
+  ],
+  "from_decimal": [
+    {
+      "decimal": 1,
+      "out": {
+        "american": null,
+        "fractional": null,
+        "probability": null
+      }
+    },
+    {
+      "decimal": 1.0001,
+      "out": {
+        "american": "-1000000",
+        "fractional": "0/1",
+        "probability": 99.9900009999
+      }
+    },
+    {
+      "decimal": 1.01,
+      "out": {
+        "american": "-10000",
+        "fractional": "1/100",
+        "probability": 99.00990099009901
+      }
+    },
+    {
+      "decimal": 1.1,
+      "out": {
+        "american": "-1000",
+        "fractional": "1/10",
+        "probability": 90.9090909090909
+      }
+    },
+    {
+      "decimal": 1.25,
+      "out": {
+        "american": "-400",
+        "fractional": "1/4",
+        "probability": 80
+      }
+    },
+    {
+      "decimal": 1.5,
+      "out": {
+        "american": "-200",
+        "fractional": "1/2",
+        "probability": 66.66666666666666
+      }
+    },
+    {
+      "decimal": 1.6667,
+      "out": {
+        "american": "-150",
+        "fractional": "4/6",
+        "probability": 59.99880002399952
+      }
+    },
+    {
+      "decimal": 1.8182,
+      "out": {
+        "american": "-122",
+        "fractional": "41/50",
+        "probability": 54.99945000549994
+      }
+    },
+    {
+      "decimal": 1.909090909090909,
+      "out": {
+        "american": "-110",
+        "fractional": "10/11",
+        "probability": 52.38095238095239
+      }
+    },
+    {
+      "decimal": 2,
+      "out": {
+        "american": "+100",
+        "fractional": "1/1",
+        "probability": 50
+      }
+    },
+    {
+      "decimal": 2.1,
+      "out": {
+        "american": "+110",
+        "fractional": "11/10",
+        "probability": 47.61904761904761
+      }
+    },
+    {
+      "decimal": 2.5,
+      "out": {
+        "american": "+150",
+        "fractional": "6/4",
+        "probability": 40
+      }
+    },
+    {
+      "decimal": 3,
+      "out": {
+        "american": "+200",
+        "fractional": "2/1",
+        "probability": 33.33333333333333
+      }
+    },
+    {
+      "decimal": 3.5,
+      "out": {
+        "american": "+250",
+        "fractional": "5/2",
+        "probability": 28.57142857142857
+      }
+    },
+    {
+      "decimal": 4,
+      "out": {
+        "american": "+300",
+        "fractional": "3/1",
+        "probability": 25
+      }
+    },
+    {
+      "decimal": 5,
+      "out": {
+        "american": "+400",
+        "fractional": "4/1",
+        "probability": 20
+      }
+    },
+    {
+      "decimal": 6,
+      "out": {
+        "american": "+500",
+        "fractional": "5/1",
+        "probability": 16.666666666666664
+      }
+    },
+    {
+      "decimal": 8,
+      "out": {
+        "american": "+700",
+        "fractional": "7/1",
+        "probability": 12.5
+      }
+    },
+    {
+      "decimal": 11,
+      "out": {
+        "american": "+1000",
+        "fractional": "10/1",
+        "probability": 9.090909090909092
+      }
+    },
+    {
+      "decimal": 21,
+      "out": {
+        "american": "+2000",
+        "fractional": "20/1",
+        "probability": 4.761904761904762
+      }
+    },
+    {
+      "decimal": 51,
+      "out": {
+        "american": "+5000",
+        "fractional": "50/1",
+        "probability": 1.9607843137254901
+      }
+    },
+    {
+      "decimal": 101,
+      "out": {
+        "american": "+10000",
+        "fractional": "100/1",
+        "probability": 0.9900990099009901
+      }
+    },
+    {
+      "decimal": 0,
+      "out": {
+        "american": null,
+        "fractional": null,
+        "probability": null
+      }
+    },
+    {
+      "decimal": 0.5,
+      "out": {
+        "american": null,
+        "fractional": null,
+        "probability": null
+      }
+    },
+    {
+      "decimal": -2,
+      "out": {
+        "american": null,
+        "fractional": null,
+        "probability": null
+      }
+    }
+  ],
+  "american_to_implied": [
+    {
+      "value": "-10000",
+      "out": 0.9900990099009901
+    },
+    {
+      "value": "-1000",
+      "out": 0.9090909090909091
+    },
+    {
+      "value": "-500",
+      "out": 0.8333333333333334
+    },
+    {
+      "value": "-300",
+      "out": 0.75
+    },
+    {
+      "value": "-250",
+      "out": 0.7142857142857143
+    },
+    {
+      "value": "-200",
+      "out": 0.6666666666666666
+    },
+    {
+      "value": "-150",
+      "out": 0.6
+    },
+    {
+      "value": "-130",
+      "out": 0.5652173913043478
+    },
+    {
+      "value": "-120",
+      "out": 0.5454545454545454
+    },
+    {
+      "value": "-110",
+      "out": 0.5238095238095238
+    },
+    {
+      "value": "-105",
+      "out": 0.5121951219512195
+    },
+    {
+      "value": "-101",
+      "out": 0.5024875621890548
+    },
+    {
+      "value": "-100",
+      "out": 0.5
+    },
+    {
+      "value": "100",
+      "out": 0.5
+    },
+    {
+      "value": "101",
+      "out": 0.4975124378109453
+    },
+    {
+      "value": "105",
+      "out": 0.4878048780487805
+    },
+    {
+      "value": "110",
+      "out": 0.47619047619047616
+    },
+    {
+      "value": "120",
+      "out": 0.45454545454545453
+    },
+    {
+      "value": "150",
+      "out": 0.4
+    },
+    {
+      "value": "200",
+      "out": 0.3333333333333333
+    },
+    {
+      "value": "250",
+      "out": 0.2857142857142857
+    },
+    {
+      "value": "300",
+      "out": 0.25
+    },
+    {
+      "value": "350",
+      "out": 0.2222222222222222
+    },
+    {
+      "value": "400",
+      "out": 0.2
+    },
+    {
+      "value": "500",
+      "out": 0.16666666666666666
+    },
+    {
+      "value": "1000",
+      "out": 0.09090909090909091
+    },
+    {
+      "value": "2500",
+      "out": 0.038461538461538464
+    },
+    {
+      "value": "10000",
+      "out": 0.009900990099009901
+    },
+    {
+      "value": "0",
+      "out": null
+    },
+    {
+      "value": "-0",
+      "out": null
+    },
+    {
+      "value": "50",
+      "out": 0.6666666666666666
+    },
+    {
+      "value": "-50",
+      "out": 0.3333333333333333
+    },
+    {
+      "value": "99",
+      "out": 0.5025125628140703
+    },
+    {
+      "value": "-99",
+      "out": 0.49748743718592964
+    },
+    {
+      "value": "1.5",
+      "out": 0.9852216748768473
+    },
+    {
+      "value": "-1.5",
+      "out": 0.014778325123152709
+    },
+    {
+      "value": "",
+      "out": null
+    },
+    {
+      "value": "abc",
+      "out": null
+    },
+    {
+      "value": "+150",
+      "out": 0.4
+    },
+    {
+      "value": " -110 ",
+      "out": 0.5238095238095238
+    },
+    {
+      "value": "1e3",
+      "out": 0.09090909090909091
+    },
+    {
+      "value": "NaN",
+      "out": null
+    },
+    {
+      "value": "Infinity",
+      "out": 0
+    }
+  ],
+  "implied_to_american": [
+    {
+      "prob": 0,
+      "out": 99900
+    },
+    {
+      "prob": 0.0001,
+      "out": 99900
+    },
+    {
+      "prob": 0.001,
+      "out": 99900
+    },
+    {
+      "prob": 0.005,
+      "out": 19900
+    },
+    {
+      "prob": 0.01,
+      "out": 9900
+    },
+    {
+      "prob": 0.05,
+      "out": 1900
+    },
+    {
+      "prob": 0.0909,
+      "out": 1000
+    },
+    {
+      "prob": 0.1,
+      "out": 900
+    },
+    {
+      "prob": 0.1667,
+      "out": 500
+    },
+    {
+      "prob": 0.2,
+      "out": 400
+    },
+    {
+      "prob": 0.25,
+      "out": 300
+    },
+    {
+      "prob": 0.3333333333333333,
+      "out": 200
+    },
+    {
+      "prob": 0.4,
+      "out": 150
+    },
+    {
+      "prob": 0.45,
+      "out": 122
+    },
+    {
+      "prob": 0.4762,
+      "out": 110
+    },
+    {
+      "prob": 0.5,
+      "out": -100
+    },
+    {
+      "prob": 0.5238,
+      "out": -110
+    },
+    {
+      "prob": 0.55,
+      "out": -122
+    },
+    {
+      "prob": 0.6,
+      "out": -150
+    },
+    {
+      "prob": 0.6666666666666666,
+      "out": -200
+    },
+    {
+      "prob": 0.75,
+      "out": -300
+    },
+    {
+      "prob": 0.8,
+      "out": -400
+    },
+    {
+      "prob": 0.9,
+      "out": -900
+    },
+    {
+      "prob": 0.95,
+      "out": -1900
+    },
+    {
+      "prob": 0.99,
+      "out": -9900
+    },
+    {
+      "prob": 0.999,
+      "out": -99900
+    },
+    {
+      "prob": 0.9999,
+      "out": -99900
+    },
+    {
+      "prob": 1,
+      "out": -99900
+    },
+    {
+      "prob": -0.5,
+      "out": 99900
+    },
+    {
+      "prob": 1.5,
+      "out": -99900
+    }
+  ],
+  "decimal_to_implied": [
+    {
+      "decimal": 1,
+      "out": null
+    },
+    {
+      "decimal": 1.0001,
+      "out": 0.9999000099990001
+    },
+    {
+      "decimal": 1.01,
+      "out": 0.9900990099009901
+    },
+    {
+      "decimal": 1.1,
+      "out": 0.9090909090909091
+    },
+    {
+      "decimal": 1.25,
+      "out": 0.8
+    },
+    {
+      "decimal": 1.5,
+      "out": 0.6666666666666666
+    },
+    {
+      "decimal": 1.6667,
+      "out": 0.5999880002399952
+    },
+    {
+      "decimal": 1.8182,
+      "out": 0.5499945000549994
+    },
+    {
+      "decimal": 1.909090909090909,
+      "out": 0.5238095238095238
+    },
+    {
+      "decimal": 2,
+      "out": 0.5
+    },
+    {
+      "decimal": 2.1,
+      "out": 0.47619047619047616
+    },
+    {
+      "decimal": 2.5,
+      "out": 0.4
+    },
+    {
+      "decimal": 3,
+      "out": 0.3333333333333333
+    },
+    {
+      "decimal": 3.5,
+      "out": 0.2857142857142857
+    },
+    {
+      "decimal": 4,
+      "out": 0.25
+    },
+    {
+      "decimal": 5,
+      "out": 0.2
+    },
+    {
+      "decimal": 6,
+      "out": 0.16666666666666666
+    },
+    {
+      "decimal": 8,
+      "out": 0.125
+    },
+    {
+      "decimal": 11,
+      "out": 0.09090909090909091
+    },
+    {
+      "decimal": 21,
+      "out": 0.047619047619047616
+    },
+    {
+      "decimal": 51,
+      "out": 0.0196078431372549
+    },
+    {
+      "decimal": 101,
+      "out": 0.009900990099009901
+    },
+    {
+      "decimal": 0,
+      "out": null
+    },
+    {
+      "decimal": 0.5,
+      "out": null
+    },
+    {
+      "decimal": -2,
+      "out": null
+    }
+  ],
+  "odds_to_implied": [
+    {
+      "value": "-10000",
+      "format": "american",
+      "out": 0.9900990099009901
+    },
+    {
+      "value": "-1000",
+      "format": "american",
+      "out": 0.9090909090909091
+    },
+    {
+      "value": "-500",
+      "format": "american",
+      "out": 0.8333333333333334
+    },
+    {
+      "value": "-300",
+      "format": "american",
+      "out": 0.75
+    },
+    {
+      "value": "-250",
+      "format": "american",
+      "out": 0.7142857142857143
+    },
+    {
+      "value": "-200",
+      "format": "american",
+      "out": 0.6666666666666666
+    },
+    {
+      "value": "-150",
+      "format": "american",
+      "out": 0.6
+    },
+    {
+      "value": "-130",
+      "format": "american",
+      "out": 0.5652173913043478
+    },
+    {
+      "value": "-120",
+      "format": "american",
+      "out": 0.5454545454545454
+    },
+    {
+      "value": "-110",
+      "format": "american",
+      "out": 0.5238095238095238
+    },
+    {
+      "value": "-105",
+      "format": "american",
+      "out": 0.5121951219512195
+    },
+    {
+      "value": "-101",
+      "format": "american",
+      "out": 0.5024875621890548
+    },
+    {
+      "value": "-100",
+      "format": "american",
+      "out": 0.5
+    },
+    {
+      "value": "100",
+      "format": "american",
+      "out": 0.5
+    },
+    {
+      "value": "101",
+      "format": "american",
+      "out": 0.4975124378109453
+    },
+    {
+      "value": "105",
+      "format": "american",
+      "out": 0.4878048780487805
+    },
+    {
+      "value": "110",
+      "format": "american",
+      "out": 0.47619047619047616
+    },
+    {
+      "value": "120",
+      "format": "american",
+      "out": 0.45454545454545453
+    },
+    {
+      "value": "150",
+      "format": "american",
+      "out": 0.4
+    },
+    {
+      "value": "200",
+      "format": "american",
+      "out": 0.3333333333333333
+    },
+    {
+      "value": "250",
+      "format": "american",
+      "out": 0.2857142857142857
+    },
+    {
+      "value": "300",
+      "format": "american",
+      "out": 0.25
+    },
+    {
+      "value": "350",
+      "format": "american",
+      "out": 0.2222222222222222
+    },
+    {
+      "value": "400",
+      "format": "american",
+      "out": 0.2
+    },
+    {
+      "value": "500",
+      "format": "american",
+      "out": 0.16666666666666666
+    },
+    {
+      "value": "1000",
+      "format": "american",
+      "out": 0.09090909090909091
+    },
+    {
+      "value": "2500",
+      "format": "american",
+      "out": 0.038461538461538464
+    },
+    {
+      "value": "10000",
+      "format": "american",
+      "out": 0.009900990099009901
+    },
+    {
+      "value": "0",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "-0",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "50",
+      "format": "american",
+      "out": 0.6666666666666666
+    },
+    {
+      "value": "-50",
+      "format": "american",
+      "out": 0.3333333333333333
+    },
+    {
+      "value": "99",
+      "format": "american",
+      "out": 0.5025125628140703
+    },
+    {
+      "value": "-99",
+      "format": "american",
+      "out": 0.49748743718592964
+    },
+    {
+      "value": "1.5",
+      "format": "american",
+      "out": 0.9852216748768473
+    },
+    {
+      "value": "-1.5",
+      "format": "american",
+      "out": 0.014778325123152709
+    },
+    {
+      "value": "",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "abc",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "+150",
+      "format": "american",
+      "out": 0.4
+    },
+    {
+      "value": " -110 ",
+      "format": "american",
+      "out": 0.5238095238095238
+    },
+    {
+      "value": "1e3",
+      "format": "american",
+      "out": 0.09090909090909091
+    },
+    {
+      "value": "NaN",
+      "format": "american",
+      "out": null
+    },
+    {
+      "value": "Infinity",
+      "format": "american",
+      "out": 0
+    },
+    {
+      "value": "1",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "1.0",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "1.01",
+      "format": "decimal",
+      "out": 0.9900990099009901
+    },
+    {
+      "value": "1.1",
+      "format": "decimal",
+      "out": 0.9090909090909091
+    },
+    {
+      "value": "1.5",
+      "format": "decimal",
+      "out": 0.6666666666666666
+    },
+    {
+      "value": "1.909",
+      "format": "decimal",
+      "out": 0.5238344683080146
+    },
+    {
+      "value": "2",
+      "format": "decimal",
+      "out": 0.5
+    },
+    {
+      "value": "2.5",
+      "format": "decimal",
+      "out": 0.4
+    },
+    {
+      "value": "3",
+      "format": "decimal",
+      "out": 0.3333333333333333
+    },
+    {
+      "value": "5",
+      "format": "decimal",
+      "out": 0.2
+    },
+    {
+      "value": "11",
+      "format": "decimal",
+      "out": 0.09090909090909091
+    },
+    {
+      "value": "51",
+      "format": "decimal",
+      "out": 0.0196078431372549
+    },
+    {
+      "value": "101",
+      "format": "decimal",
+      "out": 0.009900990099009901
+    },
+    {
+      "value": "0",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "0.5",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "-2",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "abc",
+      "format": "decimal",
+      "out": null
+    },
+    {
+      "value": "",
+      "format": "decimal",
+      "out": null
+    }
+  ]
+}

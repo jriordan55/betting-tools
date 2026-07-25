@@ -1,0 +1,18 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Cargo workspace target dir — lives at the repo root, not under src-tauri/
+/target
+
+# NOTE: golden-vector fixtures under crates/bettor-core/tests/fixtures/ are
+# deliberately NOT ignored. They are the reference contract captured from the
+# TypeScript implementation, and regenerating them on the fly would let a
+# regression rewrite its own expected output.

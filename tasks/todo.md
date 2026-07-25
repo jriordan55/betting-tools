@@ -10,9 +10,11 @@ No math ships in TypeScript. No Python anywhere.
 
 ## ⏸ RESUME HERE — 2026-07-25, after Phases 4, 8, 5, 6 and 7
 
-**State:** `pnpm verify` green — 304 tests (278 core, 10 parity, 15 bet-log
-storage, 1 bindings export), svelte-check 0/0, clippy `-D warnings` clean,
-`vite build` clean. 26 calculators plus the bet log.
+**State:** `pnpm verify` green — 304 Rust tests (278 core, 10 parity, 15
+bet-log storage, 1 bindings export) and 44 frontend tests, svelte-check 0/0,
+clippy `-D warnings` clean, `vite build` clean. 26 calculators plus the bet log.
+
+`pnpm verify` is now clippy → cargo test → svelte-check → **vitest** → build.
 
 **The port is complete.** All 21 reference calculators ship, against the design
 system, the shared UI kit, and the `Async` reactive pattern settled in Phase 4.
@@ -23,9 +25,11 @@ a deliberate cut — see *Deliberately not built*, below.
 
 - **Phase 2 leftover** — the JS-vs-Rust benchmark. The speed claim is currently
   unquantified.
-- **Ship chrome** — default Tauri template icons, placeholder `productName`.
-- **No frontend tests.** `pnpm verify` type-checks and builds the UI but never
-  executes it.
+- **Ship chrome** — default Tauri template icons, placeholder `productName` and
+  bundle identifier. A branding decision, not an engineering one; see *Open
+  questions*.
+- **Blog/MDX** — keep the 22 posts as bundled reference or drop them. Also
+  yours to call.
 
 **Also unresolved, from the Phase 1 findings:** the Shin fix changes real
 numbers — longshot fair probabilities were overstated ~20% relative. Worth
@@ -725,6 +729,35 @@ distribution rather than echoed back from the input, and the UI says which.
 including one inverted claim — I asserted the cover curve *falls* across a
 range running from laying 14 to getting 14, when covering obviously gets easier
 as the line moves. Every number in the module doc is now a measured one.
+
+### Frontend tests  ← COMPLETE
+
+- [x] vitest over the layer that is genuinely TypeScript's, wired into `pnpm verify`
+
+44 tests across `format`, `errors`, `odds` and the calculator registry. Chosen
+by what can actually break here rather than by coverage:
+
+- **`format.ts` never invents a value**, and a non-finite input renders as an
+  em dash rather than `NaN%`. Several core fields are legitimately NaN —
+  `Clv::distortion` on a line that did not move, `BetMix::t_stat` on a mix with
+  no variance — and `NaN%` on screen reads as a crash.
+- **`parseAll` is all-or-nothing**, including for a merely *blank* leg. This is
+  the frontend half of the Phase 1.5 parlay bug and the assertion that stops it
+  coming back.
+- **Every `MathError` and `LogError` variant says something specific**, and the
+  two families stay apart — a disk failure and a bad probability are different
+  problems, which is why the Rust keeps them in different types.
+- **The registry is the routing table.** Unique url-safe slugs, every category
+  labelled and ordered, and *every component actually imports* — a `load`
+  pointing at a renamed file otherwise fails at click time, in production, on
+  one route. There is also an explicit assertion that the registry is not
+  empty, because half the other checks are vacuously true over an empty array.
+- **Parlay correlation is asserted absent.** It was cut deliberately and the
+  port re-added it once already.
+
+`commands.*` is mocked. A test that needs a webview is not a unit test, and
+`pnpm verify` has to run without one. The math is not tested here at all — it
+is tested in Rust, where it lives.
 
 ### Phase 8 — Mass port  ← COMPLETE
 - [x] Remaining 18 calculators against the settled Phase 4 architecture

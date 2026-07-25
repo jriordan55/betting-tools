@@ -13,8 +13,10 @@
     "rs:test": "cargo test --workspace",
     "rs:lint": "cargo clippy --workspace --all-targets -- -D warnings",
     "rs:fmt": "cargo fmt --all",
-    "verify": "pnpm rs:lint && pnpm rs:test && pnpm check && pnpm build",
-    "bench": "cargo run --release --example bench -p bettor-core && node tools/bench-ts.mjs"
+    "verify": "pnpm rs:lint && pnpm rs:test && pnpm check && pnpm test && pnpm build",
+    "bench": "cargo run --release --example bench -p bettor-core && node tools/bench-ts.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "license": "MIT",
   "dependencies": {
@@ -33,7 +35,8 @@
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3"
+    "vite": "^6.0.3",
+    "vitest": "^4.1.10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

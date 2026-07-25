@@ -73,3 +73,60 @@ built" now exists for.
 starting — each was defensible in isolation and each moved away from what was
 asked. Deliver the requested scope in full, note anything adjacent worth doing,
 and let Adam decide whether to take it on.
+
+---
+
+## 5. Do not write a number into a doc comment before measuring it.
+
+**What happened (2026-07-25):** Wrote module documentation for `variance.rs`
+and `margin_model.rs` with the headline figures filled in from estimation
+rather than from a run. Eleven of them were wrong across the session:
+
+- `variance.rs` — SD at +400 was 2.04, not the 2.00 I wrote (that is the
+  break-even figure, not the one at the required win rate); detection horizons
+  were 1,440 / 6,640, not 1,500 / 6,400; a fixed cents move does *not* invert
+  the CLV ranking, which needs unequal moves; a 3% edge at +600 loses 45% of
+  seasons, not "far more often than not".
+- `margin_model.rs` — implied correlation was −0.27 and +0.31, not −0.13 and
+  +0.16; key-number margins land at 12.7% and 8.4%, not 9.4% and 5.8%; the
+  reweighting pulls the mean margin from 3.50 to 3.20, which I had not
+  predicted at all. And one claim was simply inverted: I asserted the cover
+  curve *falls* across a range running from laying 14 points to getting 14,
+  when covering plainly gets easier as the line moves.
+- `docs.ts` — three of five "what changed since this was written" notes
+  described articles I had not read. Two of those articles turned out to be
+  *more* correct than the code they were written for.
+
+**Why it matters:** every one of these was caught, because the figure went into
+an assertion at the same time it went into the prose. That is the only reason
+the cost was a rerun instead of a wrong number shipping in explanatory text —
+which is exactly the failure mode the Phase 8 review already found four times,
+where an InfoSection stated a figure the app contradicted on screen. Prose
+reads as more authoritative than a number on a screen, so a wrong sentence
+beats a right calculation.
+
+**How to apply:** the claim and the test are one artifact. Write
+`assert_relative_eq!(x, PLACEHOLDER)`, run it, read the actual value out of the
+failure, and put *that* number in both places. Never the other order. And when
+the subject is someone else's document, read the document — a correction notice
+that mischaracterises the thing it corrects is worse than no notice.
+
+---
+
+## 6. When two independent methods agree exactly, suspect an identity.
+
+**What happened (2026-07-25):** Noticed that `devig` returned bit-identical
+results for Equal Margin and Shin on every two-way market. The instinct was
+that this was the Phase 1 bug returning — a solver collapsing onto its
+neighbour. It was not: for two outcomes, Shin's fair probabilities *are* the
+equal-margin ones, provably, for whatever insider fraction balances the book.
+
+**Why it matters:** the wrong conclusion in either direction is expensive. Had
+I "fixed" it, I would have broken a correct implementation. Had I ignored it,
+the app would go on presenting five methods as five opinions when on the most
+common market shape it has four — and a user reading two agreeing columns as
+corroboration is being misled by the UI, not by the maths.
+
+**How to apply:** agreement to 1e-12 is not agreement, it is the same function.
+Derive it before touching it. Then say so in the product: an identity the user
+cannot see is a claim the interface is making on your behalf.

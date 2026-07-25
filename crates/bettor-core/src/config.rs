@@ -36,6 +36,128 @@ pub struct SportConfig {
     pub props: Vec<PropSport>,
     /// Regression constants and league averages, by sport and stat.
     pub regression: Vec<RegressionSport>,
+    /// Whole-game scoring shapes for the probability visualizer.
+    pub games: Vec<GameSport>,
+}
+
+/// A sport as the probability visualizer models a whole game.
+///
+/// Distinct from [`LineSport`], which carries only a margin standard deviation
+/// for inverting a single line. This one carries the *total's* standard
+/// deviation as well, which is what makes a per-team figure and a between-team
+/// correlation derivable — see [`crate::margin_model`].
+#[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct GameSport {
+    /// Stable identifier, e.g. `"football"`.
+    pub key: &'static str,
+    /// Display name.
+    pub label: &'static str,
+    /// What is being scored: `"points"` or `"goals"`.
+    pub unit: &'static str,
+    /// Whether a normal on integers fits, or a Poisson does.
+    ///
+    /// Low-scoring sports are Poisson-shaped and belong in
+    /// [`crate::match_model`]; the visualizer's normal model would misprice
+    /// them. Reported so the UI can send the caller to the right screen.
+    pub normal_model: bool,
+    /// Typical home team score.
+    pub mu_home: f64,
+    /// Typical away team score.
+    pub mu_away: f64,
+    /// Highest mean score the slider should offer.
+    pub mu_max: f64,
+    /// Slider granularity for the means.
+    pub mu_step: f64,
+    /// Standard deviation of the margin. Zero when the sport is Poisson-shaped.
+    pub sd_margin: f64,
+    /// Standard deviation of the combined score. Zero when Poisson-shaped.
+    pub sd_total: f64,
+    /// A typical spread.
+    pub spread: f64,
+    /// Range of spreads worth charting.
+    pub spread_range: (f64, f64),
+    /// A typical total.
+    pub total: f64,
+    /// Range of totals worth offering.
+    pub total_range: (f64, f64),
+    /// Whether key-number reweighting applies. American football only.
+    pub key_numbers: bool,
+}
+
+/// Whole-game shapes, from the reference visualizer's presets.
+fn game_sports() -> Vec<GameSport> {
+    vec![
+        GameSport {
+            key: "football",
+            label: "Football",
+            unit: "points",
+            normal_model: true,
+            mu_home: 24.5,
+            mu_away: 21.0,
+            mu_max: 45.0,
+            mu_step: 0.5,
+            sd_margin: 13.5,
+            sd_total: 10.2,
+            spread: -3.5,
+            spread_range: (-21.0, 21.0),
+            total: 45.5,
+            total_range: (30.0, 62.0),
+            key_numbers: true,
+        },
+        GameSport {
+            key: "basketball",
+            label: "Basketball",
+            unit: "points",
+            normal_model: true,
+            mu_home: 114.5,
+            mu_away: 110.0,
+            mu_max: 140.0,
+            mu_step: 0.5,
+            sd_margin: 11.5,
+            sd_total: 15.9,
+            spread: -4.5,
+            spread_range: (-20.0, 20.0),
+            total: 224.5,
+            total_range: (190.0, 260.0),
+            key_numbers: false,
+        },
+        GameSport {
+            key: "hockey",
+            label: "Hockey",
+            unit: "goals",
+            normal_model: false,
+            mu_home: 3.15,
+            mu_away: 2.85,
+            mu_max: 7.0,
+            mu_step: 0.05,
+            sd_margin: 0.0,
+            sd_total: 0.0,
+            spread: -1.5,
+            spread_range: (-3.5, 3.5),
+            total: 6.5,
+            total_range: (2.5, 9.5),
+            key_numbers: false,
+        },
+        GameSport {
+            key: "soccer",
+            label: "Soccer",
+            unit: "goals",
+            normal_model: false,
+            mu_home: 1.55,
+            mu_away: 1.20,
+            mu_max: 4.5,
+            mu_step: 0.05,
+            sd_margin: 0.0,
+            sd_total: 0.0,
+            spread: -0.5,
+            spread_range: (-3.0, 3.0),
+            total: 2.5,
+            total_range: (0.5, 6.5),
+            key_numbers: false,
+        },
+    ]
 }
 
 /// Scoring variance for one sport, and the markets it posts.
@@ -184,6 +306,7 @@ pub fn sport_config() -> SportConfig {
         matches: match_sports(),
         props: prop_sports(),
         regression: regression_sports(),
+        games: game_sports(),
     }
 }
 
@@ -736,4 +859,43 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn every_game_preset_is_internally_consistent() {
+        for sport in sport_config().games {
+            assert!(sport.mu_home > 0.0 && sport.mu_away > 0.0, "{}", sport.key);
+            assert!(sport.mu_max > sport.mu_home, "{}", sport.key);
+            assert!(sport.mu_step > 0.0, "{}", sport.key);
+            assert!(sport.spread_range.0 < sport.spread_range.1, "{}", sport.key);
+            assert!(sport.total_range.0 < sport.total_range.1, "{}", sport.key);
+
+            // The normal model needs both standard deviations; the Poisson
+            // sports must not carry stand-in values that look usable.
+            if sport.normal_model {
+                assert!(sport.sd_margin > 0.0 && sport.sd_total > 0.0, "{}", sport.key);
+            } else {
+                assert!(sport.sd_margin == 0.0 && sport.sd_total == 0.0, "{}", sport.key);
+            }
+
+            // The preset total should sit near the two means added together.
+            let implied = sport.mu_home + sport.mu_away;
+            assert!(
+                (sport.total - implied).abs() < 0.15 * implied,
+                "{}: total {} against means summing to {implied}",
+                sport.key,
+                sport.total
+            );
+        }
+    }
+
+    #[test]
+    fn key_numbers_are_claimed_only_by_american_football() {
+        let keyed: Vec<&str> = sport_config()
+            .games
+            .iter()
+            .filter(|s| s.key_numbers)
+            .map(|s| s.key)
+            .collect();
+        assert_eq!(keyed, vec!["football"]);
+    }
+
 }

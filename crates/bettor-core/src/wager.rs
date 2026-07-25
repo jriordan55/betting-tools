@@ -146,8 +146,88 @@ pub fn kelly(decimal: f64, true_prob: f64, bankroll: f64, multiplier: f64) -> Re
     })
 }
 
+/// One point on an expected-value curve.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct EvPoint {
+    /// The true win probability being assumed, 0–1.
+    pub true_prob: f64,
+    /// Expected value per unit staked at that probability.
+    pub ev: f64,
+}
+
+/// Expected value across a range of assumed true probabilities.
+///
+/// A bet is only good relative to a belief, and the belief is the input nobody
+/// can check. Drawing EV as a function of it moves the question from "is this
+/// +EV" — which invites a made-up number — to "how wrong would I have to be
+/// for this to stop being +EV", which is answerable. The break-even point is
+/// the price's own implied probability.
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] for a price at or below 1.0, a non-positive
+/// step, or a reversed range; [`MathError::ProbabilityOutOfRange`] if the
+/// range falls outside `[0, 1]`; [`MathError::ShapeError`] beyond 400 points.
+pub fn ev_curve(decimal: f64, from_prob: f64, to_prob: f64, step: f64) -> Result<Vec<EvPoint>> {
+    crate::odds::decimal_to_implied(decimal)?;
+    if !step.is_finite() || step <= 0.0 {
+        return Err(MathError::DomainError {
+            param: "step",
+            constraint: "greater than zero",
+            value: step,
+        });
+    }
+    for value in [from_prob, to_prob] {
+        if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+            return Err(MathError::ProbabilityOutOfRange {
+                value,
+                reason: "the range must lie between 0 and 1",
+            });
+        }
+    }
+    if to_prob <= from_prob {
+        return Err(MathError::DomainError {
+            param: "probability range",
+            constraint: "the second probability must be above the first",
+            value: to_prob - from_prob,
+        });
+    }
+
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "non-negative by the checks above, and capped on the next line"
+    )]
+    let points = ((to_prob - from_prob) / step).floor() as usize + 1;
+    if points > 400 {
+        return Err(MathError::ShapeError {
+            what: "curve points",
+            expected: "at most 400",
+            got: points,
+        });
+    }
+
+    Ok((0..points)
+        .map(|i| {
+            #[allow(clippy::cast_precision_loss, reason = "point index, capped at 400")]
+            let true_prob = from_prob + i as f64 * step;
+            EvPoint {
+                true_prob,
+                ev: true_prob * decimal - 1.0,
+            }
+        })
+        .collect())
+}
+
 #[cfg(test)]
-#[allow(clippy::unwrap_used, reason = "test code")]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    reason = "test code"
+)]
 mod tests {
     use super::*;
     use crate::odds::american_to_decimal;
@@ -234,4 +314,40 @@ mod tests {
         assert!(kelly(1.0, 0.6, 10_000.0, 1.0).is_err());
         assert!(kelly(2.0, 1.0, 10_000.0, 1.0).is_err());
     }
+    #[test]
+    fn the_ev_curve_crosses_zero_at_the_implied_probability() {
+        let d = american_to_decimal(-110.0).unwrap();
+        let curve = ev_curve(d, 0.0, 1.0, 0.005).unwrap();
+        let crossing = curve
+            .iter()
+            .find(|p| p.ev >= 0.0)
+            .expect("the curve must reach break-even somewhere");
+        assert_relative_eq!(crossing.true_prob, 0.525, epsilon = 3e-3);
+    }
+
+    #[test]
+    fn the_ev_curve_rises_with_the_belief_and_is_steeper_at_long_prices() {
+        // Slope is the decimal price: a longshot's EV swings far harder on the
+        // same change of mind, which is the same fact the variance module
+        // reports as a longer confirmation horizon.
+        let short = ev_curve(american_to_decimal(-110.0).unwrap(), 0.1, 0.9, 0.1).unwrap();
+        let long = ev_curve(american_to_decimal(600.0).unwrap(), 0.1, 0.9, 0.1).unwrap();
+
+        for w in short.windows(2) {
+            assert!(w[1].ev > w[0].ev);
+        }
+        let short_slope = short[1].ev - short[0].ev;
+        let long_slope = long[1].ev - long[0].ev;
+        assert!(long_slope > 3.0 * short_slope);
+    }
+
+    #[test]
+    fn the_ev_curve_rejects_bad_input() {
+        assert!(ev_curve(1.0, 0.0, 1.0, 0.1).is_err());
+        assert!(ev_curve(2.0, 0.0, 1.0, 0.0).is_err());
+        assert!(ev_curve(2.0, 0.9, 0.1, 0.1).is_err());
+        assert!(ev_curve(2.0, -0.1, 1.0, 0.1).is_err());
+        assert!(ev_curve(2.0, 0.0, 1.0, 0.0001).is_err());
+    }
+
 }

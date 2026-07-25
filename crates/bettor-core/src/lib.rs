@@ -19,6 +19,7 @@ pub mod distributions;
 pub mod hold;
 pub mod ledger;
 pub mod line;
+pub mod margin_model;
 pub mod match_model;
 pub mod middle;
 pub mod odds;

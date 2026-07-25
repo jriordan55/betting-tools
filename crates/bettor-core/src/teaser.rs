@@ -30,6 +30,14 @@
 //! Pricing the discrete mass properly needs an empirical margin distribution
 //! per sport, which is a data problem rather than a math one and belongs in
 //! its own change.
+//!
+//! **Partly answered, and this module still does not use it.**
+//! [`crate::margin_model::KEY_NUMBER_WEIGHTS`] now carries a football margin
+//! reweighting that puts 12.7% on a 3 and 8.4% on a 7, against the ~15% and
+//! ~9% usually quoted — much closer than the normal used here, and still short
+//! of the observed rates. Wiring it in would change every teaser price the app
+//! has quoted, so it stays a separate change with its own migration note.
+//! Until then [`Teaser::model_ignores_key_numbers`] means exactly what it says.
 
 use crate::line::{fair_prob_at_line, implied_true_line, BetType};
 use crate::odds::{decimal_to_implied, implied_to_american};

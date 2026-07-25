@@ -240,6 +240,15 @@ export const CALCULATORS: Calculator[] = [
 		load: () => import('./calculators/PropSimulator.svelte')
 	},
 	{
+		slug: 'game-visualizer',
+		title: 'Game Probability Visualizer',
+		description:
+			'Model a whole football or basketball game from its spread and total — margin and score distributions on integers, key numbers, and the spread-to-probability curve',
+		category: 'simulation',
+		icon: '/\\',
+		load: () => import('./calculators/GameVisualizer.svelte')
+	},
+	{
 		slug: 'poisson-match',
 		title: 'Poisson Match Predictor',
 		description:

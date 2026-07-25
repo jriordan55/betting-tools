@@ -542,6 +542,32 @@ async betLogStatus() : Promise<string | null> {
     return await TAURI_INVOKE("bet_log_status");
 },
 /**
+ * Models a game and grades a spread and a total against it.
+ * 
+ * One command rather than four so every figure on screen comes from the same
+ * distribution. Rebuilding the model per query would let a half-typed input
+ * leave the curve describing one game and the grades another.
+ */
+async analyzeGame(shape: GameShape, spread: number, total: number, curveFrom: number, curveTo: number, curveStep: number) : Promise<Result<GameView, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("analyze_game", { shape, spread, total, curveFrom, curveTo, curveStep }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Expected value across a range of assumed true probabilities.
+ */
+async evCurve(decimal: number, fromProb: number, toProb: number, step: number) : Promise<Result<EvPoint[], MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("ev_curve", { decimal, fromProb, toProb, step }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Standard normal CDF, exposed for charting the model directly.
  */
 async normalCdf(z: number) : Promise<number> {
@@ -1118,6 +1144,22 @@ correlationWasClamped: boolean;
  */
 simulationSeed: string | null }
 /**
+ * One rung of a spread-to-probability curve.
+ */
+export type CurvePoint = { 
+/**
+ * The line.
+ */
+spread: number; 
+/**
+ * Probability the home side covers it, 0–1.
+ */
+homeCovers: number; 
+/**
+ * Probability of a push at this line, 0–1.
+ */
+push: number }
+/**
  * Which assumption to make about where the margin sits.
  */
 export type DevigMethod = 
@@ -1242,6 +1284,18 @@ shellVersion: string;
  */
 optimized: boolean }
 /**
+ * One point on an expected-value curve.
+ */
+export type EvPoint = { 
+/**
+ * The true win probability being assumed, 0–1.
+ */
+trueProb: number; 
+/**
+ * Expected value per unit staked at that probability.
+ */
+ev: number }
+/**
  * What a bet is worth at a given price and true probability.
  */
 export type ExpectedValue = { 
@@ -1294,6 +1348,129 @@ p75: number;
  * 95th percentile bankroll.
  */
 p95: number }
+/**
+ * A game, described the way a book prices one.
+ */
+export type GameShape = { 
+/**
+ * Points the home team is expected to score.
+ */
+muHome: number; 
+/**
+ * Points the away team is expected to score.
+ */
+muAway: number; 
+/**
+ * Standard deviation of the margin.
+ */
+sdMargin: number; 
+/**
+ * Standard deviation of the combined score.
+ */
+sdTotal: number; 
+/**
+ * Whether to reweight margins onto football's key numbers.
+ * 
+ * Only meaningful for American football. See [`KEY_NUMBER_WEIGHTS`].
+ */
+keyNumbers: boolean }
+/**
+ * A sport as the probability visualizer models a whole game.
+ * 
+ * Distinct from [`LineSport`], which carries only a margin standard deviation
+ * for inverting a single line. This one carries the *total's* standard
+ * deviation as well, which is what makes a per-team figure and a between-team
+ * correlation derivable — see [`crate::margin_model`].
+ */
+export type GameSport = { 
+/**
+ * Stable identifier, e.g. `"football"`.
+ */
+key: string; 
+/**
+ * Display name.
+ */
+label: string; 
+/**
+ * What is being scored: `"points"` or `"goals"`.
+ */
+unit: string; 
+/**
+ * Whether a normal on integers fits, or a Poisson does.
+ * 
+ * Low-scoring sports are Poisson-shaped and belong in
+ * [`crate::match_model`]; the visualizer's normal model would misprice
+ * them. Reported so the UI can send the caller to the right screen.
+ */
+normalModel: boolean; 
+/**
+ * Typical home team score.
+ */
+muHome: number; 
+/**
+ * Typical away team score.
+ */
+muAway: number; 
+/**
+ * Highest mean score the slider should offer.
+ */
+muMax: number; 
+/**
+ * Slider granularity for the means.
+ */
+muStep: number; 
+/**
+ * Standard deviation of the margin. Zero when the sport is Poisson-shaped.
+ */
+sdMargin: number; 
+/**
+ * Standard deviation of the combined score. Zero when Poisson-shaped.
+ */
+sdTotal: number; 
+/**
+ * A typical spread.
+ */
+spread: number; 
+/**
+ * Range of spreads worth charting.
+ */
+spreadRange: [number, number]; 
+/**
+ * A typical total.
+ */
+total: number; 
+/**
+ * Range of totals worth offering.
+ */
+totalRange: [number, number]; 
+/**
+ * Whether key-number reweighting applies. American football only.
+ */
+keyNumbers: boolean }
+/**
+ * A whole game, modelled and graded.
+ */
+export type GameView = { 
+/**
+ * The scoring distributions, and the team figures they imply.
+ */
+model: MarginModel; 
+/**
+ * How the spread grades.
+ */
+spread: SpreadGrade; 
+/**
+ * How the total grades.
+ */
+total: TotalGrade; 
+/**
+ * The three-way market.
+ */
+moneyline: Moneyline; 
+/**
+ * Cover probability across a range of spreads.
+ */
+curve: CurvePoint[] }
 /**
  * A hedge on an open position.
  */
@@ -1695,6 +1872,53 @@ field: string;
  */
 reason: string } }
 /**
+ * A scoring model, as distributions over integers.
+ */
+export type MarginModel = { 
+/**
+ * Home score distribution.
+ */
+homeScores: PmfPoint[]; 
+/**
+ * Away score distribution.
+ */
+awayScores: PmfPoint[]; 
+/**
+ * Margin distribution, home minus away.
+ */
+margin: PmfPoint[]; 
+/**
+ * Combined score distribution.
+ */
+total: PmfPoint[]; 
+/**
+ * Standard deviation of the margin, as supplied.
+ */
+sdMargin: number; 
+/**
+ * Standard deviation of the total, as supplied.
+ */
+sdTotal: number; 
+/**
+ * Per-team standard deviation implied by the two above.
+ */
+sdTeam: number; 
+/**
+ * Correlation between the two teams' scores, implied by the two above.
+ * 
+ * Negative means game script pulls the scores apart — one team runs the
+ * clock out while the other throws. Positive means shared pace.
+ */
+impliedCorrelation: number; 
+/**
+ * Mean margin of the distribution, after any key-number reweighting.
+ */
+meanMargin: number; 
+/**
+ * Mean total.
+ */
+meanTotal: number }
+/**
  * A precision-weighted combination of two margin estimates.
  */
 export type MarginPosterior = { 
@@ -2049,6 +2273,25 @@ ev: number;
  */
 varianceShare: number }
 /**
+ * The three-way market a margin distribution implies.
+ */
+export type Moneyline = { 
+/**
+ * Probability the home team wins outright, 0–1.
+ */
+home: number; 
+/**
+ * Probability of a level score, 0–1.
+ * 
+ * In football and basketball this is a regulation tie, not a settled
+ * draw — those sports play overtime. In soccer it is the draw itself.
+ */
+draw: number; 
+/**
+ * Probability the away team wins outright, 0–1.
+ */
+away: number }
+/**
  * The three ways a price gets written.
  */
 export type OddsFormat = 
@@ -2124,6 +2367,18 @@ profit: number;
  * How many legs were priced.
  */
 legCount: number }
+/**
+ * One integer outcome and its probability.
+ */
+export type PmfPoint = { 
+/**
+ * The score, margin, or total.
+ */
+k: number; 
+/**
+ * Probability of exactly that value, 0–1.
+ */
+p: number }
 /**
  * One position within a sport.
  */
@@ -2523,7 +2778,31 @@ props: PropSport[];
 /**
  * Regression constants and league averages, by sport and stat.
  */
-regression: RegressionSport[] }
+regression: RegressionSport[]; 
+/**
+ * Whole-game scoring shapes for the probability visualizer.
+ */
+games: GameSport[] }
+/**
+ * How a spread grades against a margin distribution.
+ */
+export type SpreadGrade = { 
+/**
+ * The line, from the home team's perspective. `-3.5` means laying 3.5.
+ */
+spread: number; 
+/**
+ * Probability the home side covers, 0–1.
+ */
+homeCovers: number; 
+/**
+ * Probability of a push, 0–1. Always zero on a half-point line.
+ */
+push: number; 
+/**
+ * Probability the away side covers, 0–1.
+ */
+awayCovers: number }
 /**
  * Cover probabilities for one spread.
  */
@@ -2642,6 +2921,26 @@ fairOdds: number;
  * Reported for judgement, **not** priced in — see the module docs.
  */
 keyNumbersCrossed: number[] }
+/**
+ * How a total grades.
+ */
+export type TotalGrade = { 
+/**
+ * The line.
+ */
+total: number; 
+/**
+ * Probability of the over, 0–1.
+ */
+over: number; 
+/**
+ * Probability of a push, 0–1.
+ */
+push: number; 
+/**
+ * Probability of the under, 0–1.
+ */
+under: number }
 /**
  * Over/under probabilities for one total.
  */

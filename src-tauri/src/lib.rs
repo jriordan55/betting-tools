@@ -84,6 +84,8 @@ fn builder() -> Builder {
         commands::analyze_bet_log,
         commands::bet_log_mix,
         commands::bet_log_status,
+        commands::analyze_game,
+        commands::ev_curve,
         commands::normal_cdf,
         commands::prob_to_spread,
     ])

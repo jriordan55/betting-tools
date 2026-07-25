@@ -8,20 +8,19 @@ No math ships in TypeScript. No Python anywhere.
 
 ---
 
-## ⏸ RESUME HERE — 2026-07-25, after Phases 4, 8, 5 and 6
+## ⏸ RESUME HERE — 2026-07-25, after Phases 4, 8, 5, 6 and 7
 
-**State:** `pnpm verify` green — 281 tests (255 core, 10 parity, 15 bet-log
+**State:** `pnpm verify` green — 304 tests (278 core, 10 parity, 15 bet-log
 storage, 1 bindings export), svelte-check 0/0, clippy `-D warnings` clean,
-`vite build` clean.
+`vite build` clean. 26 calculators plus the bet log.
 
 **The port is complete.** All 21 reference calculators ship, against the design
 system, the shared UI kit, and the `Async` reactive pattern settled in Phase 4.
 Nothing from `~/Code/bettor-calculator-main` is unported. `ParlayCorrelation` is
 a deliberate cut — see *Deliberately not built*, below.
 
-**Phases 5 and 6 are done.** What is left:
+**Phases 5, 6 and 7 are done.** What is left:
 
-- **Phase 7 — probability visualizer.** `~/Code/probabilites-main` untouched.
 - **Phase 2 leftover** — the JS-vs-Rust benchmark. The speed claim is currently
   unquantified.
 - **Ship chrome** — default Tauri template icons, placeholder `productName`.
@@ -637,10 +636,55 @@ the one page that cannot use it (it also refreshes imperatively after a write).
 Deleting a bet was also a single unguarded click, two pixels from *edit*, on an
 unrecoverable row; it now arms first.
 
-### Phase 7 — Probability visualizer
-- [ ] Port `~/Code/probabilites-main/betting-probability-viz.html`: vig removal, margin/total
+### Phase 7 — Probability visualizer  ← COMPLETE
+- [x] Port `~/Code/probabilites-main/betting-probability-viz.html`: margin/total
       scoring models, spread↔probability curve, EV-by-true-probability
-- [ ] Math to Rust, D3 for render
+- [x] Math to Rust, D3 for render
+
+`margin_model.rs` (18 tests), `wager::ev_curve`, four game presets in
+`config.rs`, two commands, one calculator, and a `PmfChart` for distributions
+over integers.
+
+**Vig removal was deliberately not re-ported.** The reference page's first
+section is odds conversion, hold, and EV — all of which already ship as Hold
+Calculator, Devig Calculator and Expected Value. A fourth implementation of
+devigging is the exact duplication this project exists to remove.
+
+**The derivation is the reason this is a module and not a chart.** A book posts
+a spread and a total; their standard deviations differ (13.5 and 10.2 in the
+NFL), and the pair pins down two things nobody posts:
+
+```
+σ_team = √((σ_margin² + σ_total²) / 4)
+ρ      = (σ_total² − σ_margin²) / (σ_total² + σ_margin²)
+```
+
+Football lands at ρ ≈ **−0.27** — the teams' scores are anti-correlated, which
+is game script — and basketball at **+0.31**, where pace is shared.
+
+**Everything grades on integers.** A spread of exactly 3 is compared against a
+margin of exactly 3, so a push is a real event with a real probability. That is
+what makes a whole-number line price differently from a half-point one here, as
+it should.
+
+**The key-number table partly answers a limitation `teaser.rs` records.** With
+the weighting on, a 3-point margin carries **12.7%** and a 7 carries **8.4%**,
+against the ~15% and ~9% usually quoted for the NFL — far closer than a smooth
+normal, and still short of the observed rates. It is a shape correction, not a
+fitted distribution. **`teaser.rs` still does not use it**, and still says so:
+wiring it in would move every teaser price the app has quoted, which is its own
+change with its own migration note.
+
+**A caveat the weighting introduces, surfaced rather than hidden:** the weights
+apply to `|margin|` and are heaviest near the middle, so on a distribution not
+centred at zero they pull the mean in. A game set up at -3.5 prices out at
+-3.20 with key numbers on. `mean_margin` is therefore measured from the
+distribution rather than echoed back from the input, and the UI says which.
+
+**Four of my own predicted figures were wrong and the tests caught them**,
+including one inverted claim — I asserted the cover curve *falls* across a
+range running from laying 14 to getting 14, when covering obviously gets easier
+as the line moves. Every number in the module doc is now a measured one.
 
 ### Phase 8 — Mass port  ← COMPLETE
 - [x] Remaining 18 calculators against the settled Phase 4 architecture

@@ -12,7 +12,8 @@
 use crate::betlog;
 use bettor_core::{
     arbitrage, bayesian, clv, correlation, devig, distributions, hold, ledger, line, match_model,
-    middle, odds, parlay, probability, regression, risk_of_ruin, teaser, variance, wager, MathError,
+    margin_model, middle, odds, parlay, probability, regression, risk_of_ruin, teaser,
+    variance, wager, MathError,
 };
 
 /// Result of a command, with the error type the frontend sees.
@@ -755,6 +756,61 @@ pub fn bet_log_mix(
     let bets = log.list(&filter)?;
     let logged: Vec<ledger::LoggedBet> = bets.iter().map(betlog::to_logged).collect();
     Ok(ledger::to_mix(&logged, bucket_cents)?)
+}
+
+// ------------------------------------------------------- game visualizer
+
+/// A whole game, modelled and graded.
+#[derive(Debug, serde::Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GameView {
+    /// The scoring distributions, and the team figures they imply.
+    pub model: margin_model::MarginModel,
+    /// How the spread grades.
+    pub spread: margin_model::SpreadGrade,
+    /// How the total grades.
+    pub total: margin_model::TotalGrade,
+    /// The three-way market.
+    pub moneyline: margin_model::Moneyline,
+    /// Cover probability across a range of spreads.
+    pub curve: Vec<margin_model::CurvePoint>,
+}
+
+/// Models a game and grades a spread and a total against it.
+///
+/// One command rather than four so every figure on screen comes from the same
+/// distribution. Rebuilding the model per query would let a half-typed input
+/// leave the curve describing one game and the grades another.
+#[tauri::command]
+#[specta::specta]
+pub fn analyze_game(
+    shape: margin_model::GameShape,
+    spread: f64,
+    total: f64,
+    curve_from: f64,
+    curve_to: f64,
+    curve_step: f64,
+) -> CmdResult<GameView> {
+    let model = margin_model::normal_game(&shape)?;
+    Ok(GameView {
+        spread: model.grade_spread(spread),
+        total: model.grade_total(total),
+        moneyline: model.moneyline(),
+        curve: margin_model::cover_curve(&model, curve_from, curve_to, curve_step)?,
+        model,
+    })
+}
+
+/// Expected value across a range of assumed true probabilities.
+#[tauri::command]
+#[specta::specta]
+pub fn ev_curve(
+    decimal: f64,
+    from_prob: f64,
+    to_prob: f64,
+    step: f64,
+) -> CmdResult<Vec<wager::EvPoint>> {
+    wager::ev_curve(decimal, from_prob, to_prob, step)
 }
 
 // ------------------------------------------------------------ primitives

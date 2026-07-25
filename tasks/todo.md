@@ -8,6 +8,42 @@ No math ships in TypeScript. No Python anywhere.
 
 ---
 
+## ⏸ RESUME HERE — paused 2026-07-24, after Phase 3
+
+**State:** working tree clean at `c3338a7`. `pnpm verify` green — 190 unit tests,
+10 parity suites, 1 bindings export, svelte-check 0/0, clippy `-D warnings` clean.
+
+**The math engine is done. The UI is not built.** `src/routes/+page.svelte` is a
+single smoke-test page proving the typed IPC boundary works end to end; that is
+the entire frontend.
+
+**Next: Phase 4** — design system, shared components, calculator registry, four
+calculators end to end. This is the **architecture gate**: the patterns settled
+here are what the other 17 calculators get built against, so stop and review
+before mass-porting.
+
+**Two decisions waiting before Phase 4 starts:**
+
+1. **The vertical slice's fourth calculator does not exist yet.** The slice names
+   Odds Converter, Devig, Risk of Ruin, and Odds-Range Variance. The first three
+   have Rust behind them; the fourth is the original idea, and its `variance.rs`
+   is Phase 5 work. Either fold Phase 5's core forward into Phase 4, or
+   substitute something already built (Kelly is the natural stand-in).
+   **Recommendation: fold it forward.** It is the reason the project exists, and
+   building the chart surface against a real module beats building it twice.
+2. **Sport config tables** land in Phase 4, deferred from Phase 2 on the grounds
+   that a mistranscribed λ is invisible in a unit test and obvious in a dropdown.
+
+**Also unresolved, from the Phase 1 findings:** the Shin fix changes real
+numbers — longshot fair probabilities were overstated ~20% relative. Worth
+telling the Discord group, since people may have acted on the old output.
+
+**Documentation written at the pause:** `CLAUDE.md` (working rules), `README.md`,
+`docs/DIVERGENCES.md` (every bug found in the reference TS), `docs/TESTING.md`
+(the parity harness and how not to defeat it).
+
+---
+
 ## Architecture
 
 ```

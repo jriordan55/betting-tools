@@ -59,6 +59,20 @@
 		</div>
 
 		<nav>
+			<!-- Not a calculator: it is a record, and it belongs above them. -->
+			<div class="group">
+				<div class="group-title">Your book</div>
+				<a
+					class="nav-link"
+					class:active={page.url.pathname === '/bet-log'}
+					href="/bet-log"
+					title="Every bet you record, priced against its closing line"
+				>
+					<span class="nav-icon">$</span>
+					<span class="nav-label">Bet Log</span>
+				</a>
+			</div>
+
 			{#each groups as group (group.category)}
 				<div class="group">
 					<div class="group-title">{CATEGORY_LABELS[group.category]}</div>

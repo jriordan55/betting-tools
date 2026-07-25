@@ -384,6 +384,26 @@ fn from_cent_line(cents: f64) -> f64 {
     }
 }
 
+/// Where an American price sits on the cents axis, with even money at zero.
+///
+/// Negative for favorites, positive for dogs, and monotone in price — which
+/// makes it the axis to bucket or interpolate prices on, since the American
+/// scale itself is discontinuous.
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] if the price is under 100 in magnitude.
+pub fn cents_from_even(american: f64) -> Result<f64> {
+    american_to_decimal(american)?;
+    Ok(cent_line(american))
+}
+
+/// Inverse of [`cents_from_even`]. Zero is even money.
+#[must_use]
+pub fn american_from_cents(cents: f64) -> f64 {
+    from_cent_line(cents)
+}
+
 /// Cents between two American prices, correct across the ±100 pivot.
 ///
 /// Positive when `from` is the longer price — that is, when moving from `from`

@@ -452,6 +452,96 @@ async simulateSeason(input: SeasonInput, seed: string | null) : Promise<Result<S
 }
 },
 /**
+ * Records a bet.
+ */
+async addBet(draft: BetDraft) : Promise<Result<Bet, LogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_bet", { draft }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Replaces a recorded bet — settling it, or correcting a typo.
+ */
+async updateBet(id: number, draft: BetDraft) : Promise<Result<Bet, LogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_bet", { id, draft }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Deletes a recorded bet.
+ */
+async deleteBet(id: number) : Promise<Result<null, LogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_bet", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Lists recorded bets, newest first.
+ */
+async listBets(filter: BetFilter) : Promise<Result<Bet[], LogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_bets", { filter }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Every sport that appears in the log.
+ */
+async betLogSports() : Promise<Result<string[], LogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("bet_log_sports") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reads a slice of the log and analyses it.
+ * 
+ * One command rather than two so the rows and the summary can never describe
+ * different sets of bets — which is what a separate `list` and `summarise`
+ * would produce the moment a filter changed between the calls.
+ */
+async analyzeBetLog(filter: BetFilter) : Promise<Result<BetLogView, BetLogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("analyze_bet_log", { filter }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reshapes the log into the bet mix the variance module takes.
+ */
+async betLogMix(filter: BetFilter, bucketCents: number) : Promise<Result<LedgerMix, BetLogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("bet_log_mix", { filter, bucketCents }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Why the bet log is not saving to disk, or `None` when it is.
+ * 
+ * Surfaced so the UI can say that nothing is being kept, rather than looking
+ * like it works until the window closes.
+ */
+async betLogStatus() : Promise<string | null> {
+    return await TAURI_INVOKE("bet_log_status");
+},
+/**
  * Standard normal CDF, exposed for charting the model directly.
  */
 async normalCdf(z: number) : Promise<number> {
@@ -516,6 +606,197 @@ stake: number;
  */
 payout: number }
 /**
+ * A bet as it is stored and returned.
+ */
+export type Bet = { 
+/**
+ * Row id, assigned on insert.
+ */
+id: number; 
+/**
+ * ISO 8601 date the bet was placed.
+ */
+placedAt: string; 
+/**
+ * Sport or league, free text.
+ */
+sport: string; 
+/**
+ * Market type, free text: moneyline, spread, total, prop.
+ */
+market: string; 
+/**
+ * What was actually backed.
+ */
+selection: string; 
+/**
+ * Which book.
+ */
+book: string; 
+/**
+ * American price taken.
+ */
+priceTaken: number; 
+/**
+ * American price this side closed at, when known.
+ */
+closingPrice: number | null; 
+/**
+ * American closing price on the other side, when known.
+ */
+opposingClosingPrice: number | null; 
+/**
+ * Money risked.
+ */
+stake: number; 
+/**
+ * How it finished.
+ */
+outcome: BetOutcome; 
+/**
+ * Anything else worth remembering.
+ */
+notes: string }
+/**
+ * What one bet was worth, in every sense that can be measured.
+ */
+export type BetAnalysis = { 
+/**
+ * Decimal price taken.
+ */
+decimalTaken: number; 
+/**
+ * Probability the price taken implies, 0–1. Contains vig.
+ */
+impliedTaken: number; 
+/**
+ * Realised profit. `None` while the bet is pending.
+ */
+profit: number | null; 
+/**
+ * Probability points gained against the raw closing price.
+ * 
+ * Available whenever a closing price was recorded, because it compares
+ * two vigged numbers and the margins largely cancel.
+ */
+clvPoints: number | null; 
+/**
+ * The same move in American cents, measured on the cents axis.
+ */
+clvCents: number | null; 
+/**
+ * Fair closing probability, 0–1. `None` without the opposing close.
+ */
+fairProb: number | null; 
+/**
+ * Edge against the fair close, as a fraction of stake.
+ */
+ev: number | null; 
+/**
+ * The same edge in currency.
+ */
+evDollars: number | null }
+/**
+ * The fields a caller supplies when writing a bet.
+ * 
+ * Separate from [`Bet`] because the id is the database's to assign, and a
+ * shape that carries one on the way in invites a caller to invent it.
+ */
+export type BetDraft = { 
+/**
+ * ISO 8601 date the bet was placed.
+ */
+placedAt: string; 
+/**
+ * Sport or league.
+ */
+sport: string; 
+/**
+ * Market type.
+ */
+market: string; 
+/**
+ * What was backed.
+ */
+selection: string; 
+/**
+ * Which book.
+ */
+book: string; 
+/**
+ * American price taken.
+ */
+priceTaken: number; 
+/**
+ * American price this side closed at.
+ */
+closingPrice: number | null; 
+/**
+ * American closing price on the other side.
+ */
+opposingClosingPrice: number | null; 
+/**
+ * Money risked.
+ */
+stake: number; 
+/**
+ * How it finished.
+ */
+outcome: BetOutcome; 
+/**
+ * Free-text notes.
+ */
+notes: string }
+/**
+ * Which bets to return.
+ */
+export type BetFilter = { 
+/**
+ * Only bets with this outcome.
+ */
+outcome: BetOutcome | null; 
+/**
+ * Only this sport, matched exactly.
+ */
+sport: string | null; 
+/**
+ * Only bets placed on or after this ISO date.
+ */
+fromDate: string | null; 
+/**
+ * Only bets placed on or before this ISO date.
+ */
+toDate: string | null }
+/**
+ * Something that can go wrong reading or analysing the bet log.
+ * 
+ * Two sources, kept apart. `MathError` must never learn that a disk exists —
+ * `bettor-core` has no io — and a caller wants to know whether the log could
+ * not be *read* or whether one of the bets in it does not make sense. The
+ * frontend matches on `source` and then on the inner `kind`.
+ */
+export type BetLogError = 
+/**
+ * The log itself could not be read or written.
+ */
+{ source: "storage"; error: LogError } | 
+/**
+ * A bet in the log could not be analysed.
+ */
+{ source: "math"; error: MathError }
+/**
+ * A slice of the bet log, with each bet analysed and the whole thing summed.
+ */
+export type BetLogView = { 
+/**
+ * The bets themselves, newest first.
+ */
+bets: Bet[]; 
+/**
+ * Their analysis, in the same order, plus the summary.
+ */
+ledger: Ledger }
+/**
  * A whole bet mix, priced for both return and ride.
  */
 export type BetMix = { 
@@ -570,6 +851,35 @@ tStat: number;
  * Bets before the edge clears two standard errors, at this mix's shape.
  */
 betsToDetect: number | null }
+/**
+ * How a bet finished.
+ * 
+ * Exported as `BetOutcome`: TypeScript has one flat namespace and
+ * [`crate::middle::Outcome`] is already in it. Same reason `middle::Leg` and
+ * `arbitrage::Leg` are disambiguated on export — the Rust names stay
+ * idiomatic, and the collision is resolved once, here.
+ */
+export type BetOutcome = 
+/**
+ * Not settled yet. Counted in the book, excluded from every return figure.
+ */
+"pending" | 
+/**
+ * Won.
+ */
+"won" | 
+/**
+ * Lost.
+ */
+"lost" | 
+/**
+ * Pushed — stake returned.
+ */
+"push" | 
+/**
+ * Voided or cancelled — stake returned.
+ */
+"void"
 /**
  * Which kind of line is being modelled.
  */
@@ -1189,6 +1499,118 @@ sdPerUnit: number;
  */
 betsToDetect: number | null }
 /**
+ * A record, bet by bet and in total.
+ */
+export type Ledger = { 
+/**
+ * One entry per input bet, in the order supplied.
+ */
+bets: BetAnalysis[]; 
+/**
+ * The whole record.
+ */
+summary: LedgerSummary }
+/**
+ * A real record, reshaped into the input the variance module takes.
+ */
+export type LedgerMix = { 
+/**
+ * One leg per price bucket, shortest price first.
+ */
+legs: MixLeg[]; 
+/**
+ * Bets that contributed.
+ */
+betsUsed: number; 
+/**
+ * Bets skipped because no fair closing line was recorded for them.
+ * 
+ * Reported rather than quietly dropped: a mix built from a third of a
+ * record is a different claim than one built from all of it.
+ */
+betsSkipped: number }
+/**
+ * A whole betting record, summarised.
+ */
+export type LedgerSummary = { 
+/**
+ * Bets in the record.
+ */
+bets: number; 
+/**
+ * Bets that have settled.
+ */
+settled: number; 
+/**
+ * Bets still open.
+ */
+pending: number; 
+/**
+ * Bets won.
+ */
+won: number; 
+/**
+ * Bets lost.
+ */
+lost: number; 
+/**
+ * Bets pushed or voided.
+ */
+pushed: number; 
+/**
+ * Money risked on settled bets.
+ */
+staked: number; 
+/**
+ * Realised profit.
+ */
+profit: number; 
+/**
+ * Profit as a fraction of money risked.
+ */
+roi: number; 
+/**
+ * Share of *decided* bets won, 0–1. Pushes excluded.
+ */
+winRate: number; 
+/**
+ * Settled bets that also have a closing price recorded.
+ */
+withClose: number; 
+/**
+ * Mean probability points gained against the close.
+ * 
+ * `None` when no bet in the record has a closing price.
+ */
+meanClvPoints: number | null; 
+/**
+ * Share of those bets that beat the close, 0–1.
+ */
+beatCloseRate: number | null; 
+/**
+ * Settled bets whose closing market was recorded on both sides.
+ */
+withFairClose: number; 
+/**
+ * Profit the record should have produced, against the fair close.
+ * 
+ * `None` when no bet has both closing prices.
+ */
+expectedProfit: number | null; 
+/**
+ * Expected profit as a fraction of the money those bets risked.
+ */
+expectedRoi: number | null; 
+/**
+ * Realised profit minus expected profit.
+ * 
+ * Variance, named. Positive means the record ran better than the prices
+ * it took deserved; negative means worse. It is normally the largest
+ * number on this list, and treating it as skill in either direction is
+ * the most common way a betting record is misread.
+ */
+luck: number | null }
+/**
  * Which of two competing lines is better, and by how much.
  */
 export type LineComparison = { 
@@ -1236,6 +1658,42 @@ markets: Market[];
  * True where a draw is a distinct moneyline outcome.
  */
 threeWayMoneyline: boolean }
+/**
+ * Something went wrong talking to the bet log.
+ * 
+ * Deliberately separate from `MathError`: a disk failure and a bad
+ * probability are not the same kind of problem, and collapsing them would
+ * leave the UI unable to tell the user which one happened.
+ */
+export type LogError = 
+/**
+ * The database could not be read or written.
+ */
+{ kind: "storage"; detail: { 
+/**
+ * What SQLite reported.
+ */
+message: string } } | 
+/**
+ * No bet with that id.
+ */
+{ kind: "notFound"; detail: { 
+/**
+ * The id that was looked up.
+ */
+id: number } } | 
+/**
+ * A field failed validation before it could be stored.
+ */
+{ kind: "invalid"; detail: { 
+/**
+ * Which field.
+ */
+field: string; 
+/**
+ * Why it was rejected.
+ */
+reason: string } }
 /**
  * A precision-weighted combination of two margin estimates.
  */

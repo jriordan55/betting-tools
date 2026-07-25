@@ -1,6 +1,6 @@
 //! Desktop shell for the bettor calculators.
 //!
-//! This crate owns windowing, IPC, and (from Phase 6) the SQLite bet log.
+//! This crate owns windowing, IPC, and the SQLite bet log.
 //! It deliberately owns no math: every command is a thin adapter that
 //! deserializes input, calls `bettor_core`, and serializes the result.
 //!
@@ -10,8 +10,10 @@
 //! commands take an optional seed and always report back the one they used, so
 //! any figure a user quotes can be reproduced exactly.
 
+pub mod betlog;
 pub mod commands;
 
+use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
 
 /// Draws a fresh seed for a simulation the caller did not pin.
@@ -74,6 +76,14 @@ fn builder() -> Builder {
         commands::clv_ladder,
         commands::bet_mix,
         commands::simulate_season,
+        commands::add_bet,
+        commands::update_bet,
+        commands::delete_bet,
+        commands::list_bets,
+        commands::bet_log_sports,
+        commands::analyze_bet_log,
+        commands::bet_log_mix,
+        commands::bet_log_status,
         commands::normal_cdf,
         commands::prob_to_spread,
     ])
@@ -89,6 +99,16 @@ pub fn run() {
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
             builder.mount_events(app);
+
+            // The log lives beside the app's own data rather than in the
+            // user's documents: it is application state, and a file the user
+            // can move out from under an open connection is a support ticket.
+            let path = app
+                .path()
+                .app_data_dir()
+                .map(|dir| dir.join("betlog.sqlite3"))
+                .unwrap_or_else(|_| std::path::PathBuf::from("betlog.sqlite3"));
+            app.manage(betlog::BetLog::open_or_ephemeral(&path));
             Ok(())
         })
         .run(tauri::generate_context!())

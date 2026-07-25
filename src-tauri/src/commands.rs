@@ -9,9 +9,10 @@
 //! union, so the frontend gets a discriminated type it can match on rather
 //! than a string it has to parse.
 
+use crate::betlog;
 use bettor_core::{
-    arbitrage, bayesian, clv, correlation, devig, distributions, hold, line, match_model, middle,
-    odds, parlay, probability, regression, risk_of_ruin, teaser, variance, wager, MathError,
+    arbitrage, bayesian, clv, correlation, devig, distributions, hold, ledger, line, match_model,
+    middle, odds, parlay, probability, regression, risk_of_ruin, teaser, variance, wager, MathError,
 };
 
 /// Result of a command, with the error type the frontend sees.
@@ -638,6 +639,122 @@ pub async fn simulate_season(
     seed: Option<String>,
 ) -> CmdResult<variance::SeasonResult> {
     variance::simulate_season(&input, resolve_seed(seed)?)
+}
+
+// ---------------------------------------------------------------- bet log
+
+/// Something that can go wrong reading or analysing the bet log.
+///
+/// Two sources, kept apart. `MathError` must never learn that a disk exists —
+/// `bettor-core` has no io — and a caller wants to know whether the log could
+/// not be *read* or whether one of the bets in it does not make sense. The
+/// frontend matches on `source` and then on the inner `kind`.
+#[derive(Debug, thiserror::Error, serde::Serialize, specta::Type)]
+#[serde(tag = "source", content = "error", rename_all = "camelCase")]
+pub enum BetLogError {
+    /// The log itself could not be read or written.
+    #[error(transparent)]
+    Storage(#[from] betlog::LogError),
+    /// A bet in the log could not be analysed.
+    #[error(transparent)]
+    Math(#[from] MathError),
+}
+
+type LogResult<T> = Result<T, betlog::LogError>;
+type AnalysisResult<T> = Result<T, BetLogError>;
+
+/// Records a bet.
+#[tauri::command]
+#[specta::specta]
+pub fn add_bet(log: tauri::State<'_, betlog::BetLog>, draft: betlog::BetDraft) -> LogResult<betlog::Bet> {
+    log.add(&draft)
+}
+
+/// Replaces a recorded bet — settling it, or correcting a typo.
+#[tauri::command]
+#[specta::specta]
+pub fn update_bet(
+    log: tauri::State<'_, betlog::BetLog>,
+    id: i64,
+    draft: betlog::BetDraft,
+) -> LogResult<betlog::Bet> {
+    log.update(id, &draft)
+}
+
+/// Deletes a recorded bet.
+#[tauri::command]
+#[specta::specta]
+pub fn delete_bet(log: tauri::State<'_, betlog::BetLog>, id: i64) -> LogResult<()> {
+    log.delete(id)
+}
+
+/// Lists recorded bets, newest first.
+#[tauri::command]
+#[specta::specta]
+pub fn list_bets(
+    log: tauri::State<'_, betlog::BetLog>,
+    filter: betlog::BetFilter,
+) -> LogResult<Vec<betlog::Bet>> {
+    log.list(&filter)
+}
+
+/// Every sport that appears in the log.
+#[tauri::command]
+#[specta::specta]
+pub fn bet_log_sports(log: tauri::State<'_, betlog::BetLog>) -> LogResult<Vec<String>> {
+    log.sports()
+}
+
+/// Why the bet log is not saving to disk, or `None` when it is.
+///
+/// Surfaced so the UI can say that nothing is being kept, rather than looking
+/// like it works until the window closes.
+#[tauri::command]
+#[specta::specta]
+pub fn bet_log_status(log: tauri::State<'_, betlog::BetLog>) -> Option<String> {
+    log.ephemeral_reason().map(str::to_owned)
+}
+
+/// A slice of the bet log, with each bet analysed and the whole thing summed.
+#[derive(Debug, serde::Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BetLogView {
+    /// The bets themselves, newest first.
+    pub bets: Vec<betlog::Bet>,
+    /// Their analysis, in the same order, plus the summary.
+    pub ledger: ledger::Ledger,
+}
+
+/// Reads a slice of the log and analyses it.
+///
+/// One command rather than two so the rows and the summary can never describe
+/// different sets of bets — which is what a separate `list` and `summarise`
+/// would produce the moment a filter changed between the calls.
+#[tauri::command]
+#[specta::specta]
+pub fn analyze_bet_log(
+    log: tauri::State<'_, betlog::BetLog>,
+    filter: betlog::BetFilter,
+) -> AnalysisResult<BetLogView> {
+    let bets = log.list(&filter)?;
+    let logged: Vec<ledger::LoggedBet> = bets.iter().map(betlog::to_logged).collect();
+    Ok(BetLogView {
+        ledger: ledger::analyze(&logged)?,
+        bets,
+    })
+}
+
+/// Reshapes the log into the bet mix the variance module takes.
+#[tauri::command]
+#[specta::specta]
+pub fn bet_log_mix(
+    log: tauri::State<'_, betlog::BetLog>,
+    filter: betlog::BetFilter,
+    bucket_cents: f64,
+) -> AnalysisResult<ledger::LedgerMix> {
+    let bets = log.list(&filter)?;
+    let logged: Vec<ledger::LoggedBet> = bets.iter().map(betlog::to_logged).collect();
+    Ok(ledger::to_mix(&logged, bucket_cents)?)
 }
 
 // ------------------------------------------------------------ primitives

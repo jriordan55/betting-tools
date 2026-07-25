@@ -8,20 +8,19 @@ No math ships in TypeScript. No Python anywhere.
 
 ---
 
-## ⏸ RESUME HERE — 2026-07-25, after Phases 4, 8 and 5
+## ⏸ RESUME HERE — 2026-07-25, after Phases 4, 8, 5 and 6
 
-**State:** `pnpm verify` green — 252 tests (241 unit, 10 parity, 1 bindings
-export), svelte-check 0/0, clippy `-D warnings` clean, `vite build` clean.
+**State:** `pnpm verify` green — 281 tests (255 core, 10 parity, 15 bet-log
+storage, 1 bindings export), svelte-check 0/0, clippy `-D warnings` clean,
+`vite build` clean.
 
 **The port is complete.** All 21 reference calculators ship, against the design
 system, the shared UI kit, and the `Async` reactive pattern settled in Phase 4.
 Nothing from `~/Code/bettor-calculator-main` is unported. `ParlayCorrelation` is
 a deliberate cut — see *Deliberately not built*, below.
 
-**Phase 5 is done** — `variance.rs` and four calculators. What is left:
+**Phases 5 and 6 are done.** What is left:
 
-- **Phase 6 — SQLite bet log.** No `rusqlite` dependency. Feeds Phase 5 a real
-  bet mix rather than a hypothetical one.
 - **Phase 7 — probability visualizer.** `~/Code/probabilites-main` untouched.
 - **Phase 2 leftover** — the JS-vs-Rust benchmark. The speed claim is currently
   unquantified.
@@ -582,11 +581,61 @@ Phase 4 note predicted these components would need extending here, and they
 did. `FanChart` is new: percentile bands are a different drawing, not a
 different line.
 
-### Phase 6 — SQLite bet log
-- [ ] rusqlite (bundled, WAL), migrations, schema versioning
-- [ ] Log bets: date, market, price taken, closing price, stake, result
-- [ ] Auto-compute CLV (in probability points) and realized ROI
-- [ ] Feed the real book into the Phase 5 variance model — actual mix, not hypothetical
+### Phase 6 — SQLite bet log  ← COMPLETE
+- [x] rusqlite (bundled, WAL), migrations, schema versioning
+- [x] Log bets: date, market, price taken, closing price, stake, result
+- [x] Auto-compute CLV (in probability points) and realized ROI
+- [x] Feed the real book into the Phase 5 variance model — actual mix, not hypothetical
+
+Split in two, along the line CLAUDE.md draws: `bettor_core::ledger` reads a
+record and never sees a database; `src-tauri/src/betlog.rs` owns the database
+and computes nothing. 14 analysis tests, 15 storage tests, and the storage ones
+run against `:memory:` so `cargo test` touches no disk.
+
+**The figure the module is built around is `luck`** — realised profit minus
+expected profit against the devigged close. Over a few hundred bets that gap is
+routinely larger than the edge itself in either direction, so a bettor with a
+real edge and a losing year is ordinary. Stating it beats leaving a reader to
+infer it from two rows that look unrelated.
+
+**The opposing closing price is required for any edge figure.** A closing price
+alone still carries the book's margin, so an edge derived from it is overstated
+by roughly half the hold — enough to make a break-even bettor look like a
+winning one. `BetAnalysis::ev` is `None` without it. Closing line value in
+points is still reported, because that compares two vigged numbers and the
+margins largely cancel.
+
+**Decisions worth keeping:**
+
+- **Schema version lives in `PRAGMA user_version`**, not a table of our own. It
+  is transactional, and the version bump shares a transaction with the change
+  it describes, so a half-applied migration is not a reachable state.
+- **An unknown outcome word reads as `pending`** rather than failing the read.
+  A row written by a newer build must not make the log unopenable to an older
+  one.
+- **A log file that will not open degrades to memory** and says so in the UI.
+  Twenty-five calculators have nothing to do with the bet log, and making them
+  unreachable because one file is corrupt is a worse failure than the one being
+  reported.
+- **Filters bind their values**, so a sport named `'; DROP TABLE bets; --` is a
+  sport that matches nothing. There is a test.
+- **Pushes are settled but not decided**, and are excluded from the win rate.
+- **`to_mix` carries the edge against the close, not the realised return.**
+  "Given bets this good at prices this long, what does a season look like" is a
+  different question from "what did last season do", and only the first
+  generalises. Bets without a fair close are skipped *and counted*, because a
+  mix built from a third of a record is a different claim than one built from
+  all of it.
+- **`ledger::Outcome` exports as `BetOutcome`** — `middle::Outcome` already
+  occupies that name in TypeScript's flat namespace, the same collision
+  `arbitrage::Leg` and `middle::Leg` hit in Phase 3.
+
+**Caught in review before commit:** the page fired three commands per refresh
+with no generation guard, so a slow response to an old filter could overwrite a
+fast response to the current one — the staleness `Async` exists to prevent, on
+the one page that cannot use it (it also refreshes imperatively after a write).
+Deleting a bet was also a single unguarded click, two pixels from *edit*, on an
+unrecoverable row; it now arms first.
 
 ### Phase 7 — Probability visualizer
 - [ ] Port `~/Code/probabilites-main/betting-probability-viz.html`: vig removal, margin/total

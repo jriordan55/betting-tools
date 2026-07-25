@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { commands, type MathError, type MixLeg, type SeasonResult } from '$lib/bindings';
 	import { numeric, positive } from '$lib/async.svelte';
+	import { takeMix } from '$lib/handoff';
 	import { count, money, moneySigned, num, pct, pctSigned, signColor } from '$lib/format';
 	import FanChart from '$lib/charts/FanChart.svelte';
 	import {
@@ -35,6 +37,24 @@
 		{ price: '-110', stake: '100', edge: '2', count: '300' },
 		{ price: '600', stake: '100', edge: '5', count: '40' }
 	]);
+
+	/**
+	 * The bet log can hand a real mix over on the way here. Consumed once on
+	 * mount, so a later visit shows the defaults rather than a stale book.
+	 */
+	let fromBetLog = $state(false);
+
+	onMount(() => {
+		const legs = takeMix();
+		if (!legs || legs.length === 0) return;
+		buckets = legs.map((leg) => ({
+			price: String(Math.round(leg.american)),
+			stake: leg.stake.toFixed(0),
+			edge: (leg.edge * 100).toFixed(2),
+			count: String(leg.count)
+		}));
+		fromBetLog = true;
+	});
 
 	let bankroll = $state('10000');
 	let numSims = $state('5000');
@@ -119,6 +139,12 @@
 </script>
 
 <InputCard title="The season">
+	{#if fromBetLog}
+		<p class="imported">
+			Loaded from your bet log — each bucket carries the edge its closing lines say you had, not
+			the return you actually got.
+		</p>
+	{/if}
 	<div class="grid head">
 		<span>Price</span>
 		<span>Stake</span>
@@ -308,6 +334,13 @@
 		width: 100%;
 		margin-top: 0.5rem;
 		color: var(--accent-cyan);
+	}
+
+	.imported {
+		font-size: 0.75rem;
+		color: var(--accent-cyan);
+		line-height: 1.6;
+		margin-bottom: 0.85rem;
 	}
 
 	.check {

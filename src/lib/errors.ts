@@ -1,4 +1,4 @@
-import type { MathError, Result } from './bindings';
+import type { BetLogError, LogError, MathError, Result } from './bindings';
 
 /**
  * Render a `MathError` as a sentence a bettor can act on.
@@ -44,4 +44,31 @@ export function err<T>(result: Result<T, MathError>): MathError | null {
 
 function formatNumber(value: number, digits: number): string {
 	return Number.isFinite(value) ? value.toFixed(digits).replace(/\.?0+$/, '') : String(value);
+}
+
+/**
+ * Render a `LogError` as a sentence.
+ *
+ * Separate from `describeError` because these are not math failures. A disk
+ * that will not write and a probability out of range need different words and,
+ * more importantly, different reactions from the reader.
+ */
+export function describeLogError(error: LogError): string {
+	switch (error.kind) {
+		case 'storage':
+			return `The bet log could not be read or written. ${error.detail.message}`;
+		case 'notFound':
+			return `That bet is no longer in the log (id ${error.detail.id}). It may have been deleted in another window.`;
+		case 'invalid': {
+			const { field, reason } = error.detail;
+			return `${field}: ${reason}.`;
+		}
+	}
+}
+
+/** Render either failure a bet-log analysis can produce. */
+export function describeBetLogError(error: BetLogError): string {
+	return error.source === 'storage'
+		? describeLogError(error.error)
+		: describeError(error.error);
 }

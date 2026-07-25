@@ -69,7 +69,11 @@ pub struct Clv {
     /// Reported alongside [`Self::prob_points`] precisely so the gap between
     /// the two is visible: fifty cents on a longshot is worth less than twenty
     /// on a favorite.
-    pub cents: i32,
+    ///
+    /// Measured on the cents axis (see [`crate::odds::cents_between`]) rather
+    /// than by subtracting the two American numbers, which is only the same
+    /// thing while both prices sit on the same side of even money.
+    pub cents: f64,
 
     /// EV against the raw closing price — vig included, so overstated.
     ///
@@ -147,7 +151,10 @@ pub fn clv(
         close_implied,
         ratio: bet_decimal / close_decimal - 1.0,
         prob_points: close_implied - bet_implied,
-        cents: crate::odds::to_american(bet_decimal)? - crate::odds::to_american(close_decimal)?,
+        cents: crate::odds::cents_between(
+            f64::from(crate::odds::to_american(bet_decimal)?),
+            f64::from(crate::odds::to_american(close_decimal)?),
+        )?,
         ev_vs_raw_close: close_implied * bet_decimal - 1.0,
         ev_vs_fair,
         fair_prob,
@@ -198,10 +205,26 @@ mod tests {
     fn fifty_cents_on_a_longshot_beats_twenty_on_a_favorite_only_in_cents() {
         let favorite = at(-110.0, -130.0);
         let longshot = at(400.0, 350.0);
-        assert_eq!(favorite.cents, 20);
-        assert_eq!(longshot.cents, 50);
+        assert_relative_eq!(favorite.cents, 20.0, epsilon = 1e-9);
+        assert_relative_eq!(longshot.cents, 50.0, epsilon = 1e-9);
         // Two and a half times the cents, barely half the actual value.
         assert!(longshot.prob_points < favorite.prob_points);
+    }
+
+    #[test]
+    fn a_line_moving_through_even_money_is_still_a_small_move() {
+        // +105 closing at -115 is twenty cents. Subtracting the two American
+        // numbers — which is what this field used to do — reports 220, an
+        // enormous move on a line that barely budged. Ordinary scenario: any
+        // near-even market drifting one way.
+        let c = clv(
+            american_to_decimal(105.0).unwrap(),
+            american_to_decimal(-115.0).unwrap(),
+            None,
+        )
+        .unwrap();
+        assert_relative_eq!(c.cents, 20.0, epsilon = 1e-9);
+        assert_relative_eq!(c.prob_points, 0.0470, epsilon = 5e-4);
     }
 
     #[test]
@@ -216,7 +239,7 @@ mod tests {
         let c = at(-110.0, -110.0);
         assert_relative_eq!(c.ratio, 0.0, epsilon = 1e-12);
         assert_relative_eq!(c.prob_points, 0.0, epsilon = 1e-12);
-        assert_eq!(c.cents, 0);
+        assert_relative_eq!(c.cents, 0.0, epsilon = 1e-12);
         assert!(!c.is_positive());
     }
 

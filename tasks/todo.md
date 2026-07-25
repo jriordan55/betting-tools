@@ -8,9 +8,9 @@ No math ships in TypeScript. No Python anywhere.
 
 ---
 
-## ⏸ RESUME HERE — 2026-07-25, after Phases 4 and 8
+## ⏸ RESUME HERE — 2026-07-25, after Phases 4, 8 and 5
 
-**State:** `pnpm verify` green — 217 tests (206 unit, 10 parity, 1 bindings
+**State:** `pnpm verify` green — 252 tests (241 unit, 10 parity, 1 bindings
 export), svelte-check 0/0, clippy `-D warnings` clean, `vite build` clean.
 
 **The port is complete.** All 21 reference calculators ship, against the design
@@ -18,10 +18,8 @@ system, the shared UI kit, and the `Async` reactive pattern settled in Phase 4.
 Nothing from `~/Code/bettor-calculator-main` is unported. `ParlayCorrelation` is
 a deliberate cut — see *Deliberately not built*, below.
 
-**What is left is everything the port was a prerequisite for:**
+**Phase 5 is done** — `variance.rs` and four calculators. What is left:
 
-- **Phase 5 — odds-range / variance.** No `variance.rs` exists. This is the
-  original idea and the only planned module with no Rust behind it.
 - **Phase 6 — SQLite bet log.** No `rusqlite` dependency. Feeds Phase 5 a real
   bet mix rather than a hypothetical one.
 - **Phase 7 — probability visualizer.** `~/Code/probabilites-main` untouched.
@@ -516,15 +514,73 @@ desktop window:
 3. Light mode needed its own accents. `#2ed573` on white is ~1.9:1, and those
    are the colours the numbers that matter are printed in.
 
-### Phase 5 — Odds-range / variance module (new)
+### Phase 5 — Odds-range / variance module (new)  ← COMPLETE
 The original idea. All simulation in Rust.
-- [ ] Breakeven ladder — breakeven % vs price, with required win rate at a chosen edge
-- [ ] CLV translator — cents of CLV vs **probability points** of CLV across the price range
+- [x] Breakeven ladder — breakeven % vs price, with required win rate at a chosen edge
+- [x] CLV translator — cents of CLV vs **probability points** of CLV across the price range
       (-110→-130 is 20¢ but +4.1 pts; +400→+350 is 50¢ but only +2.2 pts)
-- [ ] Bet-mix builder — blended breakeven, per-bet SD, variance contribution by price bucket
-- [ ] Season simulator — Monte Carlo equity-curve fan at constant edge; P(losing season),
+- [x] Bet-mix builder — blended breakeven, per-bet SD, variance contribution by price bucket
+- [x] Season simulator — Monte Carlo equity-curve fan at constant edge; P(losing season),
       median/p95 max drawdown, longest losing streak
-- [ ] Charts in D3, data computed Rust-side
+- [x] Charts in D3, data computed Rust-side
+
+`variance.rs`, six commands, four calculators, 35 tests. **Added, not in the
+plan: `bets_to_detect`** — how many bets before an edge clears two standard
+errors. It is the figure that turns the module's thesis into a number:
+
+| Price | SD per unit | Bets to confirm a 5% edge |
+|---|---|---|
+| -110 | 0.95 | ~1,440 |
+| +400 | 2.04 | ~6,640 |
+
+Identical expectation, four and a half times the evidence. Edge grows linearly
+in the sample and noise grows with its square root, so the horizon scales with
+the *square* of the standard deviation.
+
+**The measured claims, all pinned by tests rather than asserted in prose:**
+
+- Variance of a one-unit bet at the break-even rate is exactly `decimal − 1`,
+  the amount you stand to win. Closed form, checked across five prices.
+- The *cushion* — win-rate points above break even that an edge requires —
+  **shrinks** as the price lengthens: 2.62 points at -110 against 1.00 at +400
+  for the same 5%. A longshot edge sounds easier and proves harder.
+- Twenty cents is 4.14 probability points at -110 and 0.20 at +900, a factor of
+  twenty, where the ratio measure falls off only fourfold.
+- A genuine 3% edge over 200 bets ends the season down **32%** of the time at
+  -110 and **45%** at +600.
+
+**A real bug in my own port, found while building this.** `clv.rs` computed
+cents by subtracting one American number from another. That is only cents while
+both prices sit on the same side of even money: a line moving +105 → -115 is an
+ordinary twenty-cent move, and subtraction reports **220**. Nothing exists
+strictly between -100 and +100 and the two endpoints are the same price, so the
+axis has a hole in it. `odds::cents_between` / `shift_cents` / `price_ladder`
+now close it in one place, and `Clv::cents` became `f64` on the way through.
+Exactly the seam pattern in CLAUDE.md — no formula was wrong.
+
+**Two more bugs, in the Phase 5 code itself, caught in review before commit:**
+
+1. `BetMixBuilder` read each result row's bet count from its own input list by
+   index. Legs are only sent for buckets with a price, so one blank bucket
+   shifts every row after it and silently mislabels the table. `MixLegResult`
+   now carries its own `count`.
+2. `SeasonSimulator` drew the fan chart's break-even line from the live
+   bankroll field rather than from the run. Editing the field after a run moved
+   the line under a finished simulation. `SeasonResult` now echoes
+   `starting_bankroll`.
+
+Also: `simulate_season` caps `bets × seasons`, not each separately. Both
+factors were legal alone and their product could be two billion wagers.
+
+**`over_prob` became `over_under_prob`.** Deriving the under side as `1 - over`
+had migrated from the frontend into `commands.rs`, whose own module doc says no
+arithmetic lives there. Both sides are now counted next to the push-splitting
+rule that makes them sum to one.
+
+**`LineChart` grew multi-series support** rather than being duplicated — the
+Phase 4 note predicted these components would need extending here, and they
+did. `FanChart` is new: percentile bands are a different drawing, not a
+different line.
 
 ### Phase 6 — SQLite bet log
 - [ ] rusqlite (bundled, WAL), migrations, schema versioning

@@ -1,6 +1,12 @@
 import type { Component } from 'svelte';
 
-export type Category = 'conversion' | 'analysis' | 'sizing' | 'comparison' | 'simulation';
+export type Category =
+	| 'conversion'
+	| 'analysis'
+	| 'sizing'
+	| 'variance'
+	| 'comparison'
+	| 'simulation';
 
 export interface Calculator {
 	slug: string;
@@ -17,6 +23,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 	analysis: 'Analysis',
 	sizing: 'Sizing',
 	comparison: 'Comparison',
+	variance: 'Odds Range & Variance',
 	simulation: 'Simulation'
 };
 
@@ -24,6 +31,7 @@ export const CATEGORY_ORDER: Category[] = [
 	'conversion',
 	'analysis',
 	'sizing',
+	'variance',
 	'comparison',
 	'simulation'
 ];
@@ -185,6 +193,42 @@ export const CALCULATORS: Calculator[] = [
 		category: 'comparison',
 		icon: '><',
 		load: () => import('./calculators/BetterLine.svelte')
+	},
+	{
+		slug: 'breakeven-ladder',
+		title: 'Breakeven Ladder',
+		description:
+			'Break-even and required win rate across a whole price range, with the sample size each one needs before its edge can be told from noise',
+		category: 'variance',
+		icon: '=',
+		load: () => import('./calculators/BreakevenLadder.svelte')
+	},
+	{
+		slug: 'clv-translator',
+		title: 'CLV Translator',
+		description:
+			'What a cents move is actually worth in probability points, across every price — the same twenty cents is worth twenty times more at -110 than at +900',
+		category: 'variance',
+		icon: '~>',
+		load: () => import('./calculators/ClvTranslator.svelte')
+	},
+	{
+		slug: 'bet-mix',
+		title: 'Bet Mix Builder',
+		description:
+			'Blended break-even, per-season standard deviation, and which price buckets supply the swing rather than the profit',
+		category: 'variance',
+		icon: '#',
+		load: () => import('./calculators/BetMixBuilder.svelte')
+	},
+	{
+		slug: 'season-simulator',
+		title: 'Season Simulator',
+		description:
+			'Monte Carlo equity-curve fan for a whole season of your bet mix — how often a real edge still ends the year down',
+		category: 'variance',
+		icon: '^',
+		load: () => import('./calculators/SeasonSimulator.svelte')
 	},
 	{
 		slug: 'prop-simulator',

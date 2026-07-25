@@ -353,11 +353,183 @@ pub fn odds_to_implied(value: &str, format: OddsFormat) -> Result<f64> {
     Ok(1.0 / to_decimal(value, format)?)
 }
 
+// ---------------------------------------------------------------------------
+// The cents axis
+// ---------------------------------------------------------------------------
+//
+// American odds have a hole in them. Nothing lives strictly between -100 and
+// +100, and those two endpoints are the same price. Subtracting one American
+// number from another therefore only measures cents while both prices stay on
+// the same side of the pivot: `+105` to `-115` is twenty cents, and naive
+// subtraction calls it two hundred and twenty.
+//
+// Everything that measures or moves a price by cents goes through the
+// transform below, so the discontinuity is handled in exactly one place.
+
+/// Maps an American price onto a continuous axis where distance is cents.
+fn cent_line(american: f64) -> f64 {
+    if american > 0.0 {
+        american - 100.0
+    } else {
+        american + 100.0
+    }
+}
+
+/// Inverse of [`cent_line`]. Zero maps to even money.
+fn from_cent_line(cents: f64) -> f64 {
+    if cents > 0.0 {
+        cents + 100.0
+    } else {
+        cents - 100.0
+    }
+}
+
+/// Cents between two American prices, correct across the ±100 pivot.
+///
+/// Positive when `from` is the longer price — that is, when moving from `from`
+/// to `to` means the price shortened.
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] if either price is under 100 in magnitude.
+pub fn cents_between(from: f64, to: f64) -> Result<f64> {
+    american_to_decimal(from)?;
+    american_to_decimal(to)?;
+    Ok(cent_line(from) - cent_line(to))
+}
+
+/// Shortens an American price by `cents`. A negative `cents` lengthens it.
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] if the price is under 100 in magnitude or the
+/// move is not finite.
+pub fn shift_cents(american: f64, cents: f64) -> Result<f64> {
+    american_to_decimal(american)?;
+    if !cents.is_finite() {
+        return Err(MathError::DomainError {
+            param: "cents",
+            constraint: "finite",
+            value: cents,
+        });
+    }
+    Ok(from_cent_line(cent_line(american) - cents))
+}
+
+/// Builds a ladder of American prices, evenly spaced in cents.
+///
+/// The step is applied on the cents axis, so consecutive rungs are a fixed
+/// number of cents apart rather than jumping by 200 across the pivot.
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] for a price under 100 in magnitude, a
+/// non-positive step, or a range whose second price is not the longer one;
+/// [`MathError::ShapeError`] if the range would produce more than 2,000 rungs.
+pub fn price_ladder(from_american: f64, to_american: f64, step_cents: f64) -> Result<Vec<f64>> {
+    american_to_decimal(from_american)?;
+    american_to_decimal(to_american)?;
+    if !step_cents.is_finite() || step_cents <= 0.0 {
+        return Err(MathError::DomainError {
+            param: "step",
+            constraint: "greater than zero",
+            value: step_cents,
+        });
+    }
+    let lo = cent_line(from_american);
+    let hi = cent_line(to_american);
+    if hi <= lo {
+        return Err(MathError::DomainError {
+            param: "range",
+            constraint: "the second price must be longer than the first",
+            value: hi - lo,
+        });
+    }
+
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "non-negative by the check above, and capped on the next line"
+    )]
+    let rungs = ((hi - lo) / step_cents).floor() as usize + 1;
+    if rungs > 2_000 {
+        return Err(MathError::ShapeError {
+            what: "ladder rungs",
+            expected: "at most 2000",
+            got: rungs,
+        });
+    }
+
+    Ok((0..rungs)
+        .map(|i| {
+            #[allow(clippy::cast_precision_loss, reason = "rung index, capped at 2000")]
+            let offset = i as f64 * step_cents;
+            from_cent_line(lo + offset)
+        })
+        .collect())
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing, reason = "test code")]
 mod tests {
     use super::*;
     use approx::assert_relative_eq;
+
+    #[test]
+    fn cents_are_plain_subtraction_while_both_prices_share_a_side() {
+        assert_relative_eq!(cents_between(-110.0, -130.0).unwrap(), 20.0, epsilon = 1e-9);
+        assert_relative_eq!(cents_between(400.0, 350.0).unwrap(), 50.0, epsilon = 1e-9);
+    }
+
+    #[test]
+    fn cents_across_the_pivot_do_not_jump_by_two_hundred() {
+        // The bug this transform exists to prevent. A line moving from +105 to
+        // -115 is an ordinary twenty-cent move; naive subtraction calls it two
+        // hundred and twenty.
+        assert_relative_eq!(cents_between(105.0, -115.0).unwrap(), 20.0, epsilon = 1e-9);
+        assert_relative_eq!(105.0 - -115.0, 220.0, epsilon = 1e-9);
+
+        // +100 and -100 are the same price, so the distance between them is nil.
+        assert_relative_eq!(cents_between(100.0, -100.0).unwrap(), 0.0, epsilon = 1e-9);
+    }
+
+    #[test]
+    fn shifting_and_measuring_are_inverses() {
+        for american in [-400.0, -110.0, -101.0, 100.0, 145.0, 900.0] {
+            for cents in [-75.0, -20.0, 0.0, 15.0, 60.0] {
+                let moved = shift_cents(american, cents).unwrap();
+                assert_relative_eq!(cents_between(american, moved).unwrap(), cents, epsilon = 1e-9);
+            }
+        }
+    }
+
+    #[test]
+    fn a_shortened_price_is_always_a_shorter_price() {
+        for american in [-300.0, -110.0, 110.0, 500.0] {
+            let d = american_to_decimal(american).unwrap();
+            let moved = american_to_decimal(shift_cents(american, 20.0).unwrap()).unwrap();
+            assert!(moved < d, "{american} did not shorten: {d} -> {moved}");
+        }
+    }
+
+    #[test]
+    fn the_price_ladder_steps_evenly_in_cents_and_skips_the_hole() {
+        let rungs = price_ladder(-300.0, 300.0, 50.0).unwrap();
+        assert!(rungs.iter().all(|a| a.abs() >= 100.0), "{rungs:?}");
+        for w in rungs.windows(2) {
+            assert_relative_eq!(cents_between(w[1], w[0]).unwrap(), 50.0, epsilon = 1e-9);
+        }
+        assert_relative_eq!(rungs[0], -300.0, epsilon = 1e-9);
+        assert!(rungs.contains(&-100.0), "even money should be a rung");
+    }
+
+    #[test]
+    fn the_price_ladder_rejects_a_reversed_or_oversized_range() {
+        assert!(price_ladder(300.0, -300.0, 10.0).is_err());
+        assert!(price_ladder(-300.0, 300.0, 0.0).is_err());
+        assert!(price_ladder(-100.0, 100_000.0, 1.0).is_err());
+        assert!(price_ladder(-50.0, 300.0, 10.0).is_err());
+    }
 
     #[test]
     fn implied_to_decimal_inverts_decimal_to_implied() {

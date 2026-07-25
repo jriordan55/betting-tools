@@ -384,6 +384,74 @@ async simulateRuin(input: RuinInput, seed: string | null) : Promise<Result<RuinR
 }
 },
 /**
+ * Builds a range of American prices evenly spaced in cents.
+ */
+async priceLadder(fromAmerican: number, toAmerican: number, stepCents: number) : Promise<Result<number[], MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("price_ladder", { fromAmerican, toAmerican, stepCents }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Cents between two American prices, correct across the ±100 pivot.
+ */
+async centsBetween(fromAmerican: number, toAmerican: number) : Promise<Result<number, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("cents_between", { fromAmerican, toAmerican }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Breakeven and required win rate across a range of prices.
+ */
+async breakevenLadder(americanPrices: number[], targetEdge: number) : Promise<Result<LadderRung[], MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("breakeven_ladder", { americanPrices, targetEdge }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Translates a fixed cents move into probability points across a price range.
+ */
+async clvLadder(americanPrices: number[], cents: number) : Promise<Result<ClvRung[], MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("clv_ladder", { americanPrices, cents }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Prices a mix of bets for return and for variance.
+ */
+async betMix(legs: MixLeg[]) : Promise<Result<BetMix, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("bet_mix", { legs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Simulates a season of a bet mix many times over.
+ * 
+ * Long-running, so it is `async` for the same reason as [`simulate_ruin`].
+ */
+async simulateSeason(input: SeasonInput, seed: string | null) : Promise<Result<SeasonResult, MathError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("simulate_season", { input, seed }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Standard normal CDF, exposed for charting the model directly.
  */
 async normalCdf(z: number) : Promise<number> {
@@ -447,6 +515,61 @@ stake: number;
  * Return if it wins, stake included.
  */
 payout: number }
+/**
+ * A whole bet mix, priced for both return and ride.
+ */
+export type BetMix = { 
+/**
+ * Per-kind breakdown, in the order supplied.
+ */
+legs: MixLegResult[]; 
+/**
+ * How many bets the mix contains.
+ */
+bets: number; 
+/**
+ * Total money risked.
+ */
+totalStake: number; 
+/**
+ * Expected profit over the whole mix.
+ */
+ev: number; 
+/**
+ * Expected profit as a fraction of money risked.
+ */
+roi: number; 
+/**
+ * The single win rate that would break the mix even, 0–1.
+ * 
+ * Stake-weighted: `Σ stake / Σ (stake × decimal)`. It answers "what would
+ * I need to hit if every bet here hit at the same rate", which is a
+ * summary, not a prediction — the bets do not hit at the same rate.
+ */
+blendedBreakeven: number; 
+/**
+ * Stake-weighted average of the legs' actual win rates, 0–1.
+ */
+blendedWinRate: number; 
+/**
+ * Standard deviation of the mix's total profit, in currency.
+ */
+sd: number; 
+/**
+ * [`Self::sd`] as a fraction of money risked.
+ */
+sdPerUnit: number; 
+/**
+ * Expected profit divided by its standard deviation.
+ * 
+ * How much of the swing the edge actually is, over one run of this mix.
+ * Below about 0.5 the season is mostly noise no matter how good the bets.
+ */
+tStat: number; 
+/**
+ * Bets before the edge clears two standard errors, at this mix's shape.
+ */
+betsToDetect: number | null }
 /**
  * Which kind of line is being modelled.
  */
@@ -565,6 +688,10 @@ probPoints: number;
  * Reported alongside [`Self::prob_points`] precisely so the gap between
  * the two is visible: fifty cents on a longshot is worth less than twenty
  * on a favorite.
+ * 
+ * Measured on the cents axis (see [`crate::odds::cents_between`]) rather
+ * than by subtracting the two American numbers, which is only the same
+ * thing while both prices sit on the same side of even money.
  */
 cents: number; 
 /**
@@ -584,6 +711,48 @@ evVsFair: number | null;
  * Fair probability at the close once the vig is removed, 0–1.
  */
 fairProb: number | null }
+/**
+ * What a fixed cents move is worth at one price.
+ */
+export type ClvRung = { 
+/**
+ * Price taken.
+ */
+american: number; 
+/**
+ * Price taken, decimal.
+ */
+decimal: number; 
+/**
+ * Probability it implies, 0–1.
+ */
+implied: number; 
+/**
+ * Price after the move.
+ */
+closedAmerican: number; 
+/**
+ * Price after the move, decimal.
+ */
+closedDecimal: number; 
+/**
+ * Probability the closing price implies, 0–1.
+ */
+closedImplied: number; 
+/**
+ * Probability points gained. The currency that compounds a bankroll.
+ */
+probPoints: number; 
+/**
+ * `taken / closed - 1` — the ratio measure, retained to be argued with.
+ */
+ratio: number; 
+/**
+ * How many times larger the ratio measure looks than the honest one.
+ * 
+ * Climbs steeply with price. This ratio *is* the misconception.
+ */
+distortion: number }
 /**
  * One point on a convergence curve.
  */
@@ -788,6 +957,34 @@ breakeven: number;
  */
 edgePoints: number }
 /**
+ * The percentile band across all paths at one point in the season.
+ */
+export type FanPoint = { 
+/**
+ * Bets placed so far.
+ */
+bet: number; 
+/**
+ * 5th percentile bankroll.
+ */
+p05: number; 
+/**
+ * 25th percentile bankroll.
+ */
+p25: number; 
+/**
+ * Median bankroll.
+ */
+median: number; 
+/**
+ * 75th percentile bankroll.
+ */
+p75: number; 
+/**
+ * 95th percentile bankroll.
+ */
+p95: number }
+/**
  * A hedge on an open position.
  */
 export type Hedge = { 
@@ -952,6 +1149,45 @@ fairProb: number;
  * The American price that probability implies.
  */
 fairOdds: number }
+/**
+ * One price on the breakeven ladder.
+ */
+export type LadderRung = { 
+/**
+ * American price.
+ */
+american: number; 
+/**
+ * Decimal price.
+ */
+decimal: number; 
+/**
+ * Win rate that breaks even at this price, 0–1. This is `1 / decimal`.
+ */
+breakeven: number; 
+/**
+ * Win rate needed to earn the target edge, 0–1.
+ */
+requiredWinRate: number; 
+/**
+ * Percentage points between the two above.
+ * 
+ * Worth its own field because it *shrinks* as the price lengthens: the
+ * same 5% edge needs 2.6 points of cushion at -110 and 1.0 at +400. That
+ * makes a longshot edge look easier to hit and harder to prove, which is
+ * exactly backwards from how it is usually discussed.
+ */
+cushion: number; 
+/**
+ * Standard deviation of a one-unit bet at the required win rate.
+ */
+sdPerUnit: number; 
+/**
+ * Bets before the edge clears two standard errors.
+ * 
+ * `None` when the target edge is not positive.
+ */
+betsToDetect: number | null }
 /**
  * Which of two competing lines is better, and by how much.
  */
@@ -1286,6 +1522,75 @@ stake: number;
  */
 decimalOdds: number }
 /**
+ * One kind of bet in a mix: a price, a stake, an edge, and how many of them.
+ */
+export type MixLeg = { 
+/**
+ * American price.
+ */
+american: number; 
+/**
+ * Stake on each bet of this kind.
+ */
+stake: number; 
+/**
+ * EV per unit staked, as a fraction. `0.03` is a 3% edge.
+ */
+edge: number; 
+/**
+ * How many bets of this kind the mix contains.
+ */
+count: number }
+/**
+ * What one kind of bet contributes to the mix.
+ */
+export type MixLegResult = { 
+/**
+ * American price, normalised.
+ */
+american: number; 
+/**
+ * Decimal price.
+ */
+decimal: number; 
+/**
+ * How many bets of this kind, echoed back from the input.
+ * 
+ * Carried on the row rather than left to the caller to line up against
+ * its own input list: a leg the caller skipped shifts every index after
+ * it, and a table that reads counts from one list and prices from another
+ * would mislabel every row without failing.
+ */
+count: number; 
+/**
+ * Win rate implied by this leg's price and edge, 0–1.
+ */
+winProb: number; 
+/**
+ * Win rate that would break even at this price, 0–1.
+ */
+breakeven: number; 
+/**
+ * Total staked on bets of this kind.
+ */
+totalStake: number; 
+/**
+ * Share of the mix's money, 0–1.
+ */
+stakeShare: number; 
+/**
+ * Expected profit from bets of this kind.
+ */
+ev: number; 
+/**
+ * Share of the mix's *variance*, 0–1.
+ * 
+ * The number the whole builder is for. Variance scales with the square of
+ * the stake and with the length of the price, so a price bucket routinely
+ * contributes a share of the swing several times its share of the money.
+ */
+varianceShare: number }
+/**
  * The three ways a price gets written.
  */
 export type OddsFormat = 
@@ -1402,10 +1707,8 @@ overProb: number;
 /**
  * Probability it does not, 0–1.
  * 
- * Reported rather than left as `1 - over_prob` for the caller to work
- * out. The frontend does not compute, and a complement derived on the
- * far side of the IPC boundary would silently stop agreeing with this
- * side the moment pushes at the line are handled differently.
+ * Both sides come back counted from `bettor_core`; neither is derived
+ * from the other here. See `distributions::over_under_prob`.
  */
 underProb: number; 
 /**
@@ -1632,6 +1935,105 @@ away: number;
  * Probability of exactly this result.
  */
 prob: number }
+/**
+ * A season to simulate: a bet mix, a bankroll, and a number of runs.
+ */
+export type SeasonInput = { 
+/**
+ * The bets that make up one season. Their counts set its length.
+ */
+legs: MixLeg[]; 
+/**
+ * Starting bankroll.
+ */
+bankroll: number; 
+/**
+ * How many independent seasons to run.
+ */
+numSims: number; 
+/**
+ * Whether a bankroll that cannot cover the next stake stops the season.
+ * 
+ * Off by default in the UI: the fan chart is about the shape of an
+ * ordinary year, and a ruin barrier truncates exactly the paths that make
+ * the point. [`crate::risk_of_ruin`] is the module for the barrier.
+ * 
+ * With it off the season plays every bet regardless, so a path may finish
+ * below zero. That is deliberate — it keeps the fan an unbiased picture of
+ * the profit distribution instead of one censored at the bottom — but it
+ * means a negative ending is a bookkeeping figure, not a real bankroll.
+ * [`SeasonResult::ruin_prob`] still reports how often it happened.
+ */
+stopAtRuin: boolean }
+/**
+ * What a season looked like across every simulated run.
+ */
+export type SeasonResult = { 
+/**
+ * Seed that produced this run. Feed it back to reproduce exactly.
+ * 
+ * Crosses the wire as a decimal string — see [`crate::seed_repr`].
+ */
+seed: string; 
+/**
+ * Bets in one season.
+ */
+bets: number; 
+/**
+ * Bankroll every season started from.
+ * 
+ * Echoed back because it is the line between a winning year and a losing
+ * one: a chart that drew that line from a live input field would move it
+ * the moment the field was edited, and quietly relabel a finished run.
+ */
+startingBankroll: number; 
+/**
+ * The closed-form summary of the same mix, for comparison with the fan.
+ */
+mix: BetMix; 
+/**
+ * Percentile bands over the season, for the fan chart.
+ */
+fan: FanPoint[]; 
+/**
+ * Fraction of seasons that ended below the starting bankroll, 0–1.
+ * 
+ * The headline. A real edge loses money over a season far more often than
+ * people expect, and the figure grows with the length of the prices.
+ */
+losingSeasonProb: number; 
+/**
+ * Fraction of seasons that could not cover a stake at some point, 0–1.
+ */
+ruinProb: number; 
+/**
+ * 5th percentile ending bankroll.
+ */
+endingP05: number; 
+/**
+ * Median ending bankroll.
+ */
+endingMedian: number; 
+/**
+ * 95th percentile ending bankroll.
+ */
+endingP95: number; 
+/**
+ * Mean ending bankroll. Compare with the median: the gap is the skew.
+ */
+endingMean: number; 
+/**
+ * Median worst peak-to-trough drop, as a fraction of the peak.
+ */
+medianMaxDrawdown: number; 
+/**
+ * 95th percentile of the same — the bad-but-not-unthinkable year.
+ */
+p95MaxDrawdown: number; 
+/**
+ * Longest run of consecutive losses seen in any season.
+ */
+longestLosingStreak: number }
 /**
  * Identifies one of two compared quotes.
  */

@@ -6,6 +6,14 @@
 		y: number;
 	}
 
+	export interface Series {
+		data: Point[];
+		label: string;
+		color?: string;
+		fill?: boolean;
+		dashed?: boolean;
+	}
+
 	export interface Marker {
 		value: number;
 		label: string;
@@ -15,7 +23,8 @@
 	}
 
 	let {
-		data,
+		data = [],
+		series,
 		markers = [],
 		height = 300,
 		color = 'var(--accent-cyan)',
@@ -25,7 +34,10 @@
 		labelX = '',
 		labelY = ''
 	}: {
-		data: Point[];
+		/** Shorthand for a single series. Ignored when `series` is given. */
+		data?: Point[];
+		/** Two or more lines on shared axes. */
+		series?: Series[];
 		markers?: Marker[];
 		height?: number;
 		color?: string;
@@ -36,8 +48,14 @@
 		labelY?: string;
 	} = $props();
 
+	/** One code path for both shapes: the single-series props become a series. */
+	const lines = $derived<Series[]>(
+		series ?? [{ data, label: labelY, color, fill, dashed: false }]
+	);
+
 	let width = $state(640);
-	let hovered = $state<Point | null>(null);
+	/** The x the pointer is nearest, or null. Each series reads its own y from it. */
+	let hoveredX = $state<number | null>(null);
 
 	const margin = { top: 16, right: 68, bottom: 34, left: 56 };
 
@@ -47,10 +65,16 @@
 	});
 
 	const domain = $derived.by(() => {
-		if (data.length === 0) return { x: [0, 1] as [number, number], y: [0, 1] as [number, number] };
+		const xs: number[] = [];
+		const ys: number[] = [];
+		for (const s of lines) {
+			for (const p of s.data) {
+				xs.push(p.x);
+				ys.push(p.y);
+			}
+		}
+		if (xs.length === 0) return { x: [0, 1] as [number, number], y: [0, 1] as [number, number] };
 
-		const xs = data.map((d) => d.x);
-		const ys = data.map((d) => d.y);
 		for (const marker of markers) {
 			if (marker.axis === 'y') ys.push(marker.value);
 			else xs.push(marker.value);
@@ -72,28 +96,45 @@
 	const xTicks = $derived(xScale.ticks(6));
 	const yTicks = $derived(yScale.ticks(5));
 
-	const path = $derived(
-		d3Line<Point>()
-			.x((d) => xScale(d.x))
-			.y((d) => yScale(d.y))
-			.curve(curveMonotoneX)(data) ?? ''
+	const shapes = $derived(
+		lines.map((s) => {
+			const path =
+				d3Line<Point>()
+					.x((d) => xScale(d.x))
+					.y((d) => yScale(d.y))
+					.curve(curveMonotoneX)(s.data) ?? '';
+
+			const first = s.data[0];
+			const last = s.data[s.data.length - 1];
+			const area =
+				s.fill && s.data.length > 1 && first && last
+					? `${path}L${xScale(last.x)},${yScale(domain.y[0])}L${xScale(first.x)},${yScale(domain.y[0])}Z`
+					: '';
+
+			return { ...s, color: s.color ?? color, path, area };
+		})
 	);
 
-	const areaPath = $derived(
-		fill && data.length > 1
-			? `${path}L${xScale(data[data.length - 1].x)},${yScale(domain.y[0])}L${xScale(data[0].x)},${yScale(domain.y[0])}Z`
-			: ''
-	);
+	/** The point of each series nearest the hovered x. */
+	const readout = $derived.by(() => {
+		const at = hoveredX;
+		if (at === null) return [];
+		return shapes
+			.map((s) => {
+				let closest: Point | null = null;
+				for (const point of s.data) {
+					if (closest === null || Math.abs(point.x - at) < Math.abs(closest.x - at)) {
+						closest = point;
+					}
+				}
+				return closest ? { label: s.label, color: s.color, point: closest } : null;
+			})
+			.filter((entry) => entry !== null);
+	});
 
 	function onMove(event: MouseEvent) {
-		if (data.length === 0) return;
 		const bounds = (event.currentTarget as SVGRectElement).getBoundingClientRect();
-		const value = xScale.invert(event.clientX - bounds.left);
-		let closest = data[0];
-		for (const point of data) {
-			if (Math.abs(point.x - value) < Math.abs(closest.x - value)) closest = point;
-		}
-		hovered = closest;
+		hoveredX = xScale.invert(event.clientX - bounds.left);
 	}
 </script>
 
@@ -156,37 +197,58 @@
 				{/if}
 			{/each}
 
-			{#if areaPath}
-				<path d={areaPath} style="fill: {color}" class="area" />
-			{/if}
-			<path d={path} style="stroke: {color}" class="series" />
+			{#each shapes as s (s.label)}
+				{#if s.area}
+					<path d={s.area} style="fill: {s.color}" class="area" />
+				{/if}
+				<path
+					d={s.path}
+					style="stroke: {s.color}"
+					class="series"
+					class:dashed={s.dashed}
+				/>
+			{/each}
 
-			{#if hovered}
+			{#each readout as entry (entry.label)}
 				<circle
-					cx={xScale(hovered.x)}
-					cy={yScale(hovered.y)}
+					cx={xScale(entry.point.x)}
+					cy={yScale(entry.point.y)}
 					r="4"
-					style="fill: {color}"
+					style="fill: {entry.color}"
 					class="dot"
 				/>
-			{/if}
+			{/each}
 
 			<rect
 				class="overlay"
 				width={inner.width}
 				height={inner.height}
 				onmousemove={onMove}
-				onmouseleave={() => (hovered = null)}
+				onmouseleave={() => (hoveredX = null)}
 				role="presentation"
 			/>
 		</g>
 	</svg>
 
 	<div class="footer">
-		<span class="axis-label">{labelX}</span>
-		{#if hovered}
+		{#if lines.length > 1}
+			<span class="legend">
+				{#each shapes as s (s.label)}
+					<span class="key">
+						<span class="swatch" style="background: {s.color}"></span>{s.label}
+					</span>
+				{/each}
+			</span>
+		{:else}
+			<span class="axis-label">{labelX}</span>
+		{/if}
+
+		{#if readout.length > 0}
 			<span class="readout">
-				{formatX(hovered.x)} → <strong>{formatY(hovered.y)}</strong>
+				{formatX(readout[0].point.x)} →
+				{#each readout as entry (entry.label)}
+					<strong style="color: {entry.color}">{formatY(entry.point.y)}</strong>
+				{/each}
 			</span>
 		{/if}
 	</div>
@@ -234,6 +296,10 @@
 		stroke-width: 2;
 	}
 
+	.series.dashed {
+		stroke-dasharray: 5 4;
+	}
+
 	.area {
 		opacity: 0.12;
 		stroke: none;
@@ -253,10 +319,35 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
+		gap: 1rem;
 		margin-top: 0.35rem;
 		font-size: 0.72rem;
 		color: var(--text-muted);
 		font-family: var(--font-mono);
+	}
+
+	.legend {
+		display: flex;
+		gap: 0.85rem;
+		flex-wrap: wrap;
+	}
+
+	.key {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
+	.swatch {
+		width: 9px;
+		height: 2px;
+		border-radius: 1px;
+	}
+
+	.readout {
+		display: inline-flex;
+		gap: 0.5rem;
+		white-space: nowrap;
 	}
 
 	.readout strong {

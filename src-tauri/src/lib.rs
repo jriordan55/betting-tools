@@ -68,6 +68,12 @@ fn builder() -> Builder {
         commands::edge_vs_price,
         commands::simulate_prop,
         commands::simulate_ruin,
+        commands::price_ladder,
+        commands::cents_between,
+        commands::breakeven_ladder,
+        commands::clv_ladder,
+        commands::bet_mix,
+        commands::simulate_season,
         commands::normal_cdf,
         commands::prob_to_spread,
     ])

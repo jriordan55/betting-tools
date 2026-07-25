@@ -11,7 +11,7 @@
 
 use bettor_core::{
     arbitrage, bayesian, clv, correlation, devig, distributions, hold, line, match_model, middle,
-    odds, parlay, probability, regression, risk_of_ruin, teaser, wager, MathError,
+    odds, parlay, probability, regression, risk_of_ruin, teaser, variance, wager, MathError,
 };
 
 /// Result of a command, with the error type the frontend sees.
@@ -537,10 +537,8 @@ pub struct PropSimulation {
     pub over_prob: f64,
     /// Probability it does not, 0–1.
     ///
-    /// Reported rather than left as `1 - over_prob` for the caller to work
-    /// out. The frontend does not compute, and a complement derived on the
-    /// far side of the IPC boundary would silently stop agreeing with this
-    /// side the moment pushes at the line are handled differently.
+    /// Both sides come back counted from `bettor_core`; neither is derived
+    /// from the other here. See `distributions::over_under_prob`.
     pub under_prob: f64,
     /// Fair American price for the over.
     pub over_fair_odds: i32,
@@ -565,16 +563,16 @@ pub async fn simulate_prop(
     let seed = resolve_seed(seed)?;
     let samples =
         distributions::generate_samples(n as usize, distribution, mu, var_multiplier, seed)?;
-    let over_prob = distributions::over_prob(&samples, line_value);
+    let sides = distributions::over_under_prob(&samples, line_value);
 
     Ok(PropSimulation {
         seed: seed.to_string(),
         histogram: distributions::histogram(&samples, distribution, None),
         stats: distributions::stats(&samples),
-        over_prob,
-        under_prob: 1.0 - over_prob,
-        over_fair_odds: odds::implied_to_american(over_prob),
-        under_fair_odds: odds::implied_to_american(1.0 - over_prob),
+        over_prob: sides.over,
+        under_prob: sides.under,
+        over_fair_odds: odds::implied_to_american(sides.over),
+        under_fair_odds: odds::implied_to_american(sides.under),
     })
 }
 
@@ -588,6 +586,58 @@ pub async fn simulate_ruin(
     seed: Option<String>,
 ) -> CmdResult<risk_of_ruin::RuinResult> {
     risk_of_ruin::simulate_ruin(&input, resolve_seed(seed)?)
+}
+
+// --------------------------------------------------------------- variance
+
+/// Builds a range of American prices evenly spaced in cents.
+#[tauri::command]
+#[specta::specta]
+pub fn price_ladder(from_american: f64, to_american: f64, step_cents: f64) -> CmdResult<Vec<f64>> {
+    odds::price_ladder(from_american, to_american, step_cents)
+}
+
+/// Cents between two American prices, correct across the ±100 pivot.
+#[tauri::command]
+#[specta::specta]
+pub fn cents_between(from_american: f64, to_american: f64) -> CmdResult<f64> {
+    odds::cents_between(from_american, to_american)
+}
+
+/// Breakeven and required win rate across a range of prices.
+#[tauri::command]
+#[specta::specta]
+pub fn breakeven_ladder(
+    american_prices: Vec<f64>,
+    target_edge: f64,
+) -> CmdResult<Vec<variance::LadderRung>> {
+    variance::breakeven_ladder(&american_prices, target_edge)
+}
+
+/// Translates a fixed cents move into probability points across a price range.
+#[tauri::command]
+#[specta::specta]
+pub fn clv_ladder(american_prices: Vec<f64>, cents: f64) -> CmdResult<Vec<variance::ClvRung>> {
+    variance::clv_ladder(&american_prices, cents)
+}
+
+/// Prices a mix of bets for return and for variance.
+#[tauri::command]
+#[specta::specta]
+pub fn bet_mix(legs: Vec<variance::MixLeg>) -> CmdResult<variance::BetMix> {
+    variance::bet_mix(&legs)
+}
+
+/// Simulates a season of a bet mix many times over.
+///
+/// Long-running, so it is `async` for the same reason as [`simulate_ruin`].
+#[tauri::command]
+#[specta::specta]
+pub async fn simulate_season(
+    input: variance::SeasonInput,
+    seed: Option<String>,
+) -> CmdResult<variance::SeasonResult> {
+    variance::simulate_season(&input, resolve_seed(seed)?)
 }
 
 // ------------------------------------------------------------ primitives

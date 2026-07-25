@@ -287,29 +287,54 @@ pub fn histogram(
         .collect()
 }
 
-/// Probability the prop goes over `line`, estimated from samples.
+/// Both sides of a prop line, priced from the same sample.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct OverUnder {
+    /// Probability the prop goes over the line, 0–1.
+    pub over: f64,
+    /// Probability it goes under, 0–1.
+    pub under: f64,
+}
+
+/// Prices both sides of a prop line.
 ///
-/// Samples landing exactly on an integer line split evenly between over and
-/// under, which is how a push settles.
+/// Each side is counted, not derived from the other. `1 - over` happens to be
+/// correct today because a push splits evenly, but that is a settlement rule
+/// rather than an identity: the moment a caller wants pushes voided instead of
+/// split, the two sides stop summing to one, and a complement computed at the
+/// call site would keep agreeing with a rule that no longer applies.
 #[must_use]
-pub fn over_prob(samples: &[f64], line: f64) -> f64 {
+pub fn over_under_prob(samples: &[f64], line: f64) -> OverUnder {
     if samples.is_empty() {
-        return 0.0;
+        return OverUnder {
+            over: 0.0,
+            under: 0.0,
+        };
     }
     let mut above = 0_usize;
+    let mut below = 0_usize;
     let mut equal = 0_usize;
     for s in samples {
         if *s > line {
             above += 1;
         } else if (*s - line).abs() < f64::EPSILON {
             equal += 1;
+        } else {
+            below += 1;
         }
     }
     #[allow(clippy::cast_precision_loss, reason = "counts for a proportion")]
-    let numerator = above as f64 + equal as f64 / 2.0;
+    let split = equal as f64 / 2.0;
     #[allow(clippy::cast_precision_loss, reason = "sample count")]
-    let denominator = samples.len() as f64;
-    numerator / denominator
+    let n = samples.len() as f64;
+    #[allow(clippy::cast_precision_loss, reason = "counts for a proportion")]
+    let (above, below) = (above as f64, below as f64);
+    OverUnder {
+        over: (above + split) / n,
+        under: (below + split) / n,
+    }
 }
 
 /// Mean and standard deviation of a sample.
@@ -450,14 +475,27 @@ mod tests {
     #[test]
     fn a_half_point_line_has_no_pushes() {
         let s = vec![1.0, 2.0, 3.0, 4.0];
-        assert_relative_eq!(over_prob(&s, 2.5), 0.5, epsilon = 1e-12);
+        let p = over_under_prob(&s, 2.5);
+        assert_relative_eq!(p.over, 0.5, epsilon = 1e-12);
+        assert_relative_eq!(p.under, 0.5, epsilon = 1e-12);
     }
 
     #[test]
     fn an_integer_line_splits_pushes_evenly() {
         // Two under, one push, one over: the push splits, giving 0.375.
         let s = vec![1.0, 2.0, 3.0, 4.0];
-        assert_relative_eq!(over_prob(&s, 3.0), 0.375, epsilon = 1e-12);
+        let p = over_under_prob(&s, 3.0);
+        assert_relative_eq!(p.over, 0.375, epsilon = 1e-12);
+        assert_relative_eq!(p.under, 0.625, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn both_sides_of_a_line_always_sum_to_one() {
+        let s = generate_samples(5_000, Distribution::Poisson, 4.5, 1.0, 77).unwrap();
+        for line in [0.0, 2.0, 4.5, 5.0, 12.0] {
+            let p = over_under_prob(&s, line);
+            assert_relative_eq!(p.over + p.under, 1.0, epsilon = 1e-12);
+        }
     }
 
     #[test]
@@ -472,7 +510,8 @@ mod tests {
     #[test]
     fn empty_input_is_handled() {
         assert!(histogram(&[], Distribution::Poisson, None).is_empty());
-        assert_relative_eq!(over_prob(&[], 2.5), 0.0, epsilon = 1e-12);
+        assert_relative_eq!(over_under_prob(&[], 2.5).over, 0.0, epsilon = 1e-12);
+        assert_relative_eq!(over_under_prob(&[], 2.5).under, 0.0, epsilon = 1e-12);
         assert_relative_eq!(stats(&[]).mean, 0.0, epsilon = 1e-12);
     }
 }

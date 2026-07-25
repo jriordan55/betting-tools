@@ -26,6 +26,7 @@ pub mod probability;
 pub mod regression;
 pub mod risk_of_ruin;
 pub mod teaser;
+pub mod variance;
 pub mod wager;
 
 /// Serialization for RNG seeds.

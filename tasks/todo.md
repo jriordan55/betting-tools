@@ -214,7 +214,32 @@ parlay multiplication assumes leg independence.
 - [x] `line.rs` — true-line inversion and alternate-line ladders (`bestline.ts` +
       `altline.ts`, which was built entirely on the former)
 - [x] `regression.rs` — shrinkage, intervals, convergence series
-- [ ] `bayesian.rs`, `middle.rs`, `teaser_ev.rs`, `parlay_correlation.rs`
+- [x] `middle.rs` — middles and traps
+- [ ] `bayesian.rs`, `teaser_ev.rs`, `parlay_correlation.rs`
+
+**The most serious bug found so far — `middle.ts` on spreads.**
+
+`impliedTrueLine(-3.5, …)` returns the mean of *minus* the margin;
+`impliedTrueLine(+7.5, …)` returns the mean of *plus* the margin. The TS
+averaged them, which averages a quantity with its own negation.
+
+Verified by running the original TypeScript, not derived on paper:
+
+| Case | TS result | Correct |
+|---|---|---|
+| Both sides -5.5 at -110 — P(favorite covers) | **32.40%** | 50% |
+| Same case — implied true center | **-0.8277** | 5.5 |
+| Fav -3.5 (-110) $100 / dog +7.5 (+105) $120 — center | **1.798** | ~5.5 |
+| Same case — reported EV | **+$28.39 (+12.90%)** | recomputed |
+
+Totals were unaffected: those already inverted with over and under
+conventions in the same frame. Spreads were wrong on every input, always
+understating the favorite.
+
+The Rust removes the trap by construction — legs are named `high_side` and
+`low_side` for the direction that wins them rather than for which team they
+sit on, and spread lines are folded onto the margin axis before anything
+else happens, so `+7.5` and `-7.5` describe the same bet.
 
 **More bugs found:**
 

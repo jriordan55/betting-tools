@@ -16,6 +16,7 @@ pub mod distributions;
 pub mod hold;
 pub mod line;
 pub mod match_model;
+pub mod middle;
 pub mod odds;
 pub mod parlay;
 pub mod probability;

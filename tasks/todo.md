@@ -232,8 +232,38 @@ parlay multiplication assumes leg independence.
 7. **Spread and total pushes were dropped.** `margin > spread` went to home,
    `margin < spread` to away, and an exact tie went nowhere — so the two sides
    silently failed to sum to 1 on whole-number lines.
-8. **`convergenceSeries` accumulated a float step** and rounded, so a max of
-   150 produced sample sizes 0, 2, 3, 5, 6, 8 — duplicates and gaps on the axis.
+8. **`convergenceSeries` accumulated a float step** and rounded, so whenever
+   `maxSample/100` was not a whole number the x-axis came out unevenly spaced —
+   a max of 150 gives 0, 2, 3, 5, 6, 8, 9, 11, alternating gaps of 2 and 1.
+
+**Backfilled golden vectors** for the three closed-form modules above, which
+had been ported against behavioral tests alone. 803 fixture cases now, up from
+567. Results:
+
+| Fixture | Identical | Declared divergences |
+|---|---|---|
+| `poisson.ts` / `nbinom.ts` | 439 / 439 | 0 |
+| `bestline.ts` / `altline.ts` | 95 / 95 | 0 |
+| `regression.ts` | 30 | 1 (the uneven axis) |
+
+Nothing had slipped past — but the backfill did catch an **overstatement in the
+port's own documentation**: `convergenceSeries` was described as producing
+duplicated sample sizes. It cannot, since its step is never below 1, so rounding
+can never collide. Only the spacing is wrong. Claim and test both corrected.
+
+Techniques worth keeping:
+- Where the port deliberately renormalises (score matrices), the fixture stores
+  the raw TS grid and the test divides by its total. That isolates the one
+  intended difference and still compares the marginal arithmetic exactly.
+- Where the port deliberately devigs (`implied_true_line`), the test feeds the
+  Rust the same raw probability the TS used. That checks the inversion
+  arithmetic; a separate named test asserts the vig behavior change (0.828
+  points at -110).
+- `tools/gen-fixtures.mjs` stages a *patched copy* of the reference source in a
+  temp dir. `altline.ts` imports `BetType` and `TotalSide` from `./bestline` as
+  value imports when both are type aliases — a bundler elides them, native type
+  stripping does not, and the module fails to instantiate. That is a real latent
+  bug in the reference repo, but not ours to edit.
 - [ ] Sport config tables
 - [x] `rayon` for the Monte Carlo paths
 - [ ] Benchmark vs the JS to quantify the win

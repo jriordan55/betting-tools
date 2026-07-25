@@ -19,8 +19,10 @@
 //!    a finding.
 //! 2. **The convergence series steps evenly.** The TS accumulated a
 //!    floating-point step (`n += maxSample / 100`) and rounded each point, so
-//!    a max of 150 produced sample sizes 0, 2, 3, 5, 6, 8 — duplicated and
-//!    skipped values on the x-axis.
+//!    whenever `maxSample / 100` was not a whole number the x-axis came out
+//!    unevenly spaced: a max of 150 produced sample sizes 0, 2, 3, 5, 6, 8, 9,
+//!    11 — gaps of 2 and 1 alternating. The step here is exact, so the spacing
+//!    is uniform.
 //!
 //! # A caveat the model cannot express
 //!
@@ -230,14 +232,16 @@ mod tests {
 
     #[test]
     fn convergence_steps_evenly() {
-        // The TS accumulated a float step and rounded, duplicating and skipping
-        // sample sizes whenever max/steps was not an integer.
+        // The TS accumulated a float step and rounded, so the spacing came out
+        // uneven whenever max/steps was not a whole number.
         let series = convergence_series(0.400, 0.260, 200.0, 150.0, 100).unwrap();
         assert_eq!(series.len(), 101);
         assert_relative_eq!(series[0].sample_size, 0.0, epsilon = 1e-12);
         assert_relative_eq!(series[100].sample_size, 150.0, epsilon = 1e-12);
+        // Uniform spacing is the actual fix: every gap identical.
+        let gap = series[1].sample_size - series[0].sample_size;
         for w in series.windows(2) {
-            assert!(w[1].sample_size > w[0].sample_size, "sample sizes must be strictly increasing");
+            assert_relative_eq!(w[1].sample_size - w[0].sample_size, gap, epsilon = 1e-9);
         }
     }
 

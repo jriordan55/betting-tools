@@ -1,0 +1,1745 @@
+{
+  "_generated_by": "tools/gen-fixtures.mjs",
+  "_source": "line.ts (bettor-calculator-main)",
+  "_warning": "COMMITTED REFERENCE DATA. Do not regenerate to silence a test.",
+  "implied_true_line": [
+    {
+      "line": -10.5,
+      "odds": "-110",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5238095238095238,
+      "out": -11.327679003753499
+    },
+    {
+      "line": -3.5,
+      "odds": "-115",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5348837209302325,
+      "out": -4.713474137049408
+    },
+    {
+      "line": -7,
+      "odds": "+100",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5,
+      "out": -7
+    },
+    {
+      "line": 6.5,
+      "odds": "-130",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5652173913043478,
+      "out": 4.224038630411158
+    },
+    {
+      "line": -4.5,
+      "odds": "-108",
+      "std": 10.5,
+      "betType": "spread",
+      "cover_prob": 0.5192307692307693,
+      "out": -5.0063422728256475
+    },
+    {
+      "line": 47.5,
+      "odds": "-110",
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "cover_prob": 0.5238095238095238,
+      "out": 48.09717099837915
+    },
+    {
+      "line": 47.5,
+      "odds": "-110",
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "cover_prob": 0.5238095238095238,
+      "out": 46.90282900162085
+    },
+    {
+      "line": 8.5,
+      "odds": "-125",
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "cover_prob": 0.5555555555555556,
+      "out": 9.058841195520866
+    },
+    {
+      "line": 220.5,
+      "odds": "-105",
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "cover_prob": 0.5121951219512195,
+      "out": 220.01082560234622
+    }
+  ],
+  "fair_prob_at_line": [
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -16.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.35450596289889935
+    },
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -13.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.43772745610646036
+    },
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -11.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.4950399142169837
+    },
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -10.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5238097335417364
+    },
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -9.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5524554850924236
+    },
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -7.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.6087902652260514
+    },
+    {
+      "true_line": -11.327679003753499,
+      "alt_line": -4.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.6888586504640246
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": -9.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.36491627876586447
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": -6.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.44871902609210296
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": -4.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5061445157259339
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": -3.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5348839208439873
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": -2.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5634423468596224
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": -0.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.6194370292456777
+    },
+    {
+      "true_line": -4.713474137049408,
+      "alt_line": 2.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.6986260400353919
+    },
+    {
+      "true_line": -7,
+      "alt_line": -13,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.3325434981543754
+    },
+    {
+      "true_line": -7,
+      "alt_line": -10,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.4143183326215581
+    },
+    {
+      "true_line": -7,
+      "alt_line": -8,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.4712410318547713
+    },
+    {
+      "true_line": -7,
+      "alt_line": -7,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.50000014990049
+    },
+    {
+      "true_line": -7,
+      "alt_line": -6,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5287589681452287
+    },
+    {
+      "true_line": -7,
+      "alt_line": -4,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.585681667378442
+    },
+    {
+      "true_line": -7,
+      "alt_line": -1,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.6674565018456247
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 0.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.39408420832124824
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 3.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.4791687445051482
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 5.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5366752926144647
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 6.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5652175206712797
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 7.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.5934237293848541
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 9.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.6482726304794861
+    },
+    {
+      "true_line": 4.224038630411158,
+      "alt_line": 12.5,
+      "std": 13.86,
+      "betType": "spread",
+      "out": 0.724783550035027
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": -10.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.30041553609262633
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": -7.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.4061378026464389
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": -5.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.48125041946773967
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": -4.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.5192309777486834
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": -3.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.5570371623619947
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": -1.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.6307866195991554
+    },
+    {
+      "true_line": -5.0063422728256475,
+      "alt_line": 1.5,
+      "std": 10.5,
+      "betType": "spread",
+      "out": 0.732256543573514
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 41.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.7452824324034624
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 44.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.6404706834192755
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 46.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.5634481689409359
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 47.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.5238097335417364
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 48.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.48393358786349316
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 50.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.40505541173002335
+    },
+    {
+      "true_line": 48.09717099837915,
+      "alt_line": 53.5,
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "out": 0.2945008760168437
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 41.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.2945008760168437
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 44.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.4050554117300234
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 46.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.4839335878634932
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 47.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.5238097335417364
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 48.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.5634481689409359
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 50.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.6404706834192755
+    },
+    {
+      "true_line": 46.90282900162085,
+      "alt_line": 53.5,
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "out": 0.7452824324034624
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 2.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.9494673136975895
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 5.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.8131893455226686
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 7.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.6516246506922179
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 8.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.5555557101280771
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 9.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.4560896295561254
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 11.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.27083483869915725
+    },
+    {
+      "true_line": 9.058841195520866,
+      "alt_line": 14.5,
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "out": 0.08686917680917572
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 214.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.3652627099644116
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 217.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.4376512109826348
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 219.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.487265093142732
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 220.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.5121953204533121
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 221.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.5370775715584077
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 223.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.5863141182443474
+    },
+    {
+      "true_line": 220.01082560234622,
+      "alt_line": 226.5,
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "out": 0.6574720067443185
+    }
+  ],
+  "ladder": [
+    {
+      "line": -10.5,
+      "odds": "-110",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5238095238095238,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": -11.327679003753499,
+        "ladder": [
+          {
+            "line": -15.5,
+            "fairProb": 0.3816945286007202,
+            "fairOdds": 162
+          },
+          {
+            "line": -15,
+            "fairProb": 0.39552077216705117,
+            "fairOdds": 153
+          },
+          {
+            "line": -14.5,
+            "fairProb": 0.4094797822940288,
+            "fairOdds": 144
+          },
+          {
+            "line": -14,
+            "fairProb": 0.4235545078866448,
+            "fairOdds": 136
+          },
+          {
+            "line": -13.5,
+            "fairProb": 0.43772745610646036,
+            "fairOdds": 128
+          },
+          {
+            "line": -13,
+            "fairProb": 0.4519807582188971,
+            "fairOdds": 121
+          },
+          {
+            "line": -12.5,
+            "fairProb": 0.4662962380311248,
+            "fairOdds": 114
+          },
+          {
+            "line": -12,
+            "fairProb": 0.4806554825179881,
+            "fairOdds": 108
+          },
+          {
+            "line": -11.5,
+            "fairProb": 0.4950399142169837,
+            "fairOdds": 102
+          },
+          {
+            "line": -11,
+            "fairProb": 0.5094311315930681,
+            "fairOdds": -104
+          },
+          {
+            "line": -10.5,
+            "fairProb": 0.5238097335417364,
+            "fairOdds": -110
+          },
+          {
+            "line": -10,
+            "fairProb": 0.5381573627785035,
+            "fairOdds": -117
+          },
+          {
+            "line": -9.5,
+            "fairProb": 0.5524554850924236,
+            "fairOdds": -123
+          },
+          {
+            "line": -9,
+            "fairProb": 0.5666857533678037,
+            "fairOdds": -131
+          },
+          {
+            "line": -8.5,
+            "fairProb": 0.580830079475209,
+            "fairOdds": -139
+          },
+          {
+            "line": -8,
+            "fairProb": 0.5948707042617074,
+            "fairOdds": -147
+          },
+          {
+            "line": -7.5,
+            "fairProb": 0.6087902652260514,
+            "fairOdds": -156
+          },
+          {
+            "line": -7,
+            "fairProb": 0.622571861482121,
+            "fairOdds": -165
+          },
+          {
+            "line": -6.5,
+            "fairProb": 0.6361991156352045,
+            "fairOdds": -175
+          },
+          {
+            "line": -6,
+            "fairProb": 0.6496562322203931,
+            "fairOdds": -185
+          },
+          {
+            "line": -5.5,
+            "fairProb": 0.6629280523801435,
+            "fairOdds": -197
+          }
+        ]
+      }
+    },
+    {
+      "line": -3.5,
+      "odds": "-115",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5348837209302325,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": -4.713474137049408,
+        "ladder": [
+          {
+            "line": -8.5,
+            "fairProb": 0.3923504187217121,
+            "fairOdds": 155
+          },
+          {
+            "line": -8,
+            "fairProb": 0.4062805889800644,
+            "fairOdds": 146
+          },
+          {
+            "line": -7.5,
+            "fairProb": 0.4203304105850638,
+            "fairOdds": 138
+          },
+          {
+            "line": -7,
+            "fairProb": 0.4344824858956667,
+            "fairOdds": 130
+          },
+          {
+            "line": -6.5,
+            "fairProb": 0.44871902609210296,
+            "fairOdds": 123
+          },
+          {
+            "line": -6,
+            "fairProb": 0.46302191905684553,
+            "fairOdds": 116
+          },
+          {
+            "line": -5.5,
+            "fairProb": 0.47737279953716,
+            "fairOdds": 109
+          },
+          {
+            "line": -5,
+            "fairProb": 0.49175312117364706,
+            "fairOdds": 103
+          },
+          {
+            "line": -4.5,
+            "fairProb": 0.5061445157259339,
+            "fairOdds": -102
+          },
+          {
+            "line": -4,
+            "fairProb": 0.5205275786305636,
+            "fairOdds": -109
+          },
+          {
+            "line": -3.5,
+            "fairProb": 0.5348839208439873,
+            "fairOdds": -115
+          },
+          {
+            "line": -3,
+            "fairProb": 0.5491949756687144,
+            "fairOdds": -122
+          },
+          {
+            "line": -2.5,
+            "fairProb": 0.5634423468596224,
+            "fairOdds": -129
+          },
+          {
+            "line": -2,
+            "fairProb": 0.577607880889484,
+            "fairOdds": -137
+          },
+          {
+            "line": -1.5,
+            "fairProb": 0.591673737410428,
+            "fairOdds": -145
+          },
+          {
+            "line": -1,
+            "fairProb": 0.605622457493556,
+            "fairOdds": -154
+          },
+          {
+            "line": -0.5,
+            "fairProb": 0.6194370292456777,
+            "fairOdds": -163
+          },
+          {
+            "line": 0,
+            "fairProb": 0.6331009504225799,
+            "fairOdds": -173
+          },
+          {
+            "line": 0.5,
+            "fairProb": 0.6465982876821728,
+            "fairOdds": -183
+          },
+          {
+            "line": 1,
+            "fairProb": 0.6599137321479704,
+            "fairOdds": -194
+          },
+          {
+            "line": 1.5,
+            "fairProb": 0.6730326509833583,
+            "fairOdds": -206
+          }
+        ]
+      }
+    },
+    {
+      "line": -7,
+      "odds": "+100",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": -7,
+        "ladder": [
+          {
+            "line": -12,
+            "fairProb": 0.35914300176820796,
+            "fairOdds": 178
+          },
+          {
+            "line": -11.5,
+            "fairProb": 0.37271337206663196,
+            "fairOdds": 168
+          },
+          {
+            "line": -11,
+            "fairProb": 0.3864435968164459,
+            "fairOdds": 159
+          },
+          {
+            "line": -10.5,
+            "fairProb": 0.4003174927647131,
+            "fairOdds": 150
+          },
+          {
+            "line": -10,
+            "fairProb": 0.4143183326215581,
+            "fairOdds": 141
+          },
+          {
+            "line": -9.5,
+            "fairProb": 0.4284289057898711,
+            "fairOdds": 133
+          },
+          {
+            "line": -9,
+            "fairProb": 0.4426315823060028,
+            "fairOdds": 126
+          },
+          {
+            "line": -8.5,
+            "fairProb": 0.45690837962416303,
+            "fairOdds": 119
+          },
+          {
+            "line": -8,
+            "fairProb": 0.4712410318547713,
+            "fairOdds": 112
+          },
+          {
+            "line": -7.5,
+            "fairProb": 0.485611061048107,
+            "fairOdds": 106
+          },
+          {
+            "line": -7,
+            "fairProb": 0.50000014990049,
+            "fairOdds": -100
+          },
+          {
+            "line": -6.5,
+            "fairProb": 0.514388938951893,
+            "fairOdds": -106
+          },
+          {
+            "line": -6,
+            "fairProb": 0.5287589681452287,
+            "fairOdds": -112
+          },
+          {
+            "line": -5.5,
+            "fairProb": 0.5430916203758369,
+            "fairOdds": -119
+          },
+          {
+            "line": -5,
+            "fairProb": 0.5573684176939973,
+            "fairOdds": -126
+          },
+          {
+            "line": -4.5,
+            "fairProb": 0.5715710942101289,
+            "fairOdds": -133
+          },
+          {
+            "line": -4,
+            "fairProb": 0.585681667378442,
+            "fairOdds": -141
+          },
+          {
+            "line": -3.5,
+            "fairProb": 0.5996825072352869,
+            "fairOdds": -150
+          },
+          {
+            "line": -3,
+            "fairProb": 0.6135564031835541,
+            "fairOdds": -159
+          },
+          {
+            "line": -2.5,
+            "fairProb": 0.627286627933368,
+            "fairOdds": -168
+          },
+          {
+            "line": -2,
+            "fairProb": 0.640856998231792,
+            "fairOdds": -178
+          }
+        ]
+      }
+    },
+    {
+      "line": 6.5,
+      "odds": "-130",
+      "std": 13.86,
+      "betType": "spread",
+      "cover_prob": 0.5652173913043478,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": 4.224038630411158,
+        "ladder": [
+          {
+            "line": 1.5,
+            "fairProb": 0.4220938288566802,
+            "fairOdds": 137
+          },
+          {
+            "line": 2,
+            "fairProb": 0.43625744006830175,
+            "fairOdds": 129
+          },
+          {
+            "line": 2.5,
+            "fairProb": 0.45050326887247294,
+            "fairOdds": 122
+          },
+          {
+            "line": 3,
+            "fairProb": 0.46481316763757113,
+            "fairOdds": 115
+          },
+          {
+            "line": 3.5,
+            "fairProb": 0.4791687445051482,
+            "fairOdds": 109
+          },
+          {
+            "line": 4,
+            "fairProb": 0.4935514356217524,
+            "fairOdds": 103
+          },
+          {
+            "line": 4.5,
+            "fairProb": 0.5079428550603229,
+            "fairOdds": -103
+          },
+          {
+            "line": 5,
+            "fairProb": 0.5223235977716485,
+            "fairOdds": -109
+          },
+          {
+            "line": 5.5,
+            "fairProb": 0.5366752926144647,
+            "fairOdds": -116
+          },
+          {
+            "line": 6,
+            "fairProb": 0.5509793901910135,
+            "fairOdds": -123
+          },
+          {
+            "line": 6.5,
+            "fairProb": 0.5652175206712797,
+            "fairOdds": -130
+          },
+          {
+            "line": 7,
+            "fairProb": 0.5793715658563728,
+            "fairOdds": -138
+          },
+          {
+            "line": 7.5,
+            "fairProb": 0.5934237293848541,
+            "fairOdds": -146
+          },
+          {
+            "line": 8,
+            "fairProb": 0.6073566046661025,
+            "fairOdds": -155
+          },
+          {
+            "line": 8.5,
+            "fairProb": 0.6211532401420446,
+            "fairOdds": -164
+          },
+          {
+            "line": 9,
+            "fairProb": 0.6347972014994684,
+            "fairOdds": -174
+          },
+          {
+            "line": 9.5,
+            "fairProb": 0.6482726304794861,
+            "fairOdds": -184
+          },
+          {
+            "line": 10,
+            "fairProb": 0.6615642999581997,
+            "fairOdds": -195
+          },
+          {
+            "line": 10.5,
+            "fairProb": 0.6746576650029547,
+            "fairOdds": -207
+          },
+          {
+            "line": 11,
+            "fairProb": 0.6875389096413822,
+            "fairOdds": -220
+          },
+          {
+            "line": 11.5,
+            "fairProb": 0.7001949891153614,
+            "fairOdds": -234
+          }
+        ]
+      }
+    },
+    {
+      "line": -4.5,
+      "odds": "-108",
+      "std": 10.5,
+      "betType": "spread",
+      "cover_prob": 0.5192307692307693,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": -5.0063422728256475,
+        "ladder": [
+          {
+            "line": -9.5,
+            "fairProb": 0.33433737380664624,
+            "fairOdds": 199
+          },
+          {
+            "line": -9,
+            "fairProb": 0.35184338431757595,
+            "fairOdds": 184
+          },
+          {
+            "line": -8.5,
+            "fairProb": 0.36966927890639345,
+            "fairOdds": 171
+          },
+          {
+            "line": -8,
+            "fairProb": 0.3877797933971972,
+            "fairOdds": 158
+          },
+          {
+            "line": -7.5,
+            "fairProb": 0.4061378026464389,
+            "fairOdds": 146
+          },
+          {
+            "line": -7,
+            "fairProb": 0.42470454854199735,
+            "fairOdds": 135
+          },
+          {
+            "line": -6.5,
+            "fairProb": 0.44343988659797196,
+            "fairOdds": 126
+          },
+          {
+            "line": -6,
+            "fairProb": 0.4623025487170623,
+            "fairOdds": 116
+          },
+          {
+            "line": -5.5,
+            "fairProb": 0.48125041946773967,
+            "fairOdds": 108
+          },
+          {
+            "line": -5,
+            "fairProb": 0.5002411228203187,
+            "fairOdds": -100
+          },
+          {
+            "line": -4.5,
+            "fairProb": 0.5192309777486834,
+            "fairOdds": -108
+          },
+          {
+            "line": -4,
+            "fairProb": 0.5381772126657296,
+            "fairOdds": -117
+          },
+          {
+            "line": -3.5,
+            "fairProb": 0.5570371623619947,
+            "fairOdds": -126
+          },
+          {
+            "line": -3,
+            "fairProb": 0.5757687293934983,
+            "fairOdds": -136
+          },
+          {
+            "line": -2.5,
+            "fairProb": 0.5943306708037208,
+            "fairOdds": -147
+          },
+          {
+            "line": -2,
+            "fairProb": 0.6126828740922953,
+            "fairOdds": -158
+          },
+          {
+            "line": -1.5,
+            "fairProb": 0.6307866195991554,
+            "fairOdds": -171
+          },
+          {
+            "line": -1,
+            "fairProb": 0.6486048266565622,
+            "fairOdds": -185
+          },
+          {
+            "line": -0.5,
+            "fairProb": 0.6661022810870652,
+            "fairOdds": -199
+          },
+          {
+            "line": 0,
+            "fairProb": 0.6832458418885445,
+            "fairOdds": -216
+          },
+          {
+            "line": 0.5,
+            "fairProb": 0.7000046252426879,
+            "fairOdds": -233
+          }
+        ]
+      }
+    },
+    {
+      "line": 47.5,
+      "odds": "-110",
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "cover_prob": 0.5238095238095238,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": 48.09717099837915,
+        "ladder": [
+          {
+            "line": 42.5,
+            "fairProb": 0.7121638972640583,
+            "fairOdds": -247
+          },
+          {
+            "line": 43,
+            "fairProb": 0.694875250662705,
+            "fairOdds": -228
+          },
+          {
+            "line": 43.5,
+            "fairProb": 0.6771404182646727,
+            "fairOdds": -210
+          },
+          {
+            "line": 44,
+            "fairProb": 0.6589933041155497,
+            "fairOdds": -193
+          },
+          {
+            "line": 44.5,
+            "fairProb": 0.6404706834192755,
+            "fairOdds": -178
+          },
+          {
+            "line": 45,
+            "fairProb": 0.6216119865745968,
+            "fairOdds": -164
+          },
+          {
+            "line": 45.5,
+            "fairProb": 0.602459051558106,
+            "fairOdds": -152
+          },
+          {
+            "line": 46,
+            "fairProb": 0.5830558470230327,
+            "fairOdds": -140
+          },
+          {
+            "line": 46.5,
+            "fairProb": 0.5634481689409359,
+            "fairOdds": -129
+          },
+          {
+            "line": 47,
+            "fairProb": 0.5436833140262066,
+            "fairOdds": -119
+          },
+          {
+            "line": 47.5,
+            "fairProb": 0.5238097335417364,
+            "fairOdds": -110
+          },
+          {
+            "line": 48,
+            "fairProb": 0.5038766713802743,
+            "fairOdds": -102
+          },
+          {
+            "line": 48.5,
+            "fairProb": 0.48393358786349316,
+            "fairOdds": 107
+          },
+          {
+            "line": 49,
+            "fairProb": 0.4640310059928682,
+            "fairOdds": 116
+          },
+          {
+            "line": 49.5,
+            "fairProb": 0.4442180832179201,
+            "fairOdds": 125
+          },
+          {
+            "line": 50,
+            "fairProb": 0.4245436226129501,
+            "fairOdds": 136
+          },
+          {
+            "line": 50.5,
+            "fairProb": 0.40505541173002335,
+            "fairOdds": 147
+          },
+          {
+            "line": 51,
+            "fairProb": 0.3857998698160823,
+            "fairOdds": 159
+          },
+          {
+            "line": 51.5,
+            "fairProb": 0.36682171316667744,
+            "fairOdds": 173
+          },
+          {
+            "line": 52,
+            "fairProb": 0.3481636423375867,
+            "fairOdds": 187
+          },
+          {
+            "line": 52.5,
+            "fairProb": 0.32986605460047924,
+            "fairOdds": 203
+          }
+        ]
+      }
+    },
+    {
+      "line": 47.5,
+      "odds": "-110",
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "cover_prob": 0.5238095238095238,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": 46.90282900162085,
+        "ladder": [
+          {
+            "line": 42.5,
+            "fairProb": 0.3298660546004792,
+            "fairOdds": 203
+          },
+          {
+            "line": 43,
+            "fairProb": 0.3481636423375867,
+            "fairOdds": 187
+          },
+          {
+            "line": 43.5,
+            "fairProb": 0.36682171316667744,
+            "fairOdds": 173
+          },
+          {
+            "line": 44,
+            "fairProb": 0.38579986981608233,
+            "fairOdds": 159
+          },
+          {
+            "line": 44.5,
+            "fairProb": 0.4050554117300234,
+            "fairOdds": 147
+          },
+          {
+            "line": 45,
+            "fairProb": 0.4245436226129501,
+            "fairOdds": 136
+          },
+          {
+            "line": 45.5,
+            "fairProb": 0.44421808321792017,
+            "fairOdds": 125
+          },
+          {
+            "line": 46,
+            "fairProb": 0.4640310059928682,
+            "fairOdds": 116
+          },
+          {
+            "line": 46.5,
+            "fairProb": 0.4839335878634932,
+            "fairOdds": 107
+          },
+          {
+            "line": 47,
+            "fairProb": 0.5038766713802743,
+            "fairOdds": -102
+          },
+          {
+            "line": 47.5,
+            "fairProb": 0.5238097335417364,
+            "fairOdds": -110
+          },
+          {
+            "line": 48,
+            "fairProb": 0.5436833140262066,
+            "fairOdds": -119
+          },
+          {
+            "line": 48.5,
+            "fairProb": 0.5634481689409359,
+            "fairOdds": -129
+          },
+          {
+            "line": 49,
+            "fairProb": 0.5830558470230327,
+            "fairOdds": -140
+          },
+          {
+            "line": 49.5,
+            "fairProb": 0.602459051558106,
+            "fairOdds": -152
+          },
+          {
+            "line": 50,
+            "fairProb": 0.6216119865745968,
+            "fairOdds": -164
+          },
+          {
+            "line": 50.5,
+            "fairProb": 0.6404706834192755,
+            "fairOdds": -178
+          },
+          {
+            "line": 51,
+            "fairProb": 0.6589933041155497,
+            "fairOdds": -193
+          },
+          {
+            "line": 51.5,
+            "fairProb": 0.6771404182646727,
+            "fairOdds": -210
+          },
+          {
+            "line": 52,
+            "fairProb": 0.694875250662705,
+            "fairOdds": -228
+          },
+          {
+            "line": 52.5,
+            "fairProb": 0.7121638972640583,
+            "fairOdds": -247
+          }
+        ]
+      }
+    },
+    {
+      "line": 8.5,
+      "odds": "-125",
+      "std": 4,
+      "betType": "total",
+      "side": "over",
+      "cover_prob": 0.5555555555555556,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": 9.058841195520866,
+        "ladder": [
+          {
+            "line": 3.5,
+            "fairProb": 0.9176915270843669,
+            "fairOdds": -1115
+          },
+          {
+            "line": 4,
+            "fairProb": 0.8970123545381844,
+            "fairOdds": -871
+          },
+          {
+            "line": 4.5,
+            "fairProb": 0.8727964658130465,
+            "fairOdds": -686
+          },
+          {
+            "line": 5,
+            "fairProb": 0.8448780478580322,
+            "fairOdds": -545
+          },
+          {
+            "line": 5.5,
+            "fairProb": 0.8131893455226686,
+            "fairOdds": -435
+          },
+          {
+            "line": 6,
+            "fairProb": 0.7777780841557856,
+            "fairOdds": -350
+          },
+          {
+            "line": 6.5,
+            "fairProb": 0.7388196464027137,
+            "fairOdds": -283
+          },
+          {
+            "line": 7,
+            "fairProb": 0.696622350614196,
+            "fairOdds": -230
+          },
+          {
+            "line": 7.5,
+            "fairProb": 0.6516246506922179,
+            "fairOdds": -187
+          },
+          {
+            "line": 8,
+            "fairProb": 0.6043837282591603,
+            "fairOdds": -153
+          },
+          {
+            "line": 8.5,
+            "fairProb": 0.5555557101280771,
+            "fairOdds": -125
+          },
+          {
+            "line": 9,
+            "fairProb": 0.5058685275309518,
+            "fairOdds": -102
+          },
+          {
+            "line": 9.5,
+            "fairProb": 0.4560896295561254,
+            "fairOdds": 119
+          },
+          {
+            "line": 10,
+            "fairProb": 0.40699187724051056,
+            "fairOdds": 146
+          },
+          {
+            "line": 10.5,
+            "fairProb": 0.3593152150810571,
+            "fairOdds": 178
+          },
+          {
+            "line": 11,
+            "fairProb": 0.313735353969116,
+            "fairOdds": 219
+          },
+          {
+            "line": 11.5,
+            "fairProb": 0.27083483869915725,
+            "fairOdds": 269
+          },
+          {
+            "line": 12,
+            "fairProb": 0.2310814139546099,
+            "fairOdds": 333
+          },
+          {
+            "line": 12.5,
+            "fairProb": 0.1948145950068978,
+            "fairOdds": 413
+          },
+          {
+            "line": 13,
+            "fairProb": 0.16224086220757883,
+            "fairOdds": 516
+          },
+          {
+            "line": 13.5,
+            "fairProb": 0.13343712257903617,
+            "fairOdds": 649
+          }
+        ]
+      }
+    },
+    {
+      "line": 220.5,
+      "odds": "-105",
+      "std": 16,
+      "betType": "total",
+      "side": "under",
+      "cover_prob": 0.5121951219512195,
+      "range": 5,
+      "step": 0.5,
+      "out": {
+        "trueLine": 220.01082560234622,
+        "ladder": [
+          {
+            "line": 215.5,
+            "fairProb": 0.38899985357861,
+            "fairOdds": 157
+          },
+          {
+            "line": 216,
+            "fairProb": 0.40103201960486107,
+            "fairOdds": 149
+          },
+          {
+            "line": 216.5,
+            "fairProb": 0.4131587970616554,
+            "fairOdds": 142
+          },
+          {
+            "line": 217,
+            "fairProb": 0.4253690019379153,
+            "fairOdds": 135
+          },
+          {
+            "line": 217.5,
+            "fairProb": 0.4376512109826348,
+            "fairOdds": 128
+          },
+          {
+            "line": 218,
+            "fairProb": 0.4499937940948365,
+            "fairOdds": 122
+          },
+          {
+            "line": 218.5,
+            "fairProb": 0.4623849477872692,
+            "fairOdds": 116
+          },
+          {
+            "line": 219,
+            "fairProb": 0.47481272957598636,
+            "fairOdds": 111
+          },
+          {
+            "line": 219.5,
+            "fairProb": 0.487265093142732,
+            "fairOdds": 105
+          },
+          {
+            "line": 220,
+            "fairProb": 0.49972992411291844,
+            "fairOdds": 100
+          },
+          {
+            "line": 220.5,
+            "fairProb": 0.5121953204533121,
+            "fairOdds": -105
+          },
+          {
+            "line": 221,
+            "fairProb": 0.5246484751790998,
+            "fairOdds": -110
+          },
+          {
+            "line": 221.5,
+            "fairProb": 0.5370775715584077,
+            "fairOdds": -116
+          },
+          {
+            "line": 222,
+            "fairProb": 0.5494705595810355,
+            "fairOdds": -122
+          },
+          {
+            "line": 222.5,
+            "fairProb": 0.5618154915334257,
+            "fairOdds": -128
+          },
+          {
+            "line": 223,
+            "fairProb": 0.5741005571909878,
+            "fairOdds": -135
+          },
+          {
+            "line": 223.5,
+            "fairProb": 0.5863141182443474,
+            "fairOdds": -142
+          },
+          {
+            "line": 224,
+            "fairProb": 0.5984447418062381,
+            "fairOdds": -149
+          },
+          {
+            "line": 224.5,
+            "fairProb": 0.6104812328509374,
+            "fairOdds": -157
+          },
+          {
+            "line": 225,
+            "fairProb": 0.622412665444352,
+            "fairOdds": -165
+          },
+          {
+            "line": 225.5,
+            "fairProb": 0.6342284126300362,
+            "fairOdds": -173
+          }
+        ]
+      }
+    }
+  ],
+  "compare": [
+    {
+      "a": {
+        "line": -3.5,
+        "odds": "-110"
+      },
+      "b": {
+        "line": -7.5,
+        "odds": "-110"
+      },
+      "std": 13.86,
+      "betType": "spread",
+      "cover_a": 0.5238095238095238,
+      "cover_b": 0.5238095238095238,
+      "out": {
+        "implied1": -4.327679003753499,
+        "implied2": -8.327679003753499,
+        "cover1": 0.5238095238095238,
+        "cover2": 0.5238095238095238,
+        "winner": 1,
+        "diff": 4
+      }
+    },
+    {
+      "a": {
+        "line": -7,
+        "odds": "+100"
+      },
+      "b": {
+        "line": -6.5,
+        "odds": "-130"
+      },
+      "std": 13.86,
+      "betType": "spread",
+      "cover_a": 0.5,
+      "cover_b": 0.5652173913043478,
+      "out": {
+        "implied1": -7,
+        "implied2": -8.775961369588842,
+        "cover1": 0.5,
+        "cover2": 0.5652173913043478,
+        "winner": 1,
+        "diff": 1.7759613695888419
+      }
+    },
+    {
+      "a": {
+        "line": -7,
+        "odds": "-110"
+      },
+      "b": {
+        "line": -7,
+        "odds": "-110"
+      },
+      "std": 13.86,
+      "betType": "spread",
+      "cover_a": 0.5238095238095238,
+      "cover_b": 0.5238095238095238,
+      "out": {
+        "implied1": -7.827679003753499,
+        "implied2": -7.827679003753499,
+        "cover1": 0.5238095238095238,
+        "cover2": 0.5238095238095238,
+        "winner": 0,
+        "diff": 0
+      }
+    },
+    {
+      "a": {
+        "line": 44.5,
+        "odds": "-110"
+      },
+      "b": {
+        "line": 47.5,
+        "odds": "-110"
+      },
+      "std": 10,
+      "betType": "total",
+      "side": "over",
+      "cover_a": 0.5238095238095238,
+      "cover_b": 0.5238095238095238,
+      "out": {
+        "implied1": 45.09717099837915,
+        "implied2": 48.09717099837915,
+        "cover1": 0.5238095238095238,
+        "cover2": 0.5238095238095238,
+        "winner": 1,
+        "diff": 3
+      }
+    },
+    {
+      "a": {
+        "line": 44.5,
+        "odds": "-110"
+      },
+      "b": {
+        "line": 47.5,
+        "odds": "-110"
+      },
+      "std": 10,
+      "betType": "total",
+      "side": "under",
+      "cover_a": 0.5238095238095238,
+      "cover_b": 0.5238095238095238,
+      "out": {
+        "implied1": 43.90282900162085,
+        "implied2": 46.90282900162085,
+        "cover1": 0.5238095238095238,
+        "cover2": 0.5238095238095238,
+        "winner": 2,
+        "diff": 3
+      }
+    }
+  ]
+}

@@ -14,21 +14,90 @@
  * a mismatch means either the port is wrong or the divergence is deliberate,
  * and a deliberate divergence gets recorded in EXPECTED_DIVERGENCES below.
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import {
+  writeFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { registerHooks } from "node:module";
+
+// The source modules import siblings without a file extension (`from './odds'`),
+// which a bundler resolves and raw Node ESM does not. Rather than take a
+// dependency on a TypeScript loader, retry extensionless relative specifiers
+// with `.ts` appended. Leaf modules import nothing, which is why the first
+// batch of fixtures generated without this.
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    if (specifier.startsWith(".") && !/\.[cm]?[jt]s$/.test(specifier)) {
+      try {
+        return nextResolve(`${specifier}.ts`, context);
+      } catch {
+        // Fall through to the default resolver for a better error message.
+      }
+    }
+    return nextResolve(specifier, context);
+  },
+});
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "crates", "bettor-core", "tests", "fixtures");
-const TS_ROOT =
+const SOURCE_ROOT =
   process.env.TS_ROOT ??
   "/Users/adamwickwire/Code/bettor-calculator-main/src/lib/math";
+
+/**
+ * Stages a patched copy of the reference source in a temp directory.
+ *
+ * `altline.ts` imports `BetType` and `TotalSide` from `./bestline` as ordinary
+ * named imports, but both are type aliases. A bundler elides them; native type
+ * stripping leaves the import in place and the module fails to instantiate.
+ * That is a real latent bug in the reference repo — the file will not load
+ * under `verbatimModuleSyntax` or any non-bundler toolchain — but it is not
+ * ours to fix, so the copy is patched instead of the original.
+ */
+function stageSource(root) {
+  const staged = mkdtempSync(join(tmpdir(), "bettor-ts-reference-"));
+  const patches = [
+    {
+      file: "altline.ts",
+      from: "import { impliedTrueLine, BetType, TotalSide } from './bestline'",
+      to: "import { impliedTrueLine } from './bestline'\ntype BetType = 'spread' | 'total'\ntype TotalSide = 'over' | 'under'",
+    },
+  ];
+  for (const name of readdirSync(root)) {
+    if (!name.endsWith(".ts")) continue;
+    let text = readFileSync(join(root, name), "utf8");
+    for (const p of patches) {
+      if (p.file === name) {
+        if (!text.includes(p.from)) {
+          console.warn(`  ! patch for ${name} no longer applies — verify by hand`);
+          continue;
+        }
+        text = text.replace(p.from, p.to);
+      }
+    }
+    writeFileSync(join(staged, name), text);
+  }
+  return staged;
+}
+
+const TS_ROOT = stageSource(SOURCE_ROOT);
 
 const odds = await import(`${TS_ROOT}/odds.ts`);
 const probability = await import(`${TS_ROOT}/probability.ts`);
 const hold = await import(`${TS_ROOT}/hold.ts`);
 const vigComparison = await import(`${TS_ROOT}/vigComparison.ts`);
 const devig = await import(`${TS_ROOT}/devig.ts`);
+const poisson = await import(`${TS_ROOT}/poisson.ts`);
+const nbinom = await import(`${TS_ROOT}/nbinom.ts`);
+const bestline = await import(`${TS_ROOT}/bestline.ts`);
+const altline = await import(`${TS_ROOT}/altline.ts`);
+const regression = await import(`${TS_ROOT}/regression.ts`);
 
 /**
  * JSON cannot represent Infinity or NaN. Encode them as tagged strings; the
@@ -300,6 +369,176 @@ write("devig", {
     fair_prob: fair,
     bet_implied: betImplied,
     out: devig.calcDevigEV(fair, betImplied),
+  })),
+});
+
+// ------------------------------------------------- poisson.ts / nbinom.ts
+
+// Soccer, baseball, hockey, and a low-scoring outlier.
+const RATE_PAIRS = [
+  [1.5, 1.2], [1.35, 1.15], [4.5, 4.2], [2.9, 2.7], [0.9, 1.1], [3.0, 3.0],
+];
+const MAX_SCORE = 10;
+const NB_PARAMS = [
+  [1.5, 1.2, 5.0, 5.0], [4.5, 4.2, 3.0, 3.0], [2.9, 2.7, 12.0, 8.0],
+];
+
+write("match_model", {
+  poisson_pmf: [0.5, 1.5, 2.5, 4.5, 12.0, 30.0].flatMap((lambda) =>
+    [0, 1, 2, 3, 5, 8, 12, 20, 40].map((k) => ({
+      k,
+      lambda,
+      out: poisson.poissonPMF(k, lambda),
+    })),
+  ),
+  poisson_cdf: [1.5, 4.5, 12.0].flatMap((lambda) =>
+    [0, 1, 3, 5, 10, 25].map((k) => ({
+      k,
+      lambda,
+      out: poisson.poissonCDF(k, lambda),
+    })),
+  ),
+  nbinom_pmf: [[1.5, 5.0], [4.5, 3.0], [2.0, 20.0], [3.0, 1.5]].flatMap(
+    ([mean, r]) =>
+      [0, 1, 2, 4, 7, 12, 25].map((k) => ({
+        k,
+        mean,
+        r,
+        out: nbinom.nbinomPMF(k, mean, r),
+      })),
+  ),
+  // Emitted UNNORMALISED, exactly as the TS produced them. The Rust
+  // renormalises; the parity test divides by the grid total to isolate that
+  // one deliberate difference from the marginal arithmetic underneath.
+  score_matrix: RATE_PAIRS.map(([lh, la]) => ({
+    lambda_home: lh,
+    lambda_away: la,
+    max_score: MAX_SCORE,
+    out: poisson.buildScoreMatrix(lh, la, MAX_SCORE),
+  })),
+  nb_score_matrix: NB_PARAMS.map(([mh, ma, rh, ra]) => ({
+    mean_home: mh,
+    mean_away: ma,
+    r_home: rh,
+    r_away: ra,
+    max_score: MAX_SCORE,
+    out: nbinom.buildNBScoreMatrix(mh, ma, rh, ra, MAX_SCORE),
+  })),
+  markets: RATE_PAIRS.flatMap(([lh, la]) =>
+    [true, false].map((allowDraw) => {
+      const matrix = poisson.buildScoreMatrix(lh, la, MAX_SCORE);
+      return {
+        lambda_home: lh,
+        lambda_away: la,
+        max_score: MAX_SCORE,
+        allow_draw: allowDraw,
+        spread_lines: [-2.5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2.5],
+        total_lines: [1.5, 2, 2.5, 3, 3.5, 7, 8.5],
+        out: poisson.deriveMarketProbs(
+          matrix,
+          [-2.5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2.5],
+          [1.5, 2, 2.5, 3, 3.5, 7, 8.5],
+          allowDraw,
+        ),
+      };
+    }),
+  ),
+});
+
+// ------------------------------------------------- bestline.ts / altline.ts
+
+const LINE_CASES = [
+  { line: -10.5, odds: "-110", std: 13.86, betType: "spread" },
+  { line: -3.5, odds: "-115", std: 13.86, betType: "spread" },
+  { line: -7, odds: "+100", std: 13.86, betType: "spread" },
+  { line: 6.5, odds: "-130", std: 13.86, betType: "spread" },
+  { line: -4.5, odds: "-108", std: 10.5, betType: "spread" },
+  { line: 47.5, odds: "-110", std: 10.0, betType: "total", side: "over" },
+  { line: 47.5, odds: "-110", std: 10.0, betType: "total", side: "under" },
+  { line: 8.5, odds: "-125", std: 4.0, betType: "total", side: "over" },
+  { line: 220.5, odds: "-105", std: 16.0, betType: "total", side: "under" },
+];
+
+write("line", {
+  // NOTE: the TS derives its cover probability from a single price, vig
+  // included. The Rust takes a fair probability. Parity is checked by feeding
+  // the Rust the same raw figure, which isolates the inversion arithmetic from
+  // the (deliberate) decision to devig first.
+  implied_true_line: LINE_CASES.map((c) => ({
+    ...c,
+    cover_prob: odds.americanToImplied(c.odds),
+    out: bestline.impliedTrueLine(c.line, c.odds, c.std, c.betType, c.side),
+  })),
+  fair_prob_at_line: LINE_CASES.flatMap((c) => {
+    const trueLine = bestline.impliedTrueLine(c.line, c.odds, c.std, c.betType, c.side);
+    return [-6, -3, -1, 0, 1, 3, 6].map((delta) => ({
+      true_line: trueLine,
+      alt_line: c.line + delta,
+      std: c.std,
+      betType: c.betType,
+      side: c.side,
+      out: altline.fairProbAtLine(trueLine, c.line + delta, c.std, c.betType, c.side),
+    }));
+  }),
+  ladder: LINE_CASES.map((c) => ({
+    ...c,
+    cover_prob: odds.americanToImplied(c.odds),
+    range: 5,
+    step: 0.5,
+    out: altline.generateLineLadder(c.line, c.odds, c.std, c.betType, c.side, 5, 0.5),
+  })),
+  compare: [
+    { a: { line: -3.5, odds: "-110" }, b: { line: -7.5, odds: "-110" }, std: 13.86, betType: "spread" },
+    { a: { line: -7, odds: "+100" }, b: { line: -6.5, odds: "-130" }, std: 13.86, betType: "spread" },
+    { a: { line: -7, odds: "-110" }, b: { line: -7, odds: "-110" }, std: 13.86, betType: "spread" },
+    { a: { line: 44.5, odds: "-110" }, b: { line: 47.5, odds: "-110" }, std: 10.0, betType: "total", side: "over" },
+    { a: { line: 44.5, odds: "-110" }, b: { line: 47.5, odds: "-110" }, std: 10.0, betType: "total", side: "under" },
+  ].map((c) => ({
+    ...c,
+    cover_a: odds.americanToImplied(c.a.odds),
+    cover_b: odds.americanToImplied(c.b.odds),
+    out: bestline.compareBestLine(
+      c.a.line, c.a.odds, c.b.line, c.b.odds, c.std, c.betType, c.side,
+    ),
+  })),
+});
+
+// ---------------------------------------------------------- regression.ts
+
+const REG_CASES = [
+  { observed: 0.4, baseline: 0.26, n: 40, k: 200 },
+  { observed: 0.4, baseline: 0.26, n: 200, k: 200 },
+  { observed: 0.4, baseline: 0.26, n: 2000, k: 200 },
+  { observed: 0.15, baseline: 0.26, n: 40, k: 200 },
+  { observed: 0.6, baseline: 0.45, n: 120, k: 750 },
+  { observed: 0.92, baseline: 0.905, n: 900, k: 1500 },
+  { observed: 0.0, baseline: 0.26, n: 10, k: 200 },
+  { observed: 1.0, baseline: 0.26, n: 10, k: 200 },
+  { observed: 0.33, baseline: 0.33, n: 500, k: 200 },
+];
+
+write("regression", {
+  regression_weight: REG_CASES.map((c) => ({
+    sample_size: c.n,
+    regression_constant: c.k,
+    out: regression.regressionWeight(c.n, c.k),
+  })),
+  regress_to_mean: REG_CASES.map((c) => ({
+    ...c,
+    out: regression.regressToMean(c.observed, c.baseline, c.n, c.k),
+  })),
+  confidence_interval: REG_CASES.map((c) => {
+    const [lower, upper] = regression.confidenceInterval(c.observed, c.baseline, c.n, c.k);
+    return { ...c, out: { lower, upper } };
+  }),
+  // The TS accumulated a float step and rounded, so its x-axis has duplicates
+  // and gaps. Only the mapping from sample size to estimate is compared.
+  convergence_series: [
+    { observed: 0.4, baseline: 0.26, k: 200, max: 2000 },
+    { observed: 0.4, baseline: 0.26, k: 200, max: 150 },
+  ].map((c) => ({
+    ...c,
+    out: regression.convergenceSeries(c.observed, c.baseline, c.k, c.max),
   })),
 });
 

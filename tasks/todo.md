@@ -205,12 +205,45 @@ Also added, not in the original: `Hedge::worst_case` (what you actually lock in,
 rather than making the reader compare two numbers) and a documented caveat that
 parlay multiplication assumes leg independence.
 
-### Phase 2 — Rust core, tier 2 (distributions, models, simulation)
-- [ ] `distributions.rs`, `poisson.rs`, `nbinom.rs`
+### Phase 2 — Rust core, tier 2 (distributions, models, simulation)  ← IN PROGRESS
+- [x] `distributions.rs` — Poisson / negative binomial / gamma / lognormal
+      samplers, histogram, over-probability, Welford stats
+- [x] `risk_of_ruin.rs` — seeded Monte Carlo, rayon across paths
+- [ ] `poisson.rs`, `nbinom.rs` — score matrices, market derivation
 - [ ] `bayesian.rs`, `regression.rs`, `altline.rs`, `bestline.rs`, `middle.rs`, `teaser_ev.rs`,
       `parlay_correlation.rs`, `risk_of_ruin.rs`
 - [ ] Sport config tables
-- [ ] `rayon` for the Monte Carlo paths; benchmark vs the JS to quantify the win
+- [x] `rayon` for the Monte Carlo paths
+- [ ] Benchmark vs the JS to quantify the win
+
+**Simulation code cannot be parity-tested.** The TS calls `Math.random()`, so
+its output is not reproducible even against itself. These modules get
+distributional tests instead (mean, variance, skew against closed forms) plus
+determinism tests, which the seeded RNG makes possible for the first time.
+
+**`bettor-core` never reads entropy.** Every simulation takes an explicit seed
+and reports it back in the result, so any figure a user quotes can be
+reproduced exactly. Generating a seed is the shell's job.
+
+**Bugs found:**
+
+1. **`samplePoisson` used a rounded normal approximation above λ = 30** while
+   its doc comment claimed Ahrens-Dieter rejection. A normal is symmetric, a
+   Poisson is right-skewed — the approximation flattened exactly the tail a
+   prop line sits in. A regression test now asserts skew ≈ 1/√λ at λ = 50.
+2. **`simulateRuin` mixed populations in adjacent statistics.** Median over
+   *survivors*, mean over *all paths* with ruined scored as zero, displayed
+   side by side. At a 30% ruin rate the median looks healthy while the mean is
+   dragged down and nothing explains the gap. Now `median_ending_all`,
+   `mean_ending_all`, and `median_ending_survivors`, each named for its base.
+3. **Invalid input returned a zeroed result**, so a typo rendered as
+   `0% risk of ruin` — the safest-looking answer possible.
+4. **`generateSamples` returned an array of zeros** for a lognormal with
+   `mu <= 0`, which charts as certainty at zero.
+
+Added, not in the original: `longest_losing_streak`, the statistic most
+underestimated at long prices, and `median_max_drawdown` alongside the mean
+(drawdown is skewed, so the mean alone misleads).
 
 ### Phase 3 — IPC layer
 - [ ] Tauri commands wrapping every core entry point

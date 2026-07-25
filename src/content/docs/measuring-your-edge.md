@@ -45,6 +45,8 @@ This is why bet sizing (Kelly Criterion), bankroll management, and sample size a
 
 CLV measures how much better your odds were compared to where the line closed. If you bet Team A at -105 and the line closes at -115, you got 10 cents of closing line value.
 
+Cents are how people quote it, but cents are a unit of *price*, not of value. The same twenty-cent move is worth 4.14 probability points at -110 and 0.20 at +900 — a factor of twenty. Quote your CLV in probability points, using the formula below, or you will systematically overrate your longshots.
+
 ### Why CLV Matters
 
 The closing line is the most efficient price the market produces. It incorporates all available information — public betting, sharp action, injury news, weather. Research consistently shows that CLV is the single best predictor of long-term profitability.
@@ -69,9 +71,23 @@ $$
 
 **Return-based CLV** compares what you would have won at your odds vs. the closing odds, showing the percentage return advantage.
 
+### Devig the Close First
+
+One catch that trips up almost everyone. A closing price still contains the
+book's margin, so comparing your price to the raw close overstates your edge by
+roughly half the hold — enough to turn a break-even bettor into a winning one
+on paper.
+
+Bet -110 into a market that closes -110/-110 and the raw comparison says you
+broke even. You did not: the fair price was even money, so that bet was -4.5%
+EV. To get an honest number you need the *other* side of the closing market,
+devig the pair, and compare your price against the fair probability. The CLV
+Calculator asks for the opposing close for exactly this reason, and reports no
+edge at all without it rather than quietly giving you the flattering one.
+
 ### The Relationship Between EV and CLV
 
-If the closing line is efficient (a reasonable assumption for liquid markets), then CLV *is* your edge. Beating the close by 2% means your bets have roughly 2% expected value.
+If the closing line is efficient (a reasonable assumption for liquid markets) *and you have devigged it*, then CLV **is** your edge. Beating the devigged close by 2% means your bets have roughly 2% expected value.
 
 This makes CLV a more reliable metric than raw profit/loss for evaluating your process. Profits can be noisy in small samples. CLV converges much faster because it measures your ability to find value before the market corrects.
 

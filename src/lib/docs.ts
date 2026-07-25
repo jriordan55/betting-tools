@@ -8,8 +8,11 @@ import { renderMarkdown } from './markdown';
  * a desktop app — and because the explanations are the part of the original
  * project worth keeping when the SEO value it was written for does not travel.
  *
- * Some of them describe behaviour this port deliberately changed. Those carry
- * a correction; see `CORRECTIONS` below and `docs/DIVERGENCES.md`.
+ * Where an article described behaviour this port changed, the article was
+ * edited rather than annotated. They are reference material for this app, not
+ * a record of a web app nobody is reading — a banner explaining what a
+ * different program used to do is archaeology, and it belongs in
+ * `docs/DIVERGENCES.md`, which is where it is.
  */
 
 export interface Doc {
@@ -20,33 +23,9 @@ export interface Doc {
 	tags: string[];
 	/** The markdown body, frontmatter stripped. */
 	body: string;
-	/** A note shown above the article where the port changed the behaviour. */
-	correction: string | null;
 	/** Calculator slugs this article explains. */
 	related: string[];
 }
-
-/**
- * Where an article describes the *old* behaviour.
- *
- * The port found nineteen-plus bugs in the reference implementation, and these
- * documents were written against it. Publishing them unchanged next to
- * calculators that now answer differently would leave the app arguing with
- * itself, and the article would win — prose reads as more authoritative than a
- * number. Each note says what changed rather than editing the author's text.
- */
-const CORRECTIONS: Record<string, string> = {
-	'devig-methods-compared':
-		'Two corrections, in opposite directions. (1) The method descriptions are right and the implementation behind this article was not: it had q/S inside the radical where Shin (1993) has q²/S, so its bisection had no interior root and Shin silently returned Proportional\'s numbers — five methods, two of them the same one. Fixed here; on a -1000/+500 market the longshot\'s fair probability moves from 0.1550 to 0.1288. (2) The comparison table cannot be right either, whoever computed it. On a two-outcome market Shin and Equal Margin are provably identical — the insider fraction cancels out of the difference, leaving exactly the equal-margin adjustment — so those two columns must agree on every row, and in the table they do not. Run the numbers in the Devig Calculator instead.',
-	'measuring-your-edge':
-		'This article is right and the calculator it was written for was not. It leads with odds-based CLV — closing probability minus bet probability, in probability points — which is the honest measure. The web calculator implemented the other one: a ratio of decimal odds, displayed three times under three different labels ("Closing Line Value", "Edge (cents per dollar)", "Expected Value") that were algebraically the same expression. That ratio flatters longshots, ranking +400→+350 (11.1%) above -110→-130 (7.9%) when in points those are 2.22 and 4.14 — the opposite order. The calculator now leads with what this article always said to use. One thing the article does not mention: a closing price still contains the vig, so "beating the close by 2% means roughly 2% expected value" is optimistic by about half the hold unless you devig the close first.',
-	'teaser-ev-analysis':
-		'The cover probabilities here come from a normal distribution, which cannot see that football margins pile up on 3 and 7. Roughly 15% of NFL games end with a margin of exactly 3 and about 9% with exactly 7; a normal at σ≈13.9 puts under 3% on each. The teaser calculator reports keyNumbersCrossed beside a probability that ignores them and now says so explicitly. The Game Probability Visualizer has an empirical margin reweighting if you want to see the difference.',
-	'alternate-line-pricing':
-		'The method here is correct and specifies removing the vig before inverting the CDF — "extract the implied fair probability (after removing vig)". The implementation did not do that step. It fed the raw implied probability straight into Φ⁻¹, so a team at -10.5 priced -110 in a -110/-110 market, whose fair cover probability is 0.50 and whose true line is therefore exactly -10.5, came back as -11.33. Eight tenths of a point of pure hold, presented as market information. It cancels when you compare two books at identical prices, which is presumably why it survived. Fixed here, so the ladder now matches the article.',
-	'bankroll-management-beyond-kelly':
-		'Nothing here is wrong — the article is qualitative, and its ruin-risk table is a rule of thumb rather than simulator output. Two things about the tool behind it did change. The old simulator called Math.random(), so it gave a different answer on every run and no figure it printed could be checked; every simulation here takes a seed and reports it back, so any number you quote can be reproduced. And it showed a median over surviving paths beside a mean over all paths with ruined runs scored as zero — two different populations, side by side, unlabelled. Both bases are now named.'
-};
 
 /** Which calculators each article explains, for the cross-links. */
 const RELATED: Record<string, string[]> = {
@@ -127,7 +106,6 @@ export const DOCS: Doc[] = Object.entries(FILES)
 			excerpt: asString(data.excerpt),
 			tags: Array.isArray(data.tags) ? data.tags : [],
 			body,
-			correction: CORRECTIONS[slug] ?? null,
 			related: RELATED[slug] ?? []
 		};
 	})

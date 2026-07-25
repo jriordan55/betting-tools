@@ -795,13 +795,16 @@ before that rule went in, and both were silent corruptions rather than errors:
 returns ", and display math failed to render at all because its body starts
 with a newline.
 
-**Five of the fifteen carry a correction**, shown above the article. They were
-written against an implementation this port changed, and publishing them
-unannotated would leave the app arguing with itself — prose reads as more
-authoritative than a number on a screen.
+**Three articles were edited**, not annotated. The first pass put a correction
+banner above each one explaining what the old web implementation used to do;
+that was archaeology about a project nobody is reading, and it made the library
+look like a changelog. The articles are reference material for *this* app, so
+they now simply say the right thing. The record of what changed lives in
+`docs/DIVERGENCES.md`, which is what that file is for.
 
-**And in three of the five the article was right and the code was wrong**,
-which is worth recording because it inverts the assumption I started with:
+**In three of the five candidates the article was right and the code was
+wrong**, which is worth recording because it inverts the assumption I started
+with:
 
 - `measuring-your-edge` leads with *odds-based* CLV — closing probability minus
   bet probability, in points. That is the honest measure. The calculator
@@ -818,8 +821,14 @@ whatever `z` balances the book — the insider fraction cancels out of the
 difference. So the app still offers five devig methods and four distinct
 answers on the most common market shape. Not a bug this time, but it looks
 exactly like the one this project already fixed, so it is proved in
-`devig.rs`, pinned by a test, and stated in the calculator's own text. Two
-columns agreeing is not corroboration when they are the same function.
+`devig.rs`, pinned by a test, stated in the calculator's own text, and now
+derived in the article itself — whose table was replaced with one computed from
+the engine. The recomputed numbers also kill the article's claim that the
+methods differ by "typically < 1%": on a +500 longshot, MPTO says 16.00% and OR
+says 13.75%, which is a fair price of +525 against +627. On a longshot the
+choice of devig method matters more than most edges being bet into.
+
+Two columns agreeing is not corroboration when they are the same function.
 
 ### Phase 8 — Mass port  ← COMPLETE
 - [x] Remaining 18 calculators against the settled Phase 4 architecture

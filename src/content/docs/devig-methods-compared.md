@@ -71,23 +71,64 @@ where $k$ is found such that the fair probabilities sum to 1.
 
 **Assumption:** The margin is additive in log-odds space. This preserves the relative log-odds ratios between outcomes.
 
+## Shin and Equal Margin Are the Same Thing on a Two-Way Market
+
+Worth knowing before you read the table below and see two columns agreeing.
+
+On a market with exactly two outcomes, Shin returns *precisely* the equal-margin
+probabilities — not approximately, and not for some particular market. Invert
+Shin's formula to get the vigged price back:
+
+$$
+q_i = \sqrt{S \cdot \pi_i \left( z + (1-z)\pi_i \right)}
+$$
+
+With two outcomes, write $\pi_1 = p$ and $\pi_2 = 1 - p$. The insider fraction
+$z$ then cancels out of the difference:
+
+$$
+q_1^2 - q_2^2 = S\left[ z(2p-1) + (1-z)\left(p^2 - (1-p)^2\right) \right] = S(2p-1)
+$$
+
+Together with $q_1 + q_2 = S$ that forces $q_1 - q_2 = \pi_1 - \pi_2$, which is
+exactly the equal-margin adjustment $\pi_i = q_i - (S-1)/2$.
+
+So on a two-way market you have five methods and four distinct answers. Shin
+only says something of its own once there are three or more outcomes — a
+soccer 1X2 market, or a three-way prop.
+
 ## When Do They Differ?
 
-For balanced markets (e.g., -110/-110), all five methods produce nearly identical results. Differences emerge in **unbalanced markets**:
+For balanced markets (e.g., -110/-110), all five methods produce identical
+results — there is no margin to distribute. Differences emerge in
+**unbalanced markets**. Each cell below is the fair probability of the
+**first-listed** outcome:
 
-| Market | EM | MPTO | Shin | OR | LOG |
-|--------|-----|------|------|-----|-----|
-| -300/+250 | 72.50% | 73.17% | 73.35% | 73.25% | 73.21% |
-| -110/-110 | 50.00% | 50.00% | 50.00% | 50.00% | 50.00% |
-| +500/-700 | 14.64% | 14.63% | 14.50% | 14.57% | 14.60% |
+| Market | Book total | EM | MPTO | Shin | OR | LOG |
+|--------|-----------|-----|------|------|-----|-----|
+| -300/+250 | 103.57% | 73.21% | 72.41% | 73.21% | 73.63% | 73.25% |
+| -110/-110 | 104.76% | 50.00% | 50.00% | 50.00% | 50.00% | 50.00% |
+| +500/-700 | 104.17% | 14.58% | 16.00% | 14.58% | 13.75% | 14.46% |
 
-The differences are small (typically < 1%), but when you're making decisions at the margin, even 0.5% matters.
+Two things stand out. Shin matches EM exactly, for the reason above. And the
+spread between methods is **not** small once the market is lopsided: on the
++500 longshot, MPTO says 16.00% and OR says 13.75%. That is 2.25 percentage
+points, or a fair price of +525 against +627 — a gap far larger than most edges
+anyone is betting into.
+
+The lesson is not that one method is right. It is that on a longshot your
+choice of devig method matters *more* than the edge you think you have found,
+so it is worth knowing which assumption you are making rather than accepting a
+default.
 
 ## Which Should You Use?
 
-- **MPTO** is the safest default — it's simple, well-understood, and widely used
-- **Shin** is theoretically grounded and preferred by academics
-- When methods **agree**, you can be more confident in the fair probability
-- When methods **disagree** significantly, the market may be unusual — investigate further
+- **MPTO** is the safest default — simple, well understood, and widely used
+- **Shin** is theoretically grounded and preferred by academics, but adds
+  nothing over EM unless the market has three or more outcomes
+- When methods **agree**, be careful about reading that as confirmation —
+  check first that they are not the same function, as Shin and EM are here
+- When methods **disagree** significantly, the market is lopsided and the
+  choice is doing real work. Investigate rather than take the default.
 
-The Bettor Calculator Devig Calculator shows all five methods side-by-side so you can compare.
+The Devig Calculator runs all five side by side so you can see the spread.

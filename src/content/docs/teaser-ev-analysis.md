@@ -80,6 +80,26 @@ This means a teaser leg that moves through 3 or 7 gains more cover probability p
 
 The calculator shows which key numbers each leg crosses, so you can see at a glance whether your teaser points are landing in high-value territory or being spent on margins where games rarely land.
 
+### What the Model Does Not Do
+
+Be careful here, because the two halves of this page do not quite agree. The
+cover probabilities above come from a **normal distribution**, and a normal
+cannot see key numbers at all. At σ ≈ 13.9 it puts under 3% on a margin of
+exactly 3, where the real figure is around 15%.
+
+So the calculator tells you which key numbers a leg crosses, and then prices
+that leg as though crossing them bought nothing in particular. That is why the
+textbook two-team Wong teaser — -7.5 and -8.5 down through 6 points — prices out
+around 44.6% per leg against a 52.4% break-even and reads as -EV here, while
+those legs are commonly reported hitting in the low seventies.
+
+Read `modelIgnoresKeyNumbers` on the result as the warning it is. Pricing the
+discrete mass properly needs an empirical margin distribution per sport, which
+is a data problem rather than a maths one. The Game Probability Visualizer has
+a reweighted football margin distribution if you want to see the difference the
+pile-ups make: with it on, a 3-point margin carries 12.7% and a 7 carries 8.4%,
+against the roughly 15% and 9% quoted above.
+
 ### Examples
 
 | Spread | Teased (+6) | Key #s Crossed | Value |

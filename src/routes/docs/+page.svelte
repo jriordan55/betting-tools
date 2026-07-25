@@ -19,7 +19,6 @@
 		});
 	});
 
-	const correctedCount = DOCS.filter((d) => d.correction !== null).length;
 </script>
 
 <svelte:head><title>Reference — Bettor Desktop</title></svelte:head>
@@ -28,8 +27,8 @@
 	<header class="head">
 		<h1>Reference</h1>
 		<p>
-			{DOCS.length} explainers, bundled with the app — no network needed. {correctedCount} of them
-			carry a correction, because the port changed behaviour they were written against.
+			{DOCS.length} explainers, bundled with the app. No network needed, and each one links to
+			the calculators it explains.
 		</p>
 	</header>
 
@@ -60,10 +59,7 @@
 			{#each shown as doc (doc.slug)}
 				<li>
 					<a href="/docs/{doc.slug}">
-						<div class="row">
-							<h2>{doc.title}</h2>
-							{#if doc.correction}<span class="flag">corrected</span>{/if}
-						</div>
+						<h2>{doc.title}</h2>
 						<p>{doc.excerpt}</p>
 						<div class="meta">
 							<span>{doc.date}</span>
@@ -150,27 +146,10 @@
 		opacity: 1;
 	}
 
-	.row {
-		display: flex;
-		align-items: baseline;
-		gap: 0.6rem;
-	}
-
 	h2 {
 		font-size: 0.95rem;
 		font-weight: 600;
 		color: var(--text-primary);
-	}
-
-	.flag {
-		font-size: 0.62rem;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--accent-amber);
-		border: 1px solid var(--accent-amber);
-		border-radius: 2px;
-		padding: 0.05rem 0.3rem;
-		white-space: nowrap;
 	}
 
 	.list p {

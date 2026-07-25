@@ -24,13 +24,6 @@
 			</div>
 		</header>
 
-		{#if doc.correction}
-			<aside class="correction">
-				<div class="correction-title">What changed since this was written</div>
-				<p>{doc.correction}</p>
-			</aside>
-		{/if}
-
 		<!--
 			The markdown is ours: fifteen files bundled at build time from a repo
 			we control. It is not user input and never crosses a network, which is
@@ -73,7 +66,7 @@
 	}
 
 	.head {
-		margin: 1rem 0 1.5rem;
+		margin: 1rem 0 2rem;
 	}
 
 	h1 {
@@ -96,30 +89,6 @@
 	.tag::before {
 		content: '#';
 		opacity: 0.6;
-	}
-
-	.correction {
-		border: 1px solid var(--accent-amber);
-		border-radius: var(--radius);
-		background: color-mix(in srgb, var(--accent-amber) 8%, transparent);
-		padding: 0.9rem 1.1rem;
-		margin-bottom: 2rem;
-	}
-
-	.correction-title {
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--accent-amber);
-		margin-bottom: 0.4rem;
-	}
-
-	.correction p {
-		font-size: 0.82rem;
-		line-height: 1.65;
-		color: var(--text-secondary);
 	}
 
 	.related {

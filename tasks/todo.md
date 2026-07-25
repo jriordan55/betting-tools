@@ -25,11 +25,11 @@ a deliberate cut — see *Deliberately not built*, below.
 
 - **Phase 2 leftover** — the JS-vs-Rust benchmark. The speed claim is currently
   unquantified.
-- **Ship chrome** — default Tauri template icons, placeholder `productName` and
-  bundle identifier. A branding decision, not an engineering one; see *Open
-  questions*.
-- **Blog/MDX** — keep the 22 posts as bundled reference or drop them. Also
-  yours to call.
+- **Icons** — still the Tauri template's. Needs a source PNG; `pnpm tauri icon`
+  generates the set from one 1024×1024 image. The name stays `bettor-desktop`,
+  settled 2026-07-25.
+*(Nothing else. Both open items were settled 2026-07-25: the name stays
+`bettor-desktop`, and the reference library is bundled.)*
 
 **Also unresolved, from the Phase 1 findings:** the Shin fix changes real
 numbers — longshot fair probabilities were overstated ~20% relative. Worth
@@ -759,11 +759,55 @@ by what can actually break here rather than by coverage:
 `pnpm verify` has to run without one. The math is not tested here at all — it
 is tested in Rust, where it lives.
 
+### Reference library  ← COMPLETE
+
+The 15 blog posts ship inside the binary as `/docs`, rendered from markdown
+with KaTeX. No `mdsvex`, no network: `import.meta.glob` bundles them at build
+time, a 30-line frontmatter reader replaces `gray-matter`, and `marked` plus
+the KaTeX already in the tree do the rest.
+
+**The `$` problem is the whole job.** These documents use `$` as a math
+delimiter, as a literal dollar inside math (`$\$2100$`), and as a currency
+symbol in prose. Handing the raw text to a markdown parser first destroys the
+LaTeX — `_` becomes emphasis — so math is lifted out before parsing and put
+back after. The delimiter rule is the standard one: an opening `$` must be
+followed by a non-space and a closing `$` preceded by one. Two tests failed
+before that rule went in, and both were silent corruptions rather than errors:
+`a $100 bet returns $190.91` rendered as an equation whose body was " bet
+returns ", and display math failed to render at all because its body starts
+with a newline.
+
+**Five of the fifteen carry a correction**, shown above the article. They were
+written against an implementation this port changed, and publishing them
+unannotated would leave the app arguing with itself — prose reads as more
+authoritative than a number on a screen.
+
+**And in three of the five the article was right and the code was wrong**,
+which is worth recording because it inverts the assumption I started with:
+
+- `measuring-your-edge` leads with *odds-based* CLV — closing probability minus
+  bet probability, in points. That is the honest measure. The calculator
+  implemented the ratio instead, three times under three labels.
+- `alternate-line-pricing` explicitly says to extract the fair probability
+  *"after removing vig"* before inverting the CDF. The implementation skipped
+  that step, which is divergence #5.
+- `devig-methods-compared` describes Shin correctly; the implementation did not.
+
+**A new finding, from checking that last one.** The article's comparison table
+gives EM and Shin different values on two-way markets. It cannot: on a
+two-outcome market Shin returns *exactly* the equal-margin probabilities, for
+whatever `z` balances the book — the insider fraction cancels out of the
+difference. So the app still offers five devig methods and four distinct
+answers on the most common market shape. Not a bug this time, but it looks
+exactly like the one this project already fixed, so it is proved in
+`devig.rs`, pinned by a test, and stated in the calculator's own text. Two
+columns agreeing is not corroboration when they are the same function.
+
 ### Phase 8 — Mass port  ← COMPLETE
 - [x] Remaining 18 calculators against the settled Phase 4 architecture
       (18, not 17: the slice shipped three rather than four)
 - [x] Drop the free/premium split — desktop app, everything unlocked
-- [ ] Blog/MDX content: decide keep (bundled reference) or drop
+- [x] Blog/MDX content: **kept**, as a bundled in-app reference library
 
 **21 calculators ship**, 1:1 with the reference's live set. `BetterLine` is
 `BestLineCalculator` renamed; `MatchPredictor.svelte` is shared by `PoissonMatch`

@@ -219,6 +219,141 @@ button:disabled {
   color: var(--text-secondary);
 }
 
+/* Rendered markdown from the reference library. Scoped styles cannot reach
+   `{@html}` output, so the article typography lives here. */
+.prose {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  user-select: text;
+}
+
+.prose h2 {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 2.25rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose h3 {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 1.75rem 0 0.5rem;
+}
+
+.prose h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 1.25rem 0 0.4rem;
+}
+
+.prose p {
+  margin: 0.85rem 0;
+}
+
+.prose strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0.85rem 0;
+  padding-left: 1.35rem;
+}
+
+.prose li {
+  margin: 0.35rem 0;
+}
+
+.prose blockquote {
+  margin: 1.1rem 0;
+  padding: 0.15rem 0 0.15rem 1rem;
+  border-left: 2px solid var(--accent-cyan);
+  color: var(--text-muted);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+
+.prose pre {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  margin: 1.1rem 0;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Tables can be wider than the column; they scroll rather than pushing the
+   page sideways. */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  margin: 1.25rem 0;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.prose th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.prose td {
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.prose .math-error {
+  color: var(--accent-red);
+}
+
+/* KaTeX renders at its own scale and colour; pull both back into the theme. */
+.prose .katex {
+  font-size: 1em;
+  color: var(--text-primary);
+}
+
+.prose .katex-display {
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
 @media (max-width: 640px) {
   main {
     padding-left: 1.25rem;

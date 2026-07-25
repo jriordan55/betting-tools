@@ -49,6 +49,28 @@ to itself.
 `crates/bettor-core/src/devig.rs` · parity: `shin` fixture, 17 of 18 valid
 markets differ.
 
+**A coincidence that survives the fix, and is not one.** On a *two-outcome*
+market, correct Shin returns exactly the equal-margin probabilities — provably,
+for whatever insider fraction balances the book. Inverting Shin's formula gives
+`q = √(S·π·(z + (1−z)π))`, and for two outcomes `z` cancels out of the
+difference:
+
+```
+q₁² − q₂² = S[ z(2p−1) + (1−z)(p² − (1−p)²) ] = S(2p−1)
+```
+
+which with `q₁ + q₂ = S` forces `q₁ − q₂ = π₁ − π₂` — the equal-margin
+adjustment. So the app still shows five devig methods and four distinct answers
+on the most common market shape. This is a property of Shin's model rather than
+a bug, but it looks exactly like the bug above, so it is pinned by
+`shin_is_equal_margin_on_a_two_way_market` and stated in the calculator's own
+explanatory text. Two columns agreeing is not corroboration when they are the
+same function.
+
+*(Found 2026-07-25, while checking a bundled reference article's comparison
+table — which gives EM and Shin different values on two-way markets and
+therefore cannot be right either.)*
+
 ### 2. `middle.ts` averaged a quantity with its own negation
 
 `impliedTrueLine(-3.5, …)` returns the mean of *minus* the margin.

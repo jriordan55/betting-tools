@@ -1,4 +1,5 @@
 <script lang="ts">
+	import 'katex/dist/katex.min.css';
 	import '../app.css';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
@@ -59,7 +60,7 @@
 		</div>
 
 		<nav>
-			<!-- Not a calculator: it is a record, and it belongs above them. -->
+			<!-- Neither of these is a calculator, and both belong above them. -->
 			<div class="group">
 				<div class="group-title">Your book</div>
 				<a
@@ -70,6 +71,15 @@
 				>
 					<span class="nav-icon">$</span>
 					<span class="nav-label">Bet Log</span>
+				</a>
+				<a
+					class="nav-link"
+					class:active={page.url.pathname.startsWith('/docs')}
+					href="/docs"
+					title="Explainers for every calculator, bundled with the app"
+				>
+					<span class="nav-icon">?</span>
+					<span class="nav-label">Reference</span>
 				</a>
 			</div>
 

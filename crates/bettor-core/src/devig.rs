@@ -10,6 +10,12 @@
 //!
 //! # Divergences from the TypeScript
 //!
+//! 0. **Shin still coincides with one other method on a two-way market** —
+//!    with equal margin rather than with proportional, and this time because
+//!    the two are provably identical there rather than because the solver was
+//!    broken. See [`shin_probs`] for the derivation. Five methods still means
+//!    four distinct answers on the most common market shape, which is worth
+//!    saying out loud rather than letting an agreement read as corroboration.
 //! 1. **Shin is actually Shin now.** The TS put `q/S` inside the radical where
 //!    Shin (1993) has `q²/S`. With the exponent missing, the bisection has no
 //!    interior root: `z` pinned to the search ceiling on every input and the
@@ -171,6 +177,26 @@ fn em_inner(probs: &[f64], sum: f64) -> Result<Vec<f64>> {
 /// Shin's fair probabilities for a given insider fraction `z`.
 ///
 /// π_i = (√(z² + 4(1−z)·q_i²/S) − z) / (2(1−z))
+///
+/// # Shin and equal margin coincide on a two-way market
+///
+/// Not a bug, and not an approximation — an identity, which the UI has to
+/// point out because two methods agreeing looks like corroboration.
+///
+/// Inverting the formula above gives `q_i = √(S·π_i·(z + (1−z)·π_i))`. For two
+/// outcomes write `π₁ = p`, `π₂ = 1 − p`:
+///
+/// ```text
+/// q₁² − q₂² = S[ z(2p−1) + (1−z)(p² − (1−p)²) ]
+///           = S(2p−1)[ z + (1−z) ]
+///           = S(2p−1)
+/// ```
+///
+/// The `z` cancels. Together with `q₁ + q₂ = S` that forces
+/// `q₁ − q₂ = π₁ − π₂`, which is exactly `π_i = q_i − (S−1)/2` — equal margin.
+/// So on any two-outcome market the two methods return the same numbers for
+/// *whatever* insider fraction balances the book, and Shin only says something
+/// of its own once there are three or more outcomes.
 fn shin_probs(probs: &[f64], sum: f64, z: f64) -> Vec<f64> {
     probs
         .iter()
@@ -467,4 +493,39 @@ mod tests {
         // Betting +400 (0.20 implied) on a true 21% shot is a 5% edge.
         assert_relative_eq!(ev_vs_fair(0.21, 0.20).unwrap(), 0.05, epsilon = 1e-12);
     }
+    #[test]
+    fn shin_is_equal_margin_on_a_two_way_market() {
+        // An identity, derived at `shin_probs`. Pinned because it looks like a
+        // bug of exactly the kind this module already fixed once, and because
+        // the UI makes a claim about it.
+        for market in [
+            [0.75, 0.285_714_285_7],
+            [0.166_666_666_7, 0.875],
+            [0.909_090_909_1, 0.166_666_666_7],
+            [0.523_809_523_8, 0.523_809_523_8],
+        ] {
+            let em = DevigMethod::Em.apply(&market).unwrap();
+            let shin = DevigMethod::Shin.apply(&market).unwrap();
+            for (a, b) in em.iter().zip(&shin) {
+                assert_relative_eq!(a, b, epsilon = 1e-9);
+            }
+        }
+    }
+
+    #[test]
+    fn shin_says_something_of_its_own_once_there_are_three_outcomes() {
+        // Which is the other half of the claim: the coincidence is a property
+        // of two-outcome markets, not of the implementation.
+        for market in [[0.40, 0.35, 0.32], [0.70, 0.20, 0.15]] {
+            let em = DevigMethod::Em.apply(&market).unwrap();
+            let shin = DevigMethod::Shin.apply(&market).unwrap();
+            let gap = em
+                .iter()
+                .zip(&shin)
+                .map(|(a, b)| (a - b).abs())
+                .fold(0.0_f64, f64::max);
+            assert!(gap > 1e-4, "Shin {shin:?} collapsed onto EM {em:?}");
+        }
+    }
+
 }

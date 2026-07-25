@@ -219,6 +219,17 @@
 		"devigged" into false confidence, and a method that fails to converge says so instead of
 		returning its last iterate.
 	</p>
+	<p>
+		<strong>Shin and Equal Margin agree exactly on a two-way market, and that is not evidence of
+		anything.</strong>
+		It is an identity. Inverting Shin's formula gives
+		<code>q = √(S·π·(z + (1−z)·π))</code>, and for two outcomes the insider fraction
+		<code>z</code> cancels out of the difference — leaving <code>q₁ − q₂ = π₁ − π₂</code>, which
+		is equal margin. So the two return the same numbers for whatever <code>z</code> balances the
+		book, and Shin only says something of its own once there are three or more outcomes. Five
+		methods, four distinct answers on the most common market shape. Worth knowing before you read
+		two agreeing columns as corroboration.
+	</p>
 </InfoSection>
 
 <style>

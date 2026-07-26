@@ -31,25 +31,30 @@
 
 <style>
 	.group {
-		display: flex;
+		display: inline-flex;
+		width: 100%;
+		max-width: var(--control-max);
+		height: var(--control-height);
 		border: 1px solid var(--border);
 		border-radius: var(--radius-sm);
 		overflow: hidden;
+		background: var(--bg-primary);
 	}
 
 	button {
 		flex: 1;
-		padding: 0.4rem 0.75rem;
-		font-family: var(--font-mono);
-		font-size: 0.85rem;
+		padding: 0 0.65rem;
+		height: 100%;
+		font-family: var(--font-sans);
+		font-size: 0.8rem;
 		font-weight: 500;
-		letter-spacing: 0.02em;
+		line-height: 1;
 		color: var(--text-muted);
-		background: var(--bg-tertiary);
+		background: transparent;
 		border: none;
 		border-radius: 0;
 		cursor: pointer;
-		transition: all 0.15s;
+		transition: background 0.12s ease, color 0.12s ease;
 		white-space: nowrap;
 	}
 
@@ -59,19 +64,12 @@
 
 	button:hover {
 		color: var(--text-secondary);
-		background: var(--bg-secondary);
+		background: var(--bg-tertiary);
 	}
 
 	button.active {
-		color: var(--text-primary);
-		background: var(--bg-secondary);
+		color: var(--accent-cyan);
+		background: var(--accent-cyan-soft);
 		font-weight: 600;
-	}
-
-	@media (max-width: 640px) {
-		button {
-			font-size: 0.75rem;
-			padding: 0.4rem 0.5rem;
-		}
 	}
 </style>

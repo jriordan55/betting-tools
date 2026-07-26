@@ -16,21 +16,21 @@
 		border-radius: var(--radius);
 		overflow: hidden;
 		margin-bottom: 1rem;
+		box-shadow: var(--shadow-sm);
 	}
 
 	.header {
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
 		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--text-muted);
-		padding: 0.75rem 1.25rem;
+		letter-spacing: 0.02em;
+		color: var(--text-secondary);
+		padding: 0.55rem 0.9rem;
 		border-bottom: 1px solid var(--border);
 		background: var(--bg-tertiary);
 	}
 
 	.body {
-		padding: 1.25rem;
+		padding: 0.85rem 0.9rem 0.95rem;
 	}
 </style>

@@ -1,56 +1,67 @@
-/* Design system — ported from bettor-calculator-main/src/app/globals.css.
-   The web app is dark-only; this adds a light theme. Theme is chosen by
-   `data-theme` on <html>, set by src/lib/theme.svelte.ts before first paint. */
+/* Design system — desktop-first, dark + light.
+   Personality: readable tool, not a terminal emulator.
+   Numbers stay mono; chrome and prose use sans. */
 
 :root,
 :root[data-theme='dark'] {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-tertiary: #1a1a24;
-  --border: #2a2a3a;
-  --border-strong: #3a3a4a;
-  --text-primary: #e0e0e0;
-  --text-secondary: #888888;
-  --text-muted: #555555;
-  --accent-green: #2ed573;
-  --accent-red: #ff4757;
-  --accent-amber: #ffa502;
-  --accent-blue: #3b82f6;
-  --accent-cyan: #00d4aa;
+  --bg-primary: #0f1117;
+  --bg-secondary: #161922;
+  --bg-tertiary: #1e2230;
+  --bg-elevated: #222736;
+  --border: #2c3344;
+  --border-strong: #3d465c;
+  --text-primary: #e8eaf0;
+  --text-secondary: #9aa3b5;
+  --text-muted: #6b7385;
+  --accent-green: #34d399;
+  --accent-red: #f87171;
+  --accent-amber: #fbbf24;
+  --accent-blue: #60a5fa;
+  --accent-cyan: #2dd4bf;
+  --accent-cyan-soft: color-mix(in srgb, var(--accent-cyan) 14%, transparent);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.28);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.28);
 
   color-scheme: dark;
 }
 
-/* Light mode. The accents are darkened to hold contrast on a light surface —
-   #2ed573 on white is about 1.9:1, well under the 4.5:1 WCAG AA needs, and
-   these are the colours the numbers that matter are printed in. */
+/* Light mode — designed as its own surface, not a pure invert.
+   Accents are darkened for WCAG contrast on white. */
 :root[data-theme='light'] {
-  --bg-primary: #fbfbfd;
+  --bg-primary: #f4f5f8;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f2f2f6;
-  --border: #dcdce4;
-  --border-strong: #c2c2cc;
-  --text-primary: #16161d;
-  --text-secondary: #5a5a68;
-  --text-muted: #8a8a99;
-  --accent-green: #12924d;
-  --accent-red: #d32236;
-  --accent-amber: #a86500;
+  --bg-tertiary: #eceef3;
+  --bg-elevated: #ffffff;
+  --border: #d8dbe3;
+  --border-strong: #b8bdc9;
+  --text-primary: #151821;
+  --text-secondary: #5a6170;
+  --text-muted: #8a91a0;
+  --accent-green: #0f9f6e;
+  --accent-red: #d93848;
+  --accent-amber: #b45309;
   --accent-blue: #2563eb;
-  --accent-cyan: #00796b;
+  --accent-cyan: #0d9488;
+  --accent-cyan-soft: color-mix(in srgb, var(--accent-cyan) 12%, transparent);
+  --shadow-sm: 0 1px 2px rgb(15 20 35 / 0.05);
+  --shadow-md: 0 4px 16px rgb(15 20 35 / 0.07);
 
   color-scheme: light;
 }
 
 :root {
   --container-max: 900px;
-  --radius: 4px;
-  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
 
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata',
-    'Roboto Mono', ui-monospace, monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Monaco', ui-monospace, monospace;
   --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     system-ui, sans-serif;
+
+  --focus-ring: 0 0 0 2px var(--accent-cyan-soft);
+  --control-height: 2rem;
+  --control-max: 18rem;
 }
 
 * {
@@ -60,15 +71,16 @@
 }
 
 html {
-  font-size: 14px;
+  /* 15px: readable without the sparse “phone form in a big window” look. */
+  font-size: 15px;
 }
 
 body {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.15s ease, color 0.15s ease;
@@ -93,12 +105,12 @@ textarea,
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -108,11 +120,11 @@ textarea,
 a {
   color: var(--accent-cyan);
   text-decoration: none;
-  transition: opacity 0.15s ease;
+  transition: color 0.12s ease, opacity 0.12s ease;
 }
 
 a:hover {
-  opacity: 0.8;
+  color: color-mix(in srgb, var(--accent-cyan) 80%, white);
 }
 
 main {
@@ -135,15 +147,27 @@ main {
 input,
 select,
 textarea {
-  font-family: inherit;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.87rem;
+  line-height: 1.3;
   color: var(--text-primary);
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  /* Compact control height — full-width fields should not feel like mobile. */
+  padding: 0.32rem 0.55rem;
   width: 100%;
-  text-align: center;
+  max-width: var(--control-max);
+  height: var(--control-height);
+  text-align: left;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+textarea {
+  height: auto;
+  min-height: 4.5rem;
+  max-width: none;
+  padding: 0.45rem 0.55rem;
 }
 
 input:focus,
@@ -151,41 +175,60 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--accent-cyan);
+  box-shadow: var(--focus-ring);
+  background: var(--bg-secondary);
 }
 
 input::placeholder {
   color: var(--text-muted);
+  font-family: var(--font-sans);
 }
 
 input[aria-invalid='true'] {
   border-color: var(--accent-red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-red) 16%, transparent);
+}
+
+/* Number steppers + monospace values sit better slightly inset. */
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
 }
 
 select {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  font-family: var(--font-sans);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7385' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.625rem center;
-  padding-right: 1.75rem;
+  background-position: right 0.5rem center;
+  padding-right: 1.5rem;
 }
 
 button {
   background-color: var(--bg-tertiary);
   border: 1px solid var(--border);
   color: var(--text-primary);
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.3;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 button:hover:not(:disabled) {
-  background-color: var(--border);
+  background-color: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+button:focus-visible {
+  outline: none;
   border-color: var(--accent-cyan);
+  box-shadow: var(--focus-ring);
 }
 
 button:disabled {
@@ -230,25 +273,26 @@ button:disabled {
 }
 
 .prose h2 {
-  font-family: var(--font-mono);
-  font-size: 1.05rem;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 2.25rem 0 0.75rem;
-  padding-bottom: 0.4rem;
+  padding-bottom: 0.45rem;
   border-bottom: 1px solid var(--border);
+  letter-spacing: -0.01em;
 }
 
 .prose h3 {
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 1.75rem 0 0.5rem;
 }
 
 .prose h4 {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 1.25rem 0 0.4rem;
@@ -284,17 +328,18 @@ button:disabled {
   font-family: var(--font-mono);
   font-size: 0.85em;
   background: var(--bg-tertiary);
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 0.1em 0.35em;
 }
 
 .prose pre {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.85rem 1rem;
   overflow-x: auto;
   margin: 1.1rem 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .prose pre code {
@@ -320,7 +365,7 @@ button:disabled {
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   font-size: 0.68rem;
   padding: 0.45rem 0.7rem;
   border-bottom: 1px solid var(--border-strong);

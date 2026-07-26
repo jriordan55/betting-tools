@@ -932,3 +932,42 @@ and does not claim to price a same-game parlay.
 
 ## Review
 *(filled in as phases complete)*
+
+---
+
+## UI polish — soft desktop, not deep terminal (2026-07-25)
+
+**Goal:** same app structure and product identity; less "hacker terminal," more
+readable desktop tool. No calculator logic changes. No Tailwind.
+
+### Direction
+- **Keep:** dark-first, cyan as interactive accent, green/red for +/− numbers,
+  sidebar + card layout, CSS variables design system, light/dark toggle.
+- **Soften:** body no longer mono-everywhere; palette slightly lifted off pure
+  black; radius a bit rounder; chrome uses sans; mono reserved for numbers and
+  numeric inputs.
+- **Out of scope for this pass:** rebrand colors, logo redesign, new layout
+  architecture, per-calculator CSS rewrites.
+
+### Plan
+- [x] 1. **Tokens in `src/app.css`**
+  - Lifted dark surfaces (`#0f1117` family), added `--bg-elevated`, soft shadows
+  - Radius 8 / 6 / 12; body sans; mono for numbers/inputs; cyan focus ring
+- [x] 2. **Fonts**
+  - `@fontsource/ibm-plex-sans` + `@fontsource/jetbrains-mono` imported in layout
+- [x] 3. **Chrome**
+  - Sidebar active state uses soft cyan wash; logo title case; home cards elevated
+- [x] 4. **Shared UI kit**
+  - Section headers sans (no shouty caps); toggles/forms match; results stay mono
+- [x] 5. **Verify**
+  - `pnpm check` clean (0/0). Eye check: reload `pnpm tauri dev`.
+
+### Non-goals
+- Changing accent palette to a new brand color
+- Rewriting charts colors beyond token reads
+- Mobile layouts (desktop window only)
+
+### Review
+- Scope stayed in tokens + chrome + shared UI kit; calculators inherit.
+- Mono retained only where it earns its keep (inputs, results, tables, icons).
+- Light mode got its own surfaces (gray canvas + white cards), not a pure invert.

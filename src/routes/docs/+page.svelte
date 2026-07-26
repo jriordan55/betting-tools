@@ -86,7 +86,7 @@
 	h1 {
 		font-size: 1.6rem;
 		font-weight: 700;
-		letter-spacing: -0.01em;
+		letter-spacing: -0.025em;
 	}
 
 	.head p {
@@ -104,8 +104,8 @@
 	}
 
 	.controls input {
-		max-width: 22rem;
-		text-align: left;
+		max-width: min(22rem, 100%);
+		font-family: var(--font-sans);
 	}
 
 	.tags {
@@ -115,14 +115,15 @@
 	}
 
 	.tags button {
-		padding: 0.2rem 0.55rem;
-		font-size: 0.7rem;
+		padding: 0.25rem 0.6rem;
+		font-size: 0.72rem;
 		color: var(--text-muted);
 	}
 
 	.tags button.active {
 		color: var(--accent-cyan);
-		border-color: var(--accent-cyan);
+		border-color: transparent;
+		background: var(--accent-cyan-soft);
 	}
 
 	.list {
@@ -138,12 +139,15 @@
 		border-radius: var(--radius);
 		background: var(--bg-secondary);
 		color: inherit;
-		transition: border-color 0.15s ease;
+		box-shadow: var(--shadow-sm);
+		transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 	}
 
 	.list a:hover {
-		border-color: var(--accent-cyan);
-		opacity: 1;
+		border-color: color-mix(in srgb, var(--accent-cyan) 55%, var(--border));
+		background: var(--bg-elevated);
+		box-shadow: var(--shadow-md);
+		color: inherit;
 	}
 
 	h2 {
@@ -164,9 +168,8 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		font-size: 0.68rem;
+		font-size: 0.72rem;
 		color: var(--text-muted);
-		font-family: var(--font-mono);
 	}
 
 	.tag::before {

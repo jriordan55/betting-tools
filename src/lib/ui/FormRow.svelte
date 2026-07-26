@@ -10,8 +10,9 @@
 	.form-row {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(var(--min-col), 1fr));
-		gap: 1rem;
-		margin-bottom: 1rem;
+		gap: 0.65rem 1rem;
+		margin-bottom: 0.7rem;
+		align-items: start;
 	}
 
 	.form-row:last-child {

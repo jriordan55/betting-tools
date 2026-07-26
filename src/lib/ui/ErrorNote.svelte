@@ -15,7 +15,7 @@
 
 <style>
 	.note {
-		border: 1px solid var(--accent-red);
+		border: 1px solid color-mix(in srgb, var(--accent-red) 45%, var(--border));
 		border-radius: var(--radius);
 		background: color-mix(in srgb, var(--accent-red) 10%, transparent);
 		color: var(--accent-red);

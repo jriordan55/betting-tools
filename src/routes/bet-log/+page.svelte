@@ -569,7 +569,7 @@
 	h1 {
 		font-size: 1.6rem;
 		font-weight: 700;
-		letter-spacing: -0.01em;
+		letter-spacing: -0.025em;
 	}
 
 	.head p {
@@ -623,6 +623,7 @@
 	.filters select {
 		width: auto;
 		min-width: 10rem;
+		max-width: none;
 	}
 
 	.block {
@@ -632,12 +633,11 @@
 	}
 
 	.block-title {
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
 		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--text-muted);
+		letter-spacing: 0.02em;
+		color: var(--text-secondary);
 		margin-bottom: 0.75rem;
 	}
 
@@ -668,9 +668,8 @@
 		text-align: right;
 		font-weight: 600;
 		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		font-size: 0.7rem;
+		letter-spacing: 0.02em;
+		font-size: 0.72rem;
 		padding: 0.5rem 0.6rem;
 		border-bottom: 1px solid var(--border-strong);
 		white-space: nowrap;
@@ -686,6 +685,7 @@
 		padding: 0.45rem 0.6rem;
 		border-bottom: 1px solid var(--border);
 		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
 	}
 

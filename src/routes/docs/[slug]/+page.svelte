@@ -56,9 +56,8 @@
 	}
 
 	.back {
-		font-size: 0.78rem;
+		font-size: 0.8rem;
 		color: var(--text-muted);
-		font-family: var(--font-mono);
 	}
 
 	.back:hover {
@@ -73,7 +72,7 @@
 		font-size: 1.7rem;
 		font-weight: 700;
 		line-height: 1.25;
-		letter-spacing: -0.01em;
+		letter-spacing: -0.025em;
 	}
 
 	.meta {
@@ -81,9 +80,8 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		font-size: 0.68rem;
+		font-size: 0.72rem;
 		color: var(--text-muted);
-		font-family: var(--font-mono);
 	}
 
 	.tag::before {
@@ -98,11 +96,11 @@
 	}
 
 	.related-title {
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
+		font-family: var(--font-sans);
+		font-size: 0.72rem;
 		font-weight: 600;
+		letter-spacing: 0.04em;
 		text-transform: uppercase;
-		letter-spacing: 0.06em;
 		color: var(--text-muted);
 		margin-bottom: 0.6rem;
 	}
@@ -123,11 +121,13 @@
 		border-radius: var(--radius);
 		font-size: 0.8rem;
 		color: var(--text-primary);
+		background: var(--bg-secondary);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.related a:hover {
-		border-color: var(--accent-cyan);
-		opacity: 1;
+		border-color: color-mix(in srgb, var(--accent-cyan) 55%, var(--border));
+		color: var(--text-primary);
 	}
 
 	.icon {

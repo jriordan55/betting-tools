@@ -52,25 +52,30 @@
 	}
 
 	h1 {
-		font-size: 1.9rem;
+		font-size: 1.85rem;
 		font-weight: 700;
-		letter-spacing: -0.01em;
+		letter-spacing: -0.025em;
 	}
 
 	.tagline {
 		color: var(--text-secondary);
-		font-size: 0.9rem;
+		font-size: 0.95rem;
 		max-width: 62ch;
-		margin-top: 0.4rem;
+		margin-top: 0.45rem;
+		line-height: 1.55;
 	}
 
 	.engine {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		gap: 0.45rem;
-		margin-top: 0.85rem;
-		font-size: 0.75rem;
+		margin-top: 0.95rem;
+		font-size: 0.78rem;
 		color: var(--text-muted);
+		padding: 0.35rem 0.65rem;
+		border-radius: 999px;
+		background: var(--bg-secondary);
+		border: 1px solid var(--border);
 	}
 
 	.dot {
@@ -92,7 +97,7 @@
 		font-size: 0.72rem;
 		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.12em;
+		letter-spacing: 0.06em;
 		color: var(--text-muted);
 		margin-bottom: 0.75rem;
 	}
@@ -107,35 +112,38 @@
 		display: flex;
 		gap: 0.85rem;
 		align-items: flex-start;
-		padding: 0.9rem 1rem;
+		padding: 0.95rem 1rem;
 		border: 1px solid var(--border);
 		border-radius: var(--radius);
 		background: var(--bg-secondary);
 		color: var(--text-primary);
-		transition: border-color 0.15s ease, background 0.15s ease;
+		box-shadow: var(--shadow-sm);
+		transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 	}
 
 	.card:hover {
-		opacity: 1;
-		border-color: var(--accent-cyan);
-		background: var(--bg-tertiary);
+		border-color: color-mix(in srgb, var(--accent-cyan) 55%, var(--border));
+		background: var(--bg-elevated);
+		box-shadow: var(--shadow-md);
+		color: var(--text-primary);
 	}
 
 	.card-icon {
-		flex: 0 0 2.1rem;
-		height: 2.1rem;
+		flex: 0 0 2.15rem;
+		height: 2.15rem;
 		display: grid;
 		place-items: center;
 		border-radius: var(--radius-sm);
-		background: var(--bg-tertiary);
-		border: 1px solid var(--border);
+		background: var(--accent-cyan-soft);
+		border: 1px solid transparent;
+		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		font-weight: 700;
 		color: var(--accent-cyan);
 	}
 
 	.card:hover .card-icon {
-		background: var(--bg-secondary);
+		background: var(--accent-cyan-soft);
 	}
 
 	.card-body {
@@ -143,13 +151,14 @@
 	}
 
 	.card-title {
-		font-size: 0.88rem;
+		font-size: 0.9rem;
 		font-weight: 600;
+		letter-spacing: -0.01em;
 		margin-bottom: 0.2rem;
 	}
 
 	.card-desc {
-		font-size: 0.76rem;
+		font-size: 0.78rem;
 		color: var(--text-muted);
 		line-height: 1.5;
 	}

@@ -23,26 +23,32 @@
 	.form-group {
 		display: flex;
 		flex-direction: column;
-		gap: 0.375rem;
+		gap: 0.28rem;
+		min-width: 0;
 	}
 
 	.form-group label {
 		display: flex;
 		flex-direction: column;
-		gap: 0.375rem;
+		gap: 0.28rem;
 	}
 
 	.label {
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 0.8rem;
 		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
 		color: var(--text-secondary);
 	}
 
 	.hint {
-		font-size: 0.8rem;
+		font-size: 0.75rem;
 		color: var(--text-muted);
+		line-height: 1.35;
+		max-width: 36rem;
+	}
+
+	/* Keep segment controls the same footprint as text inputs. */
+	.form-group :global(.group) {
+		max-width: var(--control-max);
 	}
 </style>

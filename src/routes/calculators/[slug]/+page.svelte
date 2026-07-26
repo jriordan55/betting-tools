@@ -45,27 +45,27 @@
 
 	.back {
 		display: inline-block;
-		font-size: 0.75rem;
+		font-size: 0.8rem;
 		color: var(--text-muted);
-		margin-bottom: 0.6rem;
+		margin-bottom: 0.65rem;
 	}
 
 	.back:hover {
 		color: var(--accent-cyan);
-		opacity: 1;
 	}
 
 	h1 {
-		font-size: 1.5rem;
+		font-size: 1.55rem;
 		font-weight: 700;
-		letter-spacing: -0.01em;
+		letter-spacing: -0.025em;
 	}
 
 	.subtitle {
 		color: var(--text-secondary);
-		font-size: 0.85rem;
+		font-size: 0.9rem;
 		max-width: 68ch;
-		margin-top: 0.3rem;
+		margin-top: 0.35rem;
+		line-height: 1.5;
 	}
 
 	.loading,

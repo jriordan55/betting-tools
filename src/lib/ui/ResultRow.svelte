@@ -32,7 +32,7 @@
 	}
 
 	.label {
-		font-size: 1rem;
+		font-size: 0.92rem;
 		color: var(--text-secondary);
 	}
 
@@ -45,8 +45,9 @@
 
 	.value {
 		font-family: var(--font-mono);
-		font-size: 1rem;
+		font-size: 0.95rem;
 		font-weight: 600;
+		font-variant-numeric: tabular-nums;
 		color: var(--text-primary);
 		text-align: right;
 		white-space: nowrap;

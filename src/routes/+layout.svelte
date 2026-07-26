@@ -1,4 +1,12 @@
 <script lang="ts">
+	import '@fontsource/ibm-plex-sans/400.css';
+	import '@fontsource/ibm-plex-sans/500.css';
+	import '@fontsource/ibm-plex-sans/600.css';
+	import '@fontsource/ibm-plex-sans/700.css';
+	import '@fontsource/jetbrains-mono/400.css';
+	import '@fontsource/jetbrains-mono/500.css';
+	import '@fontsource/jetbrains-mono/600.css';
+	import '@fontsource/jetbrains-mono/700.css';
 	import 'katex/dist/katex.min.css';
 	import '../app.css';
 	import { page } from '$app/state';
@@ -37,7 +45,7 @@
 		<div class="top">
 			<a href="/" class="logo">
 				<span class="logo-mark">B</span>
-				<span class="logo-text">BETTOR<span class="logo-dim">·DESKTOP</span></span>
+				<span class="logo-text">Bettor<span class="logo-dim"> Desktop</span></span>
 			</a>
 			<button
 				class="collapse"
@@ -129,7 +137,7 @@
 	   stacks above the content, which pushed every calculator below the fold. */
 	.shell {
 		display: grid;
-		grid-template-columns: clamp(178px, 20vw, 250px) minmax(0, 1fr);
+		grid-template-columns: clamp(190px, 20vw, 260px) minmax(0, 1fr);
 		min-height: 100vh;
 	}
 
@@ -147,10 +155,10 @@
 	.sidebar {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 0.85rem;
 		border-right: 1px solid var(--border);
 		background: var(--bg-secondary);
-		padding: 1rem 0.75rem;
+		padding: 1rem 0.7rem 0.85rem;
 		height: 100vh;
 		position: sticky;
 		top: 0;
@@ -162,13 +170,13 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.4rem;
-		padding-bottom: 0.25rem;
+		padding: 0.15rem 0.25rem 0.35rem;
 	}
 
 	.collapse {
 		flex: 0 0 auto;
-		padding: 2px 6px;
-		font-size: 0.75rem;
+		padding: 0.2rem 0.4rem;
+		font-size: 0.8rem;
 		line-height: 1;
 		color: var(--text-muted);
 		background: none;
@@ -178,44 +186,52 @@
 	.collapse:hover {
 		background: var(--bg-tertiary);
 		color: var(--accent-cyan);
+		border-color: transparent;
 	}
 
 	.reveal {
 		margin-bottom: 1rem;
-		font-size: 0.75rem;
+		font-size: 0.8rem;
 		color: var(--accent-cyan);
-		padding: 4px 10px;
+		padding: 0.35rem 0.7rem;
+		background: var(--accent-cyan-soft);
+		border-color: transparent;
+	}
+
+	.reveal:hover {
+		border-color: var(--accent-cyan);
 	}
 
 	.logo {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.55rem;
 		min-width: 0;
-		padding-left: 0.25rem;
 		color: var(--text-primary);
 	}
 
 	.logo:hover {
+		color: var(--text-primary);
 		opacity: 1;
 	}
 
 	.logo-mark {
 		display: grid;
 		place-items: center;
-		width: 22px;
-		height: 22px;
-		border-radius: 3px;
+		width: 24px;
+		height: 24px;
+		border-radius: 7px;
 		background: var(--accent-cyan);
 		color: var(--bg-primary);
 		font-weight: 700;
-		font-size: 0.8rem;
+		font-size: 0.82rem;
+		box-shadow: var(--shadow-sm);
 	}
 
 	.logo-text {
-		font-size: 0.85rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
+		font-size: 0.92rem;
+		font-weight: 600;
+		letter-spacing: -0.02em;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -227,56 +243,59 @@
 	}
 
 	.search input {
-		text-align: left;
-		font-size: 0.78rem;
-		padding: 6px 10px;
+		font-family: var(--font-sans);
+		font-size: 0.8rem;
+		height: 1.9rem;
+		max-width: none;
+		padding: 0.3rem 0.55rem;
+		background: var(--bg-primary);
 	}
 
 	nav {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 0.9rem;
+		gap: 1rem;
 	}
 
 	.group-title {
-		font-size: 0.65rem;
+		font-size: 0.68rem;
 		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.12em;
+		letter-spacing: 0.06em;
 		color: var(--text-muted);
-		padding: 0 0.5rem;
-		margin-bottom: 0.3rem;
+		padding: 0 0.55rem;
+		margin-bottom: 0.35rem;
 	}
 
 	.nav-link {
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
-		padding: 0.3rem 0.5rem;
+		gap: 0.5rem;
+		padding: 0.38rem 0.55rem;
 		border-radius: var(--radius-sm);
 		color: var(--text-secondary);
-		font-size: 0.8rem;
-		line-height: 1.35;
+		font-size: 0.82rem;
+		line-height: 1.3;
 		transition: background 0.12s ease, color 0.12s ease;
 	}
 
 	.nav-link:hover {
-		opacity: 1;
 		background: var(--bg-tertiary);
 		color: var(--text-primary);
 	}
 
 	.nav-link.active {
-		background: var(--bg-tertiary);
+		background: var(--accent-cyan-soft);
 		color: var(--accent-cyan);
 		font-weight: 600;
 	}
 
 	.nav-icon {
-		flex: 0 0 1.9rem;
+		flex: 0 0 1.6rem;
+		font-family: var(--font-mono);
 		font-size: 0.68rem;
-		font-weight: 700;
+		font-weight: 600;
 		color: var(--text-muted);
 		text-align: center;
 	}
@@ -297,9 +316,10 @@
 	}
 
 	.theme-toggle {
-		font-size: 0.72rem;
-		padding: 5px 10px;
+		font-size: 0.78rem;
+		padding: 0.45rem 0.7rem;
 		color: var(--text-secondary);
+		background: var(--bg-primary);
 	}
 
 	main {
@@ -307,5 +327,4 @@
 		padding-bottom: 4rem;
 		min-width: 0;
 	}
-
 </style>

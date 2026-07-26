@@ -16,25 +16,25 @@
 <style>
 	.container {
 		text-align: center;
-		padding: 1.25rem 0;
-		margin-bottom: 0.5rem;
+		padding: 0.85rem 0;
+		margin-bottom: 0.35rem;
 	}
 
 	.value {
 		font-family: var(--font-mono);
-		font-size: 2.25rem;
+		font-size: 1.85rem;
 		font-weight: 700;
-		line-height: 1.2;
+		font-variant-numeric: tabular-nums;
+		line-height: 1.15;
+		letter-spacing: -0.02em;
 		color: var(--text-primary);
 	}
 
 	.label {
 		font-size: 0.8rem;
 		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
 		color: var(--text-muted);
-		margin-top: 0.375rem;
+		margin-top: 0.4rem;
 	}
 
 	.positive {

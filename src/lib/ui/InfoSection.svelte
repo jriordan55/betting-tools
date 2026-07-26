@@ -13,18 +13,18 @@
 	.container {
 		border: 1px solid var(--border);
 		border-radius: var(--radius);
-		padding: 1.25rem;
-		margin-top: 1rem;
+		padding: 0.85rem 0.95rem;
+		margin-top: 0.85rem;
 		background: var(--bg-secondary);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.title {
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		font-family: var(--font-sans);
+		font-size: 0.78rem;
 		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--text-muted);
+		letter-spacing: 0.02em;
+		color: var(--text-secondary);
 		margin-bottom: 0.75rem;
 	}
 

@@ -1,642 +1,293 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bettor Desktop — sports betting calculators with the math in Rust</title>
-<meta name="description" content="26 betting calculators, a bet log, and a variance module. Every number computed in Rust and replayed against 803 golden vectors. Offline desktop app.">
-<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Bettor Desktop — Local Sports Betting Tools</title>
+	<meta name="description" content="A day-one, build-in-public desktop workspace for sports betting math, simulations, and local bet tracking. Follow the source as it develops.">
+	<link rel="canonical" href="https://walrusquant.github.io/bettor-desktop/">
+	<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+	<meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+	<meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)">
+	<meta property="og:title" content="Bettor Desktop">
+	<meta property="og:description" content="Sports betting calculators, simulations, and local bet tracking, built in public from day one.">
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://walrusquant.github.io/bettor-desktop/">
+	<meta property="og:image" content="https://walrusquant.github.io/bettor-desktop/assets/screenshot.png">
+	<meta property="og:image:alt" content="The Bettor Desktop calculator index in dark mode">
+	<meta name="twitter:card" content="summary_large_image">
 
-<meta property="og:title" content="Bettor Desktop">
-<meta property="og:description" content="26 betting calculators with the math in Rust. Reproducible simulations, a bet log that devigs the close, and a variance module that shows what the price of your bets does to your ride.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://walrusquant.github.io/bettor-desktop/assets/screenshot.png">
-<meta property="og:url" content="https://walrusquant.github.io/bettor-desktop/">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fbfbfd" media="(prefers-color-scheme: light)">
+	<style>
+		:root {
+			--bg-primary: #0f1117;
+			--bg-secondary: #161922;
+			--bg-tertiary: #1e2230;
+			--bg-elevated: #222736;
+			--border: #2c3344;
+			--border-strong: #3d465c;
+			--text-primary: #e8eaf0;
+			--text-secondary: #9aa3b5;
+			--text-muted: #6b7385;
+			--accent-green: #34d399;
+			--accent-amber: #fbbf24;
+			--accent-cyan: #2dd4bf;
+			--accent-cyan-soft: color-mix(in srgb, var(--accent-cyan) 14%, transparent);
+			--shadow-sm: 0 1px 2px rgb(0 0 0 / 0.28);
+			--shadow-md: 0 4px 16px rgb(0 0 0 / 0.28);
+			--radius-sm: 6px;
+			--radius: 8px;
+			--radius-lg: 12px;
+			--sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+			--mono: "JetBrains Mono", "SF Mono", Menlo, Monaco, ui-monospace, monospace;
+			color-scheme: dark;
+		}
 
-<style>
-  :root {
-    --bg: #0a0a0f;
-    --bg-2: #12121a;
-    --bg-3: #1a1a24;
-    --border: #2a2a3a;
-    --border-strong: #3a3a4a;
-    --text: #e0e0e0;
-    --dim: #8b8b98;
-    --muted: #5f5f6d;
-    --cyan: #00d4aa;
-    --green: #2ed573;
-    --red: #ff4757;
-    --amber: #ffa502;
-    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    color-scheme: dark;
-  }
+		@media (prefers-color-scheme: light) {
+			:root {
+				--bg-primary: #f4f5f8;
+				--bg-secondary: #fff;
+				--bg-tertiary: #eceef3;
+				--bg-elevated: #fff;
+				--border: #d8dbe3;
+				--border-strong: #b8bdc9;
+				--text-primary: #151821;
+				--text-secondary: #5a6170;
+				--text-muted: #8a91a0;
+				--accent-green: #0f9f6e;
+				--accent-amber: #b45309;
+				--accent-cyan: #0d9488;
+				--accent-cyan-soft: color-mix(in srgb, var(--accent-cyan) 12%, transparent);
+				--shadow-sm: 0 1px 2px rgb(15 20 35 / 0.05);
+				--shadow-md: 0 4px 16px rgb(15 20 35 / 0.07);
+				color-scheme: light;
+			}
+		}
 
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #fbfbfd;
-      --bg-2: #ffffff;
-      --bg-3: #f2f2f6;
-      --border: #dcdce4;
-      --border-strong: #c2c2cc;
-      --text: #16161d;
-      --dim: #5a5a68;
-      --muted: #8a8a99;
-      --cyan: #00796b;
-      --green: #12924d;
-      --red: #d32236;
-      --amber: #a86500;
-      color-scheme: light;
-    }
-  }
+		* { box-sizing: border-box; }
+		html { scroll-behavior: smooth; }
+		body {
+			margin: 0;
+			background: var(--bg-primary);
+			color: var(--text-primary);
+			font-family: var(--sans);
+			font-size: 15px;
+			line-height: 1.6;
+			-webkit-font-smoothing: antialiased;
+		}
+		a { color: var(--accent-cyan); text-underline-offset: 0.18em; }
+		a:hover { text-decoration-thickness: 2px; }
+		a:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 3px; border-radius: 2px; }
+		code, pre, .eyebrow, .status { font-family: var(--mono); }
+		.wrap { width: min(900px, calc(100% - 2.5rem)); margin-inline: auto; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+		nav {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+			padding-block: 1.25rem;
+		}
+		.brand { display: flex; align-items: center; gap: 0.55rem; color: var(--text-primary); text-decoration: none; }
+		.logo-mark {
+			display: grid;
+			place-items: center;
+			width: 24px;
+			height: 24px;
+			border-radius: 7px;
+			background: var(--accent-cyan);
+			color: var(--bg-primary);
+			font-weight: 700;
+			font-size: 0.82rem;
+			box-shadow: var(--shadow-sm);
+		}
+		.logo-text { font-size: 0.92rem; font-weight: 600; letter-spacing: -0.02em; }
+		.logo-dim { color: var(--text-muted); font-weight: 500; }
+		.nav-links { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.84rem; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    line-height: 1.7;
-    -webkit-font-smoothing: antialiased;
-  }
+		header { padding: clamp(4rem, 10vw, 7rem) 0 4rem; border-bottom: 1px solid var(--border); }
+		.status {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.45rem;
+			padding: 0.28rem 0.65rem;
+			border: 1px solid var(--border);
+			border-radius: 999px;
+			background: var(--bg-secondary);
+			color: var(--text-secondary);
+			font-size: 0.73rem;
+			box-shadow: var(--shadow-sm);
+		}
+		.status::before { content: ""; width: 0.48rem; height: 0.48rem; border-radius: 50%; background: var(--accent-amber); }
+		h1 {
+			max-width: 16ch;
+			margin: 1.25rem 0 0;
+			font-size: clamp(2.4rem, 7vw, 4.25rem);
+			line-height: 1.06;
+			letter-spacing: -0.045em;
+		}
+		.accent { color: var(--accent-cyan); }
+		.lede { max-width: 62ch; margin: 1.3rem 0 0; color: var(--text-secondary); font-size: clamp(1.05rem, 2vw, 1.2rem); }
+		.actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 2rem; }
+		.button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 2.4rem;
+			padding: 0.45rem 0.9rem;
+			border: 1px solid var(--border);
+			border-radius: var(--radius-sm);
+			background: var(--bg-tertiary);
+			color: var(--text-primary);
+			font-weight: 600;
+			text-decoration: none;
+			box-shadow: var(--shadow-sm);
+		}
+		.button:hover { border-color: var(--border-strong); background: var(--bg-elevated); text-decoration: none; }
+		.button.primary { background: var(--accent-cyan); border-color: transparent; color: var(--bg-primary); }
+		.microcopy { margin-top: 0.8rem; color: var(--text-muted); font-size: 0.8rem; }
 
-  .wrap { max-width: 940px; margin: 0 auto; padding: 0 1.5rem; }
+		main section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+		.eyebrow { margin: 0 0 0.75rem; color: var(--accent-cyan); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
+		h2 { margin: 0; font-size: clamp(1.55rem, 4vw, 2.2rem); letter-spacing: -0.025em; line-height: 1.2; }
+		h3 { margin: 0; font-size: 1rem; }
+		.intro { max-width: 66ch; color: var(--text-secondary); }
+		.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+		.card {
+			padding: 1.2rem;
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			background: var(--bg-secondary);
+			box-shadow: var(--shadow-sm);
+		}
+		.card p { margin: 0.45rem 0 0; color: var(--text-secondary); font-size: 0.9rem; }
+		figure {
+			margin: 1.75rem 0 0;
+			overflow: hidden;
+			border: 1px solid var(--border);
+			border-radius: var(--radius-lg);
+			background: var(--bg-secondary);
+			box-shadow: var(--shadow-md);
+		}
+		figure img { display: block; width: 100%; height: auto; }
+		figcaption { padding: 0.65rem 0.9rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.78rem; }
+		.notice { margin-top: 1.5rem; padding: 1rem 1.1rem; border-left: 3px solid var(--accent-amber); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-secondary); }
+		.notice strong { color: var(--text-primary); }
+		pre { overflow-x: auto; margin: 1.25rem 0 0; padding: 1rem 1.1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.79rem; line-height: 1.7; box-shadow: var(--shadow-sm); }
+		.list { padding-left: 1.25rem; color: var(--text-secondary); }
+		.list li + li { margin-top: 0.55rem; }
+		footer { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 2.5rem 0 4rem; color: var(--text-muted); font-size: 0.8rem; }
+		footer div { display: flex; flex-wrap: wrap; gap: 1rem; }
 
-  a { color: var(--cyan); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  code, .mono { font-family: var(--mono); }
-
-  /* ---------------------------------------------------------------- hero */
-
-  header {
-    padding: 5rem 0 3rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 2.25rem;
-  }
-
-  .brand img { width: 34px; height: 34px; display: block; }
-
-  .brand span {
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-  }
-
-  .brand em { font-style: normal; color: var(--muted); font-weight: 500; }
-
-  h1 {
-    font-size: clamp(2rem, 5.5vw, 3.1rem);
-    line-height: 1.12;
-    letter-spacing: -0.025em;
-    font-weight: 700;
-    max-width: 18ch;
-  }
-
-  h1 .accent { color: var(--cyan); }
-
-  .lede {
-    margin-top: 1.25rem;
-    font-size: clamp(1rem, 2.2vw, 1.15rem);
-    color: var(--dim);
-    max-width: 62ch;
-  }
-
-  .cta {
-    margin-top: 2.25rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.7rem;
-    align-items: center;
-  }
-
-  .btn {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    padding: 0.6rem 1.15rem;
-    border: 1px solid var(--border-strong);
-    border-radius: 4px;
-    color: var(--text);
-  }
-
-  .btn:hover { border-color: var(--cyan); color: var(--cyan); text-decoration: none; }
-
-  .btn.primary {
-    background: var(--cyan);
-    border-color: var(--cyan);
-    color: var(--bg);
-    font-weight: 600;
-  }
-
-  .btn.primary:hover { opacity: 0.88; color: var(--bg); }
-
-  .note {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-top: 1rem;
-  }
-
-  /* -------------------------------------------------------------- shared */
-
-  section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
-
-  h2 {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--muted);
-    margin-bottom: 1.5rem;
-  }
-
-  h3 {
-    font-size: 1.15rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin-bottom: 0.4rem;
-  }
-
-  p + p { margin-top: 1rem; }
-
-  .prose { max-width: 68ch; color: var(--dim); }
-  .prose strong { color: var(--text); font-weight: 600; }
-
-  figure {
-    margin: 2.5rem 0 0;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--bg-2);
-  }
-
-  figure img { width: 100%; height: auto; display: block; }
-
-  figcaption {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--muted);
-    padding: 0.7rem 1rem;
-    border-top: 1px solid var(--border);
-  }
-
-  /* --------------------------------------------------------------- table */
-
-  .scroll { overflow-x: auto; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    white-space: nowrap;
-  }
-
-  th {
-    text-align: right;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    font-weight: 600;
-    padding: 0.5rem 0.9rem;
-    border-bottom: 1px solid var(--border-strong);
-  }
-
-  th:first-child, td:first-child { text-align: left; }
-
-  td {
-    text-align: right;
-    padding: 0.55rem 0.9rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td.hi { color: var(--cyan); font-weight: 600; }
-  td.warn { color: var(--amber); }
-  td.bad { color: var(--red); }
-
-  .table-note {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-top: 0.9rem;
-    max-width: 68ch;
-  }
-
-  /* --------------------------------------------------------------- grids */
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .card {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg-2);
-    padding: 1.15rem 1.25rem;
-  }
-
-  .card p { font-size: 0.88rem; color: var(--dim); margin-top: 0.35rem; }
-
-  .tag {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--cyan);
-  }
-
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-top: 1.5rem;
-  }
-
-  .stat { background: var(--bg-2); padding: 1.1rem 1.15rem; }
-
-  .stat b {
-    display: block;
-    font-family: var(--mono);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--cyan);
-    line-height: 1.2;
-  }
-
-  .stat span {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-  }
-
-  /* ---------------------------------------------------------------- bugs */
-
-  .bug {
-    border-left: 2px solid var(--border-strong);
-    padding: 0.15rem 0 0.15rem 1.15rem;
-    margin-top: 1.5rem;
-    max-width: 70ch;
-  }
-
-  .bug:first-of-type { margin-top: 0; }
-  .bug h3 { font-family: var(--mono); font-size: 0.92rem; }
-  .bug p { font-size: 0.88rem; color: var(--dim); }
-
-  pre {
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1rem 1.15rem;
-    overflow-x: auto;
-    margin-top: 1.25rem;
-    line-height: 1.65;
-  }
-
-  .comment { color: var(--muted); }
-
-  ul.plain { list-style: none; margin-top: 1rem; }
-
-  ul.plain li {
-    font-size: 0.9rem;
-    color: var(--dim);
-    padding-left: 1.2rem;
-    position: relative;
-    margin-top: 0.4rem;
-  }
-
-  ul.plain li::before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: var(--cyan);
-    font-family: var(--mono);
-  }
-
-  footer {
-    padding: 2.5rem 0 4rem;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    justify-content: space-between;
-  }
-
-  footer nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-</style>
+		@media (max-width: 640px) {
+			.wrap { width: min(100% - 2rem, 900px); }
+			.nav-links a:not(:last-child) { display: none; }
+			header { padding-top: 3rem; }
+			.grid { grid-template-columns: 1fr; }
+			.actions .button { width: 100%; }
+		}
+		@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+	</style>
 </head>
-
 <body>
+	<div class="wrap">
+		<nav aria-label="Primary navigation">
+			<a class="brand" href="./" aria-label="Bettor Desktop home">
+				<span class="logo-mark" aria-hidden="true">B</span>
+				<span class="logo-text">Bettor<span class="logo-dim"> Desktop</span></span>
+			</a>
+			<div class="nav-links">
+				<a href="#features">Features</a>
+				<a href="#build">Build</a>
+				<a href="https://github.com/WalrusQuant/bettor-desktop">GitHub</a>
+			</div>
+		</nav>
 
-<div class="wrap">
+		<header>
+			<span class="status">Day one · building in public</span>
+			<h1>Understand the <span class="accent">price of variance.</span></h1>
+			<p class="lede">
+				Bettor Desktop brings betting calculators, simulations, reference material, and a local bet log into one open-source desktop workspace. The math runs in Rust; your records stay on your machine.
+			</p>
+			<div class="actions">
+				<a class="button primary" href="https://github.com/WalrusQuant/bettor-desktop">Follow on GitHub</a>
+				<a class="button" href="#build">Run it locally</a>
+			</div>
+			<p class="microcopy">No packaged downloads yet. Follow the repository or build the current work from source.</p>
+		</header>
 
-  <header>
-    <div class="brand">
-      <img src="assets/icon.svg" alt="" width="34" height="34">
-      <span>BETTOR<em>·DESKTOP</em></span>
-    </div>
+		<main>
+			<section aria-labelledby="idea-title">
+				<p class="eyebrow">The core idea</p>
+				<h2 id="idea-title">The same edge can produce a very different ride.</h2>
+				<p class="intro">
+					A modest favorite and a longshot can have the same expected value while carrying very different variance, drawdowns, and sample-size demands. Bettor Desktop makes those consequences visible instead of reducing every decision to one EV number.
+				</p>
+				<figure>
+					<img src="assets/screenshot.png" alt="Bettor Desktop calculator index showing analysis, sizing, comparison, simulation, and variance tools" loading="lazy" width="1600" height="1039">
+					<figcaption>The app interface in dark mode. Dark and light themes share the same design system.</figcaption>
+				</figure>
+			</section>
 
-    <h1>Two bets at the same edge are <span class="accent">not the same bet</span>.</h1>
+			<section id="features" aria-labelledby="features-title">
+				<p class="eyebrow">Built for inspection</p>
+				<h2 id="features-title">Tools for the number and the uncertainty around it.</h2>
+				<div class="grid">
+					<article class="card">
+						<h3>Calculation and analysis</h3>
+						<p>Convert and compare odds, remove vig, inspect expected value, size stakes, and explore common market scenarios.</p>
+					</article>
+					<article class="card">
+						<h3>Variance and simulation</h3>
+						<p>Explore outcome ranges, drawdowns, risk of ruin, bet mixes, and reproducible simulated seasons.</p>
+					</article>
+					<article class="card">
+						<h3>Local bet log</h3>
+						<p>Track bets and closing prices in a SQLite database stored in your operating system’s app-data directory.</p>
+					</article>
+					<article class="card">
+						<h3>Bundled reference</h3>
+						<p>Read the concepts behind the outputs inside the app, without depending on a hosted knowledge base.</p>
+					</article>
+				</div>
+			</section>
 
-    <p class="lede">
-      26 sports betting calculators, a bet log, and a variance module — as an
-      offline desktop app with every number computed in Rust. Built to
-      demonstrate one thing the usual tools hide: what the <em>price</em> of
-      your bets does to your ride, even when every one of them is +EV.
-    </p>
-
-    <div class="cta">
-      <a class="btn primary" href="https://github.com/WalrusQuant/bettor-desktop">Source on GitHub</a>
-      <a class="btn" href="#build">Build it</a>
-      <a class="btn" href="#why">Why it exists</a>
-    </div>
-
-    <p class="note">No binaries published yet — build from source, one command.</p>
-  </header>
-
-  <section>
-    <h2>The thing it was built to show</h2>
-
-    <div class="prose">
-      <p>
-        A 5% edge at -110 and a 5% edge at +400 have identical expectation and
-        completely different consequences. The difference does not show up in
-        any EV calculator, and it is the difference between a strategy you can
-        actually hold and one you will abandon in March.
-      </p>
-    </div>
-
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Price</th>
-            <th>SD per unit</th>
-            <th>Bets to clear 2σ</th>
-            <th>Median drawdown</th>
-            <th>Losing seasons</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>-110</td>
-            <td>0.95</td>
-            <td class="hi">~1,440</td>
-            <td>lower</td>
-            <td>32%</td>
-          </tr>
-          <tr>
-            <td>+400 / +600</td>
-            <td>2.04</td>
-            <td class="bad">~6,640</td>
-            <td class="warn">much deeper</td>
-            <td class="bad">45%</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p class="table-note">
-      Same expectation, four and a half times the evidence needed to prove it.
-      The losing-season figures are a real 3% edge over 200 bets — genuinely
-      profitable, and down at the end of the year almost half the time at the
-      longer price. Every number here is asserted by a test in the repo.
-    </p>
-  </section>
-
-  <section>
-    <h2>The app</h2>
-    <figure>
-      <img src="assets/screenshot.png"
-           alt="Bettor Desktop showing its calculator index: conversion, analysis, sizing, odds range and variance, comparison and simulation groups."
-           loading="lazy">
-      <figcaption>26 calculators, a bet log, and a bundled reference library. Dark and light.</figcaption>
-    </figure>
-
-    <div class="stats">
-      <div class="stat"><b>26</b><span>calculators</span></div>
-      <div class="stat"><b>305</b><span>Rust tests</span></div>
-      <div class="stat"><b>803</b><span>golden vectors</span></div>
-      <div class="stat"><b>19+</b><span>bugs found</span></div>
-      <div class="stat"><b>0</b><span>network calls</span></div>
-    </div>
-  </section>
-
-  <section>
-    <h2>What is in it</h2>
-
-    <div class="grid">
-      <div class="card">
-        <span class="tag">Odds range &amp; variance</span>
-        <h3>Breakeven ladder</h3>
-        <p>
-          Required win rate across a whole price range — and the sample size
-          each price needs before its edge can be told from noise.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Odds range &amp; variance</span>
-        <h3>CLV translator</h3>
-        <p>
-          What a cents move is actually worth in probability points. The same
-          twenty cents is worth twenty times more at -110 than at +900.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Odds range &amp; variance</span>
-        <h3>Bet mix builder</h3>
-        <p>
-          Blended breakeven, per-season standard deviation, and which price
-          buckets supply the swing rather than the profit.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Odds range &amp; variance</span>
-        <h3>Season simulator</h3>
-        <p>
-          A Monte Carlo equity-curve fan for a whole season of your actual bet
-          mix. Seeded, so any figure you quote can be reproduced exactly.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Your book</span>
-        <h3>Bet log</h3>
-        <p>
-          Local SQLite. Records the price you took, the close, <em>and</em> the
-          opposing close — because without both sides the vig cannot be removed
-          and any edge you compute is overstated by half the hold.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Simulation</span>
-        <h3>Game visualizer</h3>
-        <p>
-          A spread and a total together pin down a per-team standard deviation
-          and the correlation between the teams — ρ ≈ −0.27 in football, +0.31
-          in basketball. Nobody posts either number.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Analysis</span>
-        <h3>The usual suspects, done properly</h3>
-        <p>
-          Devig (five methods), hold, EV, Kelly, arbitrage, hedging, parlays,
-          CLV, middles, teasers, alternate lines, Bayesian updating, regression
-          to the mean, prop and match simulation, risk of ruin.
-        </p>
-      </div>
-
-      <div class="card">
-        <span class="tag">Reference</span>
-        <h3>Fifteen explainers, bundled</h3>
-        <p>
-          Rendered with KaTeX, inside the binary. A desktop app that needs a
-          network connection to explain its own output is not a desktop app.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <section id="why">
-    <h2>Why the math is in Rust</h2>
-
-    <div class="prose" style="margin-bottom: 2rem;">
-      <p>
-        This started as a port of a working Next.js app. Replaying the original
-        TypeScript against the new implementation surfaced <strong>nineteen-plus
-        bugs</strong>, and almost none of them were formula errors. They were
-        <strong>seams</strong> — a scale, a sign, or a convention that changed
-        meaning across a function boundary, where nothing crashes and every
-        number looks plausible.
-      </p>
-    </div>
-
-    <div class="bug">
-      <h3>devigShin was not Shin</h3>
-      <p>
-        <code>q/S</code> inside the radical where Shin (1993) has
-        <code>q²/S</code>. The bisection had no interior root, so the method
-        silently returned the same numbers as proportional devigging — the app
-        offered five devig methods and two of them were the same one. On a
-        -1000/+500 market the longshot's fair probability moves 0.1550 → 0.1288.
-      </p>
-    </div>
-
-    <div class="bug">
-      <h3>A middle averaged a quantity with its own negation</h3>
-      <p>
-        Two opposite sign conventions for a spread met inside one function. A
-        symmetric -5.5 / -110 middle reported the favourite covering
-        <strong>32.4%</strong> when the answer is 50%. Confirmed by running the
-        original, not derived on paper.
-      </p>
-    </div>
-
-    <div class="bug">
-      <h3>The true-line inversion never removed the vig</h3>
-      <p>
-        A raw vigged probability fed straight into Φ⁻¹ — eight tenths of a point
-        of pure hold, presented as market information. The whole alternate-line
-        ladder was built on top of it.
-      </p>
-    </div>
-
-    <div class="bug">
-      <h3>CLV was one number under three labels</h3>
-      <p>
-        "Closing Line Value", "Edge (cents per dollar)" and "Expected Value"
-        were the same expression. And that expression is a ratio of decimal
-        odds, which ranks +400→+350 (11.1%) <em>above</em> -110→-130 (7.9%) —
-        when in probability points they are 2.22 and 4.14, the opposite order.
-        That is exactly the misconception this project exists to correct.
-      </p>
-    </div>
-
-    <div class="prose" style="margin-top: 2.25rem;">
-      <p>
-        Every one is catalogued with its reproduction. The port is held to the
-        original by <strong>803 golden vectors</strong> captured from the
-        running TypeScript: a mismatch fails the build, and so does a
-        <em>stale</em> declared difference, so the list cannot rot.
-      </p>
-      <p>
-        Speed was never the argument, and the benchmark says so — scalar work is
-        a wash or slightly slower, because Rust pays for a range check where the
-        original returned <code>null</code> and hoped. That check is what stops
-        a spread typed into an odds field from returning a plausible price.
-      </p>
-    </div>
-  </section>
-
-  <section id="build">
-    <h2>Build it</h2>
-
-    <div class="prose">
-      <p>
-        Needs Rust (stable), Node 22+ and pnpm. There are no published binaries
-        yet.
-      </p>
-    </div>
-
-    <pre><span class="comment"># clone, install, run</span>
-git clone https://github.com/WalrusQuant/bettor-desktop
+			<section id="build" aria-labelledby="build-title">
+				<p class="eyebrow">Follow along</p>
+				<h2 id="build-title">Run the current source.</h2>
+				<p class="intro">Install stable Rust, Node.js 22 or newer, pnpm, and the <a href="https://v2.tauri.app/start/prerequisites/">Tauri prerequisites</a> for your operating system.</p>
+				<pre aria-label="Source build commands"><code>git clone https://github.com/WalrusQuant/bettor-desktop.git
 cd bettor-desktop
 pnpm install
 pnpm tauri dev
 
-<span class="comment"># the gate: clippy → cargo test → svelte-check → vitest → build</span>
+# Verify the project, then create a platform bundle
 pnpm verify
+pnpm tauri build</code></pre>
+				<div class="notice">
+					<strong>Early development:</strong> there are no packaged releases or stability guarantees yet. Expect breaking changes while the project is built in public.
+				</div>
+			</section>
 
-<span class="comment"># produce a bundle for your platform</span>
-pnpm tauri build</pre>
+			<section aria-labelledby="trust-title">
+				<p class="eyebrow">Privacy and responsibility</p>
+				<h2 id="trust-title">Your data stays local.</h2>
+				<ul class="list">
+					<li>Core calculators and the bet log are designed to work locally; no account is required.</li>
+					<li>Bet records are stored on your device. Back up or remove the app-data database according to your own needs.</li>
+					<li>This software is an educational analysis tool, not financial advice and not a promise of profit. Gambling involves risk; follow local laws, set limits, and seek help if gambling stops being recreational.</li>
+					<li>The source is available under the <a href="https://github.com/WalrusQuant/bettor-desktop/blob/main/LICENSE">MIT License</a>.</li>
+				</ul>
+			</section>
+		</main>
 
-    <ul class="plain">
-      <li>The math crate builds and tests standalone: <code>cargo test -p bettor-core</code>, no webview required</li>
-      <li>Everything is local. The app makes no network calls, and the bet log is a SQLite file in your own app data directory</li>
-      <li>MIT licensed</li>
-    </ul>
-  </section>
-
-  <footer>
-    <span>Bettor Desktop · MIT</span>
-    <nav>
-      <a href="https://github.com/WalrusQuant/bettor-desktop">GitHub</a>
-      <a href="https://github.com/WalrusQuant/bettor-desktop/blob/main/docs/DIVERGENCES.md">Divergences</a>
-      <a href="https://github.com/WalrusQuant/bettor-desktop/blob/main/docs/TESTING.md">Testing</a>
-    </nav>
-  </footer>
-
-</div>
-
+		<footer>
+			<span>Bettor Desktop · Building in public</span>
+			<div>
+				<a href="https://github.com/WalrusQuant/bettor-desktop/blob/main/CONTRIBUTING.md">Contributing</a>
+				<a href="https://github.com/WalrusQuant/bettor-desktop/blob/main/SECURITY.md">Security</a>
+				<a href="https://github.com/WalrusQuant/bettor-desktop/blob/main/LICENSE">MIT License</a>
+			</div>
+		</footer>
+	</div>
 </body>
 </html>

@@ -130,3 +130,21 @@ corroboration is being misled by the UI, not by the maths.
 **How to apply:** agreement to 1e-12 is not agreement, it is the same function.
 Derive it before touching it. Then say so in the product: an identity the user
 cannot see is a claim the interface is making on your behalf.
+
+---
+
+## 7. Build in public does not mean prepare a release.
+
+**What happened (2026-07-25):** Interpreted "ready to start sharing" as a
+request for tag-driven binary releases, signing guidance, and a release
+process. The actual goal was day-one visibility: make the README easy to follow
+while the project is still far from release.
+
+**Why it matters:** Public source, usable development instructions, and a
+published product are separate milestones. Adding release machinery changes
+the project's posture and creates expectations the owner did not choose.
+
+**How to apply:** When the user says they are building in public, default to
+source-first documentation, clear work-in-progress language, and reproducible
+local setup. Do not introduce tags, release automation, installers, or
+download claims unless they explicitly ask to publish builds.

@@ -971,3 +971,58 @@ readable desktop tool. No calculator logic changes. No Tailwind.
 - Scope stayed in tokens + chrome + shared UI kit; calculators inherit.
 - Mono retained only where it earns its keep (inputs, results, tables, icons).
 - Light mode got its own surfaces (gray canvas + white cards), not a pure invert.
+# Contributor Guide
+
+- [x] Confirm `AGENTS.md` does not already exist.
+- [x] Inspect repository structure, commands, tests, and Git conventions.
+- [x] Create a concise, repository-specific `AGENTS.md`.
+- [x] Verify headings, accuracy, word count, and working-tree changes.
+
+## Review
+
+- Created `AGENTS.md` at 359 words with the requested title and repository-specific sections.
+- Cross-checked commands against `package.json`, architecture against `README.md` and `CLAUDE.md`, and commit style against recent Git history.
+- `git diff --check` passes. No code tests were run because this change only adds documentation.
+
+---
+
+# Public sharing readiness (2026-07-25)
+
+**Goal:** make the day-one build-in-public repository easy to follow and run
+from source, with a public site that matches the current UI.
+
+## Plan
+
+- [x] Audit licensing, public docs, Pages, and current app styling.
+- [x] Add the missing MIT license and concise contribution/security guidance.
+- [x] Rework README onboarding around build-in-public status, source setup, privacy, and
+  support while preserving the technical rationale.
+- [x] Add CI for the existing verification gate.
+- [x] Bring `site/` onto the current app palette, typography, components, and
+  build-in-public language.
+- [x] Review the diff, remove stale claims, and verify builds, links, assets, and responsive
+  layout rules.
+- [ ] Human eye check of the rendered Pages site before publishing (browser automation could
+  not initialize in this environment).
+
+## Decisions
+
+- Public status is **early development / building in public**, not a release.
+- There are no tags, packaged downloads, release workflows, or signing claims.
+- MIT is retained because it is already declared consistently in Cargo and npm metadata; the
+  missing canonical license text is added rather than silently changing the project license.
+
+## Review
+
+- Added the canonical MIT text plus public contribution and security guidance.
+- README now leads with build-in-public status, a copyable source setup, local-data handling,
+  and responsible-use language.
+- CI runs the repository's existing `pnpm verify` gate. No release automation is included.
+- Pages now shares the app's current dark/light palette, title-case brand treatment, surfaces,
+  radii, shadows, and responsive card behavior. Its HTML and both local assets return HTTP 200.
+- `pnpm verify` passes: Clippy, 305 Rust tests, Svelte diagnostics (0/0), 67 Vitest tests,
+  and the production build.
+- All workflow YAML parses, local documentation/asset links exist, and `git diff --check`
+  passes.
+- Visual browser automation could not initialize in this environment (`Cannot redefine
+  property: process`), so the rendered page still needs one human eye check before publishing.

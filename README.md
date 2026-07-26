@@ -6,6 +6,26 @@ offline.
 
 ![Bettor Desktop](site/assets/screenshot.png)
 
+> [!IMPORTANT]
+> **Early development.** This repository is being built in public. Interfaces,
+> behavior, and the database schema may change without notice.
+
+## Follow or run the project
+
+There are no packaged releases yet. To follow development, watch or star the
+repository. To try the current work locally, build it from source:
+
+```bash
+git clone https://github.com/WalrusQuant/bettor-desktop.git
+cd bettor-desktop
+pnpm install
+pnpm tauri dev
+```
+
+This requires the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/)
+for your operating system, Rust stable, Node 22+, and pnpm. See
+[Build from source](#build-from-source) for verification and bundle commands.
+
 The point of the project is one specific demonstration: **how the range of odds
 you bet drives your breakeven and your variance — even when every bet is +EV and
 every bet gets closing line value.** You can lose a lot of bets and sit through
@@ -24,32 +44,22 @@ Same expectation. Four and a half times the evidence.
 
 ---
 
-## Status
+## Project status
 
-Every planned phase is complete.
-
-| Phase | | |
-|---|---|---|
-| 0 | Scaffold | ✅ |
-| 1 | Core math, tier 1 — odds, probability, hold, devig | ✅ |
-| 1.5 | Math extracted from the React components | ✅ |
-| 2 | Core math, tier 2 — distributions, models, simulation | ✅ |
-| 3 | Typed IPC — generated bindings | ✅ |
-| 4 | Design system, shared UI, calculator registry | ✅ |
-| 5 | Odds-range / variance module | ✅ |
-| 6 | SQLite bet log | ✅ |
-| 7 | Probability visualizer | ✅ |
-| 8 | Mass port of the remaining calculators | ✅ |
+The calculation engine, desktop shell, bet log, visualizer, and reference
+library are taking shape, but this is still an early build-in-public project.
+Expect incomplete packaging, breaking changes, and active iteration.
 
 ```
 305  Rust tests          280 core · 15 shell · 10 parity suites
  67  frontend tests      formatting, error wording, registry, markdown
 803  golden vectors      replayed against the original TypeScript
-     svelte-check        295 files, 0 errors, 0 warnings
+     svelte-check        0 errors, 0 warnings
      clippy -D warnings  clean
 ```
 
-`pnpm verify` runs all of it plus a production build. Nothing lands without it.
+`pnpm verify` runs all of it plus a production build. Pull requests run the same
+gate in CI.
 
 ---
 
@@ -88,6 +98,19 @@ whole-number line is a real event with a real probability.
 
 **A reference library.** Fifteen explainers bundled into the binary, rendered
 with KaTeX. No network.
+
+## Privacy, data, and responsible use
+
+Bettor Desktop has no accounts, telemetry, or required network connection. Bet
+log records stay in the operating system's per-user application-data directory
+under the bundle identifier `com.bettorcalculator.desktop`. Back up that
+directory before upgrading an alpha build or moving to another machine. Removing
+the app does not necessarily remove its data.
+
+The calculators are educational analysis tools, not betting or financial advice.
+Outputs are estimates built from the inputs and assumptions you provide; they
+cannot guarantee an edge or a profit. If gambling is no longer recreational,
+stop and use the support resources available in your country.
 
 ---
 
@@ -195,20 +218,26 @@ and on a stale declaration, so the list cannot rot.
 
 ---
 
-## Development
+## Build from source
 
-Requires Rust (stable), Node 22+, and pnpm. Regenerating fixtures additionally
-requires **Node 25+** for native TypeScript type stripping.
+Install the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/)
+for your operating system, Rust stable, Node 22+, and pnpm. Regenerating
+fixtures additionally requires **Node 25+** for native TypeScript type stripping.
 
 ```bash
+git clone https://github.com/WalrusQuant/bettor-desktop.git
+cd bettor-desktop
 pnpm install
 pnpm tauri dev          # run the app
 pnpm verify             # the gate — see below
 pnpm tauri build        # produce a bundle
 ```
 
+Release bundles are written below `target/release/bundle/`. A development run
+is not an installed application and may use debug-speed simulations.
+
 `pnpm verify` is clippy → cargo test → svelte-check → vitest → production build.
-Nothing lands without it. Individual pieces:
+CI runs this gate on pull requests and `main`. Individual pieces:
 
 ```bash
 pnpm rs:test            # cargo test --workspace
@@ -247,9 +276,8 @@ standard Tauri v2 solution, but the type-safety backbone does rest on an RC.
 
 ## Documentation
 
-- [`CLAUDE.md`](CLAUDE.md) — working rules for the repo, in short form
-- [`tasks/todo.md`](tasks/todo.md) — the plan, and the record of every phase
-- [`tasks/lessons.md`](tasks/lessons.md) — mistakes worth not repeating
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — development workflow and pull requests
+- [`SECURITY.md`](SECURITY.md) — how to report a vulnerability privately
 - [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md) — every bug found in the
   reference TypeScript and every deliberate departure from it
 - [`docs/TESTING.md`](docs/TESTING.md) — the parity harness, and how to work
@@ -257,4 +285,4 @@ standard Tauri v2 solution, but the type-safety backbone does rest on an RC.
 
 ## License
 
-MIT
+[MIT](LICENSE)

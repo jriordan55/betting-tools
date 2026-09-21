@@ -1,0 +1,1 @@
+import{s as r,a as s,f as m}from"./CI9awFrJ.js";import{c as p,r as f,t as c}from"./cB-EsuJc.js";import"./CM5eN-hW.js";var l=m('<p class="from-log svelte-1g12cof"> </p>');function n(e,a){var t=l(),o=p(t,!0);f(t),c(()=>r(o,a.message)),s(e,t)}export{n as B};

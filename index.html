@@ -1,98 +1,72 @@
 <!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-	<title>Bettor Desktop</title>
-	<meta name="description" content="Your betting book — same Rust engine as the desktop app, in the browser.">
-	<link rel="canonical" href="https://jriordan55.github.io/betting-tools/">
-	<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="theme-color" content="#0f1117">
-	<link rel="stylesheet" href="app.css">
-</head>
-<body>
-	<header class="top">
-		<div>
-			<strong>Bettor Desktop</strong>
-			<span class="tag">Rust engine</span>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/betting-tools/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bettor Desktop</title>
+    <link href="/betting-tools/_app/immutable/entry/start.D73SQhkt.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/C9H7kcsG.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/cB-EsuJc.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/DEeMxKL2.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/entry/app.BLxByTES.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/Dp1pzeXC.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/CI9awFrJ.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/BdxLRZ67.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/CD3-oh3V.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/BCI91PIa.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/nodes/0.CroQMZB_.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/xiLcXEAI.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/ouvBCM50.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/BBlTT0_h.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/BHdoyIQ1.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/CLfLmkdy.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/BBhkOw-X.js" rel="modulepreload">
+		<link href="/betting-tools/_app/immutable/chunks/CyZTcPXY.js" rel="modulepreload">
+		
+		<link href="/betting-tools/_app/immutable/assets/ErrorNote.aBsFErY4.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/HoldCalculator.PrWd_nVy.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/ParlayCalculator.CIo-JChc.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/SharpImplied.BJ4Z7-Mp.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/DevigCalculator.DKEp260d.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/ClvCalculator.0LGNDeRT.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/LineChart.B5Ecpz9k.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/RegressionMean.Bd4_1x4z.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/AltLinePricer.DzhrhJyJ.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/MiddleFinder.CehpSe2e.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/TeaserEv.C9ERh5V2.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/RiskOfRuin.03NFABQ6.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/ArbitrageCalculator.Caou4ZDW.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/VigComparison.Dv0ApwLG.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/BetterLine.BZD48EIa.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/BreakevenLadder.33wtwdqq.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/ClvTranslator.C4jdEMTx.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/BetMixBuilder.CL02VSxr.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/SeasonSimulator.CeLAQgkg.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/PropSimulator.BDdb1Fwt.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/GameVisualizer.YcTFM-KK.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/MatchPredictor.BngQiwge.css" rel="stylesheet">
+		<link href="/betting-tools/_app/immutable/assets/0.B0Iq54pT.css" rel="stylesheet">
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">
+			<script>
+				{
+					__sveltekit_dtq9od = {
+						base: "/betting-tools",
+						assets: "/betting-tools"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("/betting-tools/_app/immutable/entry/start.D73SQhkt.js"),
+						import("/betting-tools/_app/immutable/entry/app.BLxByTES.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
 		</div>
-		<nav>
-			<button type="button" data-page="book" class="active">Book</button>
-			<button type="button" data-page="log">Log</button>
-			<button type="button" data-page="add">Add</button>
-		</nav>
-	</header>
-
-	<main>
-		<section id="page-book" class="page active">
-			<p id="status" class="status">Loading your book…</p>
-			<div id="summary" class="metrics" hidden></div>
-			<p id="caption" class="caption" hidden></p>
-		</section>
-
-		<section id="page-log" class="page">
-			<div class="filters">
-				<select id="filter-outcome">
-					<option value="">All results</option>
-					<option value="won">Won</option>
-					<option value="lost">Lost</option>
-					<option value="push">Push</option>
-					<option value="void">Void</option>
-					<option value="pending">Pending</option>
-				</select>
-			</div>
-			<div id="log" class="log"></div>
-		</section>
-
-		<section id="page-add" class="page">
-			<form id="add-form" class="form">
-				<label>Selection
-					<input name="selection" required placeholder="Lakers moneyline" autocomplete="off">
-				</label>
-				<div class="row">
-					<label>Date
-						<input name="placedAt" type="date" required>
-					</label>
-					<label>Sport
-						<input name="sport" value="NBA">
-					</label>
-				</div>
-				<div class="row">
-					<label>Market
-						<input name="market" value="moneyline">
-					</label>
-					<label>Book
-						<input name="book" value="DraftKings">
-					</label>
-				</div>
-				<div class="row">
-					<label>American odds
-						<input name="odds" value="-110" required>
-					</label>
-					<label>Stake
-						<input name="stake" type="number" min="0.01" step="0.01" value="25" required>
-					</label>
-				</div>
-				<label>Result
-					<select name="outcome">
-						<option value="pending">Pending</option>
-						<option value="won">Won</option>
-						<option value="lost">Lost</option>
-						<option value="push">Push</option>
-						<option value="void">Void</option>
-					</select>
-				</label>
-				<button type="submit">Add bet</button>
-				<p id="add-status" class="status"></p>
-			</form>
-			<p class="footnote">
-				Windows install:
-				<a href="https://github.com/jriordan55/betting-tools/releases/latest">Releases</a>
-			</p>
-		</section>
-	</main>
-
-	<script type="module" src="app.js"></script>
-</body>
+  </body>
 </html>

@@ -1,13 +1,20 @@
 # betting-tools
 
-**Open the app from anywhere:**  
+**Open on your phone:**  
+https://betting-tools.streamlit.app  
+
+(First time only: deploy from  
+https://share.streamlit.io/deploy?repository=jriordan55%2Fbetting-tools&branch=main&mainModule=streamlit_app.py&appName=betting-tools  
+and set the subdomain to `betting-tools`.)
+
+**GitHub launch page:**  
 https://jriordan55.github.io/betting-tools/
 
-That page downloads the Windows installer for the Rust desktop app. Your bet
-book is already loaded — add new bets one at a time in the Bet Log.
-
-Direct installer (latest release):  
+**Windows installer:**  
 https://github.com/jriordan55/betting-tools/releases/latest
+
+The phone app is the same Rust math engine in the browser. Your book is already
+loaded — add bets one at a time. The Windows build is the full Tauri desktop shell.
 
 ---
 

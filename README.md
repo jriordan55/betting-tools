@@ -1,4 +1,15 @@
-# bettor-desktop
+# betting-tools
+
+**Open the app from anywhere:**  
+https://jriordan55.github.io/betting-tools/
+
+That page downloads the Windows installer for the Rust desktop app. Your bet
+book is already loaded — add new bets one at a time in the Bet Log.
+
+Direct installer (latest release):  
+https://github.com/jriordan55/betting-tools/releases/latest
+
+---
 
 Sports betting calculators and simulations. A Tauri v2 desktop app with a Rust
 math engine — 26 calculators, a bet log, and a bundled reference library, all
@@ -12,12 +23,11 @@ offline.
 
 ## Follow or run the project
 
-There are no packaged releases yet on the upstream fork. On
-[`jriordan55/betting-tools`](https://github.com/jriordan55/betting-tools), the
-Rust desktop app is the main product: run **Actions → Release desktop app** to
-build a Windows installer, then download it from
-[Releases](https://github.com/jriordan55/betting-tools/releases). Or build from
-source:
+On [`jriordan55/betting-tools`](https://github.com/jriordan55/betting-tools), the
+Rust desktop app is the main product. Use the Pages link above, or run
+**Actions → Release desktop app** to rebuild the Windows installer.
+
+Or build from source:
 
 ```bash
 git clone https://github.com/jriordan55/betting-tools.git

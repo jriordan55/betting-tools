@@ -130,6 +130,38 @@ pub struct BetDraft {
     pub notes: String,
 }
 
+/// One row that failed during a bulk import.
+#[derive(Debug, Clone, PartialEq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportRowError {
+    /// Zero-based index in the submitted batch.
+    pub index: u32,
+    /// Why the row was skipped.
+    pub message: String,
+}
+
+/// Outcome of [`BetLog::import_many`].
+#[derive(Debug, Clone, PartialEq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportResult {
+    /// Rows written successfully.
+    pub imported: u32,
+    /// Rows rejected.
+    pub skipped: u32,
+    /// Per-row failures, in submission order.
+    pub errors: Vec<ImportRowError>,
+}
+
+/// Singles versus parlays and other multi-leg tickets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub enum BetKind {
+    /// One selection, one ticket.
+    Single,
+    /// Parlay or round-robin stored as `market = parlay`.
+    Parlay,
+}
+
 /// Which bets to return.
 #[derive(Debug, Clone, Default, PartialEq, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
@@ -138,10 +170,36 @@ pub struct BetFilter {
     pub outcome: Option<Outcome>,
     /// Only this sport, matched exactly.
     pub sport: Option<String>,
+    /// Only this sportsbook, matched exactly.
+    pub book: Option<String>,
+    /// Only this market type — spread, parlay, prop, and so on.
+    pub market: Option<String>,
+    /// Only bets placed in this calendar year.
+    pub year: Option<i32>,
+    /// Only bets with stake at or above this amount.
+    pub min_stake: Option<f64>,
+    /// Only bets with stake at or below this amount.
+    pub max_stake: Option<f64>,
+    /// Singles only, or parlays only.
+    pub kind: Option<BetKind>,
     /// Only bets placed on or after this ISO date.
     pub from_date: Option<String>,
     /// Only bets placed on or before this ISO date.
     pub to_date: Option<String>,
+}
+
+/// Distinct values for filter dropdowns.
+#[derive(Debug, Clone, PartialEq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BetLogFacets {
+    /// Every sport in the log.
+    pub sports: Vec<String>,
+    /// Every sportsbook in the log.
+    pub books: Vec<String>,
+    /// Every market type in the log.
+    pub markets: Vec<String>,
+    /// Every placement year in the log, newest first.
+    pub years: Vec<i32>,
 }
 
 /// Text as SQLite stores it: `Outcome` is an enum here and a word there.
@@ -328,6 +386,27 @@ impl BetLog {
     ///
     /// [`LogError::Invalid`] if the draft fails validation,
     /// [`LogError::Storage`] on a write failure.
+    pub fn import_many(&self, drafts: &[BetDraft]) -> Result<ImportResult> {
+        let mut imported = 0_u32;
+        let mut errors = Vec::new();
+
+        for (index, draft) in drafts.iter().enumerate() {
+            match self.add(draft) {
+                Ok(_) => imported += 1,
+                Err(error) => errors.push(ImportRowError {
+                    index: u32::try_from(index).unwrap_or(u32::MAX),
+                    message: error.to_string(),
+                }),
+            }
+        }
+
+        Ok(ImportResult {
+            imported,
+            skipped: u32::try_from(errors.len()).unwrap_or(u32::MAX),
+            errors,
+        })
+    }
+
     pub fn add(&self, draft: &BetDraft) -> Result<Bet> {
         validate(draft)?;
         let connection = self.lock();
@@ -393,6 +472,16 @@ impl BetLog {
         self.get(id)
     }
 
+    /// Deletes every bet in the log.
+    ///
+    /// # Errors
+    ///
+    /// [`LogError::Storage`] if the delete fails.
+    pub fn clear_all(&self) -> Result<u32> {
+        let changed = self.lock().execute("DELETE FROM bets", [])?;
+        Ok(u32::try_from(changed).unwrap_or(u32::MAX))
+    }
+
     /// Deletes a bet.
     ///
     /// # Errors
@@ -434,40 +523,27 @@ impl BetLog {
     ///
     /// [`LogError::Storage`] if the query fails.
     pub fn list(&self, filter: &BetFilter) -> Result<Vec<Bet>> {
-        // Built by pushing bound parameters rather than by interpolating the
-        // values, so a sport named `'; DROP TABLE bets; --` is just a sport
-        // that matches nothing.
-        let mut sql = String::from(
-            "SELECT id, placed_at, sport, market, selection, book,
-                    price_taken, closing_price, opposing_closing_price,
-                    stake, outcome, notes
-             FROM bets WHERE 1 = 1",
-        );
-        let mut values: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
-
-        if let Some(outcome) = filter.outcome {
-            sql.push_str(" AND outcome = ?");
-            values.push(Box::new(outcome_to_text(outcome)));
-        }
-        if let Some(sport) = &filter.sport {
-            sql.push_str(" AND sport = ?");
-            values.push(Box::new(sport.clone()));
-        }
-        if let Some(from) = &filter.from_date {
-            sql.push_str(" AND placed_at >= ?");
-            values.push(Box::new(from.clone()));
-        }
-        if let Some(to) = &filter.to_date {
-            sql.push_str(" AND placed_at <= ?");
-            values.push(Box::new(to.clone()));
-        }
-        sql.push_str(" ORDER BY placed_at DESC, id DESC");
-
+        let (sql, values) = filter_query(filter);
         let connection = self.lock();
         let mut statement = connection.prepare(&sql)?;
         let bound: Vec<&dyn rusqlite::ToSql> = values.iter().map(AsRef::as_ref).collect();
         let rows = statement.query_map(bound.as_slice(), row_to_bet)?;
         Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+    }
+
+    /// Distinct filter values drawn from the whole log.
+    ///
+    /// # Errors
+    ///
+    /// [`LogError::Storage`] if any query fails.
+    pub fn facets(&self) -> Result<BetLogFacets> {
+        let connection = self.lock();
+        Ok(BetLogFacets {
+            sports: distinct_strings(&connection, "sport")?,
+            books: distinct_strings(&connection, "book")?,
+            markets: distinct_strings(&connection, "market")?,
+            years: distinct_years(&connection)?,
+        })
     }
 
     /// Every distinct sport in the log, for a filter dropdown.
@@ -482,6 +558,84 @@ impl BetLog {
         let rows = statement.query_map([], |row| row.get::<_, String>(0))?;
         Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
     }
+}
+
+fn filter_query(filter: &BetFilter) -> (String, Vec<Box<dyn rusqlite::ToSql>>) {
+    // Built by pushing bound parameters rather than by interpolating the
+    // values, so a sport named `'; DROP TABLE bets; --` is just a sport
+    // that matches nothing.
+    let mut sql = String::from(
+        "SELECT id, placed_at, sport, market, selection, book,
+                price_taken, closing_price, opposing_closing_price,
+                stake, outcome, notes
+         FROM bets WHERE 1 = 1",
+    );
+    let mut values: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if let Some(outcome) = filter.outcome {
+        sql.push_str(" AND outcome = ?");
+        values.push(Box::new(outcome_to_text(outcome)));
+    }
+    if let Some(sport) = &filter.sport {
+        sql.push_str(" AND sport = ?");
+        values.push(Box::new(sport.clone()));
+    }
+    if let Some(book) = &filter.book {
+        sql.push_str(" AND book = ?");
+        values.push(Box::new(book.clone()));
+    }
+    if let Some(market) = &filter.market {
+        sql.push_str(" AND market = ?");
+        values.push(Box::new(market.clone()));
+    }
+    if let Some(year) = filter.year {
+        sql.push_str(" AND placed_at >= ? AND placed_at < ?");
+        values.push(Box::new(format!("{year}-01-01")));
+        values.push(Box::new(format!("{}-01-01", year + 1)));
+    }
+    if let Some(min_stake) = filter.min_stake {
+        sql.push_str(" AND stake >= ?");
+        values.push(Box::new(min_stake));
+    }
+    if let Some(max_stake) = filter.max_stake {
+        sql.push_str(" AND stake <= ?");
+        values.push(Box::new(max_stake));
+    }
+    match filter.kind {
+        Some(BetKind::Single) => sql.push_str(" AND market <> 'parlay'"),
+        Some(BetKind::Parlay) => sql.push_str(" AND market = 'parlay'"),
+        None => {}
+    }
+    if let Some(from) = &filter.from_date {
+        sql.push_str(" AND placed_at >= ?");
+        values.push(Box::new(from.clone()));
+    }
+    if let Some(to) = &filter.to_date {
+        sql.push_str(" AND placed_at <= ?");
+        values.push(Box::new(to.clone()));
+    }
+    sql.push_str(" ORDER BY placed_at DESC, id DESC");
+    (sql, values)
+}
+
+fn distinct_strings(connection: &Connection, column: &str) -> Result<Vec<String>> {
+    let sql = format!(
+        "SELECT DISTINCT {column} FROM bets WHERE {column} <> '' ORDER BY {column}"
+    );
+    let mut statement = connection.prepare(&sql)?;
+    let rows = statement.query_map([], |row| row.get::<_, String>(0))?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+}
+
+fn distinct_years(connection: &Connection) -> Result<Vec<i32>> {
+    let mut statement = connection.prepare(
+        "SELECT DISTINCT CAST(substr(placed_at, 1, 4) AS INTEGER)
+         FROM bets
+         WHERE length(placed_at) >= 4
+         ORDER BY 1 DESC",
+    )?;
+    let rows = statement.query_map([], |row| row.get::<_, i32>(0))?;
+    Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
 }
 
 /// A stored bet in the shape `bettor_core::ledger` reads.
@@ -589,6 +743,36 @@ mod tests {
     }
 
     #[test]
+    fn clear_all_removes_every_row() {
+        let log = BetLog::in_memory().unwrap();
+        log.add(&draft(-110.0, Outcome::Won)).unwrap();
+        log.add(&draft(150.0, Outcome::Lost)).unwrap();
+        assert_eq!(log.clear_all().unwrap(), 2);
+        assert!(log.list(&BetFilter::default()).unwrap().is_empty());
+    }
+
+    #[test]
+    fn import_many_reports_partial_failures() {
+        let log = BetLog::in_memory().unwrap();
+        let result = log
+            .import_many(&[
+                draft(-110.0, Outcome::Won),
+                BetDraft {
+                    stake: 0.0,
+                    ..draft(-110.0, Outcome::Lost)
+                },
+                draft(150.0, Outcome::Won),
+            ])
+            .unwrap();
+
+        assert_eq!(result.imported, 2);
+        assert_eq!(result.skipped, 1);
+        assert_eq!(result.errors.len(), 1);
+        assert_eq!(result.errors[0].index, 1);
+        assert_eq!(log.list(&BetFilter::default()).unwrap().len(), 2);
+    }
+
+    #[test]
     fn a_bet_survives_a_round_trip() {
         let log = BetLog::in_memory().unwrap();
         let stored = log
@@ -647,6 +831,109 @@ mod tests {
         let remaining = log.list(&BetFilter::default()).unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].id, b.id);
+    }
+
+    #[test]
+    fn extended_filters_narrow_the_list() {
+        let log = BetLog::in_memory().unwrap();
+        log.add(&BetDraft {
+            book: "DraftKings".to_owned(),
+            market: "parlay".to_owned(),
+            stake: 25.0,
+            placed_at: "2026-03-01".to_owned(),
+            ..draft(-110.0, Outcome::Won)
+        })
+        .unwrap();
+        log.add(&BetDraft {
+            book: "FanDuel".to_owned(),
+            market: "spread".to_owned(),
+            stake: 100.0,
+            placed_at: "2025-11-15".to_owned(),
+            ..draft(150.0, Outcome::Lost)
+        })
+        .unwrap();
+
+        assert_eq!(
+            log.list(&BetFilter {
+                book: Some("DraftKings".to_owned()),
+                ..BetFilter::default()
+            })
+            .unwrap()
+            .len(),
+            1
+        );
+        assert_eq!(
+            log.list(&BetFilter {
+                market: Some("spread".to_owned()),
+                ..BetFilter::default()
+            })
+            .unwrap()
+            .len(),
+            1
+        );
+        assert_eq!(
+            log.list(&BetFilter {
+                year: Some(2026),
+                ..BetFilter::default()
+            })
+            .unwrap()
+            .len(),
+            1
+        );
+        assert_eq!(
+            log.list(&BetFilter {
+                min_stake: Some(50.0),
+                ..BetFilter::default()
+            })
+            .unwrap()
+            .len(),
+            1
+        );
+        assert_eq!(
+            log.list(&BetFilter {
+                kind: Some(BetKind::Parlay),
+                ..BetFilter::default()
+            })
+            .unwrap()
+            .len(),
+            1
+        );
+        assert_eq!(
+            log.list(&BetFilter {
+                kind: Some(BetKind::Single),
+                ..BetFilter::default()
+            })
+            .unwrap()
+            .len(),
+            1
+        );
+    }
+
+    #[test]
+    fn facets_lists_distinct_filter_values() {
+        let log = BetLog::in_memory().unwrap();
+        log.add(&BetDraft {
+            sport: "Golf".to_owned(),
+            book: "DraftKings".to_owned(),
+            market: "prop".to_owned(),
+            placed_at: "2026-01-15".to_owned(),
+            ..draft(-110.0, Outcome::Won)
+        })
+        .unwrap();
+        log.add(&BetDraft {
+            sport: "NBA".to_owned(),
+            book: "FanDuel".to_owned(),
+            market: "parlay".to_owned(),
+            placed_at: "2025-06-01".to_owned(),
+            ..draft(150.0, Outcome::Lost)
+        })
+        .unwrap();
+
+        let facets = log.facets().unwrap();
+        assert_eq!(facets.sports, vec!["Golf".to_owned(), "NBA".to_owned()]);
+        assert!(facets.books.contains(&"DraftKings".to_owned()));
+        assert!(facets.markets.contains(&"parlay".to_owned()));
+        assert_eq!(facets.years, vec![2026, 2025]);
     }
 
     #[test]

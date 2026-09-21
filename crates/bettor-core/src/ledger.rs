@@ -473,6 +473,102 @@ pub fn to_mix(bets: &[LoggedBet], bucket_cents: f64) -> Result<LedgerMix> {
     })
 }
 
+/// Buckets a record by price using realised return per unit staked.
+///
+/// Every settled bet contributes. The edge on each leg is hindsight —
+/// profit divided by stake — not closing-line value. That is the right input
+/// when the record has no fair closes, which is most imported books, and it
+/// is honestly a different claim than [`to_mix`].
+///
+/// # Errors
+///
+/// [`MathError::DomainError`] for a non-positive bucket width or a bad bet;
+/// [`MathError::ShapeError`] if no settled bet exists.
+pub fn to_book_mix(bets: &[LoggedBet], bucket_cents: f64) -> Result<LedgerMix> {
+    if !bucket_cents.is_finite() || bucket_cents <= 0.0 {
+        return Err(MathError::DomainError {
+            param: "bucket width",
+            constraint: "greater than zero",
+            value: bucket_cents,
+        });
+    }
+
+    struct Bucket {
+        key: i64,
+        stake: f64,
+        stake_cents: f64,
+        stake_edge: f64,
+        count: usize,
+    }
+
+    let mut buckets: Vec<Bucket> = Vec::new();
+    let mut skipped = 0_usize;
+
+    for bet in bets {
+        if !bet.outcome.is_settled() {
+            skipped += 1;
+            continue;
+        }
+
+        let row = analyze_bet(bet)?;
+        let profit = row.profit.unwrap_or(0.0);
+        let edge = profit / bet.stake;
+
+        let cents = cents_from_even(bet.price_taken)?;
+        #[allow(
+            clippy::cast_possible_truncation,
+            reason = "prices are bounded well inside i64 at any sane bucket width"
+        )]
+        let key = (cents / bucket_cents).floor() as i64;
+
+        if let Some(b) = buckets.iter_mut().find(|b| b.key == key) {
+            b.stake += bet.stake;
+            b.stake_cents += bet.stake * cents;
+            b.stake_edge += bet.stake * edge;
+            b.count += 1;
+        } else {
+            buckets.push(Bucket {
+                key,
+                stake: bet.stake,
+                stake_cents: bet.stake * cents,
+                stake_edge: bet.stake * edge,
+                count: 1,
+            });
+        }
+    }
+
+    if buckets.is_empty() {
+        return Err(MathError::ShapeError {
+            what: "settled bets",
+            expected: "at least 1",
+            got: 0,
+        });
+    }
+
+    buckets.sort_by_key(|b| b.key);
+    let bets_used = buckets.iter().map(|b| b.count).sum();
+
+    let legs = buckets
+        .iter()
+        .map(|b| {
+            #[allow(clippy::cast_precision_loss, reason = "bet count")]
+            let count = b.count as f64;
+            MixLeg {
+                american: american_from_cents(b.stake_cents / b.stake),
+                stake: b.stake / count,
+                edge: b.stake_edge / b.stake,
+                count: b.count,
+            }
+        })
+        .collect();
+
+    Ok(LedgerMix {
+        legs,
+        bets_used,
+        bets_skipped: skipped,
+    })
+}
+
 #[cfg(test)]
 #[allow(
     clippy::unwrap_used,
@@ -693,6 +789,37 @@ mod tests {
         .unwrap();
         assert_eq!(l.bets_used, 1);
         assert_eq!(l.bets_skipped, 2, "one with no close, one with only one side");
+    }
+
+    #[test]
+    fn book_mix_can_hit_the_minus_one_boundary() {
+        let l = to_book_mix(
+            &[
+                bet(-110.0, Outcome::Lost),
+                bet(-110.0, Outcome::Lost),
+                bet(-110.0, Outcome::Lost),
+            ],
+            100.0,
+        )
+        .unwrap();
+        assert_eq!(l.legs.len(), 1);
+        assert_relative_eq!(l.legs[0].edge, -1.0, epsilon = 1e-12);
+        crate::variance::bet_mix(&l.legs).unwrap();
+    }
+
+    #[test]
+    fn book_mix_works_without_closing_lines() {
+        let l = to_book_mix(
+            &[
+                bet(-110.0, Outcome::Won),
+                bet(-110.0, Outcome::Lost),
+                bet(200.0, Outcome::Won),
+            ],
+            100.0,
+        )
+        .unwrap();
+        assert_eq!(l.bets_used, 3);
+        assert_eq!(l.legs.len(), 2);
     }
 
     #[test]

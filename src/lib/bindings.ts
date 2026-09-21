@@ -463,6 +463,17 @@ async addBet(draft: BetDraft) : Promise<Result<Bet, LogError>> {
 }
 },
 /**
+ * Writes many bets at once — used by file import.
+ */
+async importBets(drafts: BetDraft[]) : Promise<Result<ImportResult, LogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("import_bets", { drafts }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Replaces a recorded bet — settling it, or correcting a typo.
  */
 async updateBet(id: number, draft: BetDraft) : Promise<Result<Bet, LogError>> {
@@ -496,11 +507,22 @@ async listBets(filter: BetFilter) : Promise<Result<Bet[], LogError>> {
 }
 },
 /**
- * Every sport that appears in the log.
+ * Distinct sports, books, markets, and years for filter dropdowns.
  */
-async betLogSports() : Promise<Result<string[], LogError>> {
+async betLogFacets() : Promise<Result<BetLogFacets, LogError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("bet_log_sports") };
+    return { status: "ok", data: await TAURI_INVOKE("bet_log_facets") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The whole bet log, shaped for every calculator that can use it.
+ */
+async betLogSnapshot(filter: BetFilter) : Promise<Result<BetLogSnapshot, BetLogError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("bet_log_snapshot", { filter }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -774,6 +796,34 @@ outcome: BetOutcome;
  */
 notes: string }
 /**
+ * One row that failed during a bulk import.
+ */
+export type ImportRowError = { 
+/**
+ * Zero-based index in the submitted batch.
+ */
+index: number; 
+/**
+ * Why the row was skipped.
+ */
+message: string }
+/**
+ * Outcome of [`BetLog::import_many`].
+ */
+export type ImportResult = { 
+/**
+ * Rows written successfully.
+ */
+imported: number; 
+/**
+ * Rows rejected.
+ */
+skipped: number; 
+/**
+ * Per-row failures, in submission order.
+ */
+errors: ImportRowError[] }
+/**
  * Which bets to return.
  */
 export type BetFilter = { 
@@ -786,6 +836,30 @@ outcome: BetOutcome | null;
  */
 sport: string | null; 
 /**
+ * Only this sportsbook, matched exactly.
+ */
+book: string | null; 
+/**
+ * Only this market type — spread, parlay, prop, and so on.
+ */
+market: string | null; 
+/**
+ * Only bets placed in this calendar year.
+ */
+year: number | null; 
+/**
+ * Only bets with stake at or above this amount.
+ */
+minStake: number | null; 
+/**
+ * Only bets with stake at or below this amount.
+ */
+maxStake: number | null; 
+/**
+ * Singles only, or parlays only.
+ */
+kind: BetKind | null; 
+/**
  * Only bets placed on or after this ISO date.
  */
 fromDate: string | null; 
@@ -793,6 +867,62 @@ fromDate: string | null;
  * Only bets placed on or before this ISO date.
  */
 toDate: string | null }
+/**
+ * Singles versus parlays and other multi-leg tickets.
+ */
+export type BetKind = "single" | "parlay"
+/**
+ * Distinct values for filter dropdowns.
+ */
+export type BetLogFacets = { 
+/**
+ * Every sport in the log.
+ */
+sports: string[]; 
+/**
+ * Every sportsbook in the log.
+ */
+books: string[]; 
+/**
+ * Every market type in the log.
+ */
+markets: string[]; 
+/**
+ * Every placement year in the log, newest first.
+ */
+years: number[] }
+/**
+ * The whole bet log, shaped for every calculator that can use it.
+ */
+export type BetLogSnapshot = { 
+/**
+ * Record-wide figures.
+ */
+summary: LedgerSummary; 
+/**
+ * Price buckets with edge from fair closing lines, when any exist.
+ */
+clvMix: LedgerMix | null; 
+/**
+ * Price buckets with realised edge — always present when settled bets exist.
+ */
+bookMix: LedgerMix; 
+/**
+ * Mean stake across settled bets.
+ */
+avgStake: number; 
+/**
+ * Stake-weighted average American price on settled bets.
+ */
+avgAmerican: number; 
+/**
+ * Shortest American price in the book mix.
+ */
+priceMin: number; 
+/**
+ * Longest American price in the book mix.
+ */
+priceMax: number }
 /**
  * Something that can go wrong reading or analysing the bet log.
  * 

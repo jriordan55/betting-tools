@@ -3,6 +3,8 @@
 	import { commands, type MathError, type MixLeg, type SeasonResult } from '$lib/bindings';
 	import { numeric, positive } from '$lib/async.svelte';
 	import { takeMix } from '$lib/handoff';
+	import { betLog } from '$lib/betlog-store.svelte';
+	import { mixLegsToBuckets, mixSourceLabel } from '$lib/betlog-prefill';
 	import { count, money, moneySigned, num, pct, pctSigned, signColor } from '$lib/format';
 	import FanChart from '$lib/charts/FanChart.svelte';
 	import {
@@ -15,7 +17,8 @@
 		ResultLarge,
 		EmptyState,
 		InfoSection,
-		ErrorNote
+		ErrorNote,
+		BetLogNote
 	} from '$lib/ui';
 
 	const SIM_OPTIONS = [
@@ -43,17 +46,23 @@
 	 * mount, so a later visit shows the defaults rather than a stale book.
 	 */
 	let fromBetLog = $state(false);
+	let logNote = $state('');
 
-	onMount(() => {
+	onMount(async () => {
 		const legs = takeMix();
-		if (!legs || legs.length === 0) return;
-		buckets = legs.map((leg) => ({
-			price: String(Math.round(leg.american)),
-			stake: leg.stake.toFixed(0),
-			edge: (leg.edge * 100).toFixed(2),
-			count: String(leg.count)
-		}));
-		fromBetLog = true;
+		if (legs && legs.length > 0) {
+			buckets = mixLegsToBuckets(legs);
+			fromBetLog = true;
+			logNote = 'Loaded from a handoff on the bet log page.';
+			return;
+		}
+		await betLog.ensureLoaded();
+		const book = betLog.mixLegs();
+		if (book.length > 0 && betLog.snapshot) {
+			buckets = mixLegsToBuckets(book);
+			fromBetLog = true;
+			logNote = `Loaded from your bet log (${mixSourceLabel(betLog.snapshot)}).`;
+		}
 	});
 
 	let bankroll = $state('10000');
@@ -138,13 +147,11 @@
 
 </script>
 
+{#if fromBetLog}
+	<BetLogNote message={logNote} />
+{/if}
+
 <InputCard title="The season">
-	{#if fromBetLog}
-		<p class="imported">
-			Loaded from your bet log — each bucket carries the edge its closing lines say you had, not
-			the return you actually got.
-		</p>
-	{/if}
 	<div class="grid head">
 		<span>Price</span>
 		<span>Stake</span>
@@ -334,13 +341,6 @@
 		width: 100%;
 		margin-top: 0.5rem;
 		color: var(--accent-cyan);
-	}
-
-	.imported {
-		font-size: 0.75rem;
-		color: var(--accent-cyan);
-		line-height: 1.6;
-		margin-bottom: 0.85rem;
 	}
 
 	.check {

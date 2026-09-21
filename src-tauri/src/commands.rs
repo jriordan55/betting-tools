@@ -671,6 +671,16 @@ pub fn add_bet(log: tauri::State<'_, betlog::BetLog>, draft: betlog::BetDraft) -
     log.add(&draft)
 }
 
+/// Writes many bets at once — used by file import.
+#[tauri::command]
+#[specta::specta]
+pub fn import_bets(
+    log: tauri::State<'_, betlog::BetLog>,
+    drafts: Vec<betlog::BetDraft>,
+) -> LogResult<betlog::ImportResult> {
+    log.import_many(&drafts)
+}
+
 /// Replaces a recorded bet — settling it, or correcting a typo.
 #[tauri::command]
 #[specta::specta]
@@ -704,6 +714,80 @@ pub fn list_bets(
 #[specta::specta]
 pub fn bet_log_sports(log: tauri::State<'_, betlog::BetLog>) -> LogResult<Vec<String>> {
     log.sports()
+}
+
+/// Distinct sports, books, markets, and years for filter dropdowns.
+#[tauri::command]
+#[specta::specta]
+pub fn bet_log_facets(log: tauri::State<'_, betlog::BetLog>) -> LogResult<betlog::BetLogFacets> {
+    log.facets()
+}
+
+/// The whole bet log, shaped for every calculator that can use it.
+#[derive(Debug, serde::Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BetLogSnapshot {
+    /// Record-wide figures.
+    pub summary: ledger::LedgerSummary,
+    /// Price buckets with edge from fair closing lines, when any exist.
+    pub clv_mix: Option<ledger::LedgerMix>,
+    /// Price buckets with realised edge — always present when settled bets exist.
+    pub book_mix: ledger::LedgerMix,
+    /// Mean stake across settled bets.
+    pub avg_stake: f64,
+    /// Stake-weighted average American price on settled bets.
+    pub avg_american: f64,
+    /// Shortest American price in the book mix.
+    pub price_min: f64,
+    /// Longest American price in the book mix.
+    pub price_max: f64,
+}
+
+/// Reads the log once and returns every derived view the UI pre-fills from.
+#[tauri::command]
+#[specta::specta]
+pub fn bet_log_snapshot(
+    log: tauri::State<'_, betlog::BetLog>,
+    filter: betlog::BetFilter,
+) -> AnalysisResult<BetLogSnapshot> {
+    let bets = log.list(&filter)?;
+    let logged: Vec<ledger::LoggedBet> = bets.iter().map(betlog::to_logged).collect();
+    let summary = ledger::analyze(&logged)?.summary;
+
+    let clv_mix = ledger::to_mix(&logged, 100.0).ok();
+    let book_mix = ledger::to_book_mix(&logged, 100.0).map_err(BetLogError::Math)?;
+
+    let settled: Vec<&ledger::LoggedBet> = logged.iter().filter(|b| b.outcome.is_settled()).collect();
+    let total_stake: f64 = settled.iter().map(|b| b.stake).sum();
+    let avg_stake = if settled.is_empty() {
+        0.0
+    } else {
+        total_stake / settled.len() as f64
+    };
+
+    let avg_american = if total_stake > 0.0 {
+        settled
+            .iter()
+            .map(|b| b.stake * b.price_taken)
+            .sum::<f64>()
+            / total_stake
+    } else {
+        -110.0
+    };
+
+    let prices: Vec<f64> = book_mix.legs.iter().map(|leg| leg.american).collect();
+    let price_min = prices.iter().copied().fold(f64::INFINITY, f64::min);
+    let price_max = prices.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+
+    Ok(BetLogSnapshot {
+        summary,
+        clv_mix,
+        book_mix,
+        avg_stake,
+        avg_american,
+        price_min,
+        price_max,
+    })
 }
 
 /// Why the bet log is not saving to disk, or `None` when it is.

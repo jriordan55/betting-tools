@@ -35,3 +35,14 @@ specta-typescript = "=0.0.9"
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+csv = "1"
+
+[[example]]
+name = "import_bets"
+path = "examples/import_bets.rs"
+
+[[example]]
+name = "import_transactions"
+path = "examples/import_transactions.rs"

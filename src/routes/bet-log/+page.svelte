@@ -5,7 +5,9 @@
 		type Bet,
 		type BetDraft,
 		type BetFilter,
+		type BetKind,
 		type BetLogError,
+		type BetLogFacets,
 		type BetLogView,
 		type LedgerMix,
 		type LogError,
@@ -13,6 +15,7 @@
 	} from '$lib/bindings';
 	import { describeBetLogError, describeLogError } from '$lib/errors';
 	import { offerMix } from '$lib/handoff';
+	import { betLog } from '$lib/betlog-store.svelte';
 	import { american, count, money, moneySigned, pct, pctSigned, points, signColor } from '$lib/format';
 	import { InputCard, OutputSection, FormRow, FormGroup, ResultRow, EmptyState, InfoSection } from '$lib/ui';
 
@@ -58,12 +61,37 @@
 	let editingId = $state<number | null>(null);
 	let filterOutcome = $state<BetOutcome | ''>('');
 	let filterSport = $state('');
+	let filterBook = $state('');
+	let filterMarket = $state('');
+	let filterYear = $state('');
+	let filterKind = $state<BetKind | ''>('');
+	let filterMinStake = $state('');
+	let filterMaxStake = $state('');
+
+	type SortColumn =
+		| 'placedAt'
+		| 'selection'
+		| 'book'
+		| 'sport'
+		| 'market'
+		| 'priceTaken'
+		| 'stake'
+		| 'outcome'
+		| 'profit'
+		| 'clvPoints'
+		| 'ev';
+	type SortDir = 'asc' | 'desc';
+
+	let sortColumn = $state<SortColumn>('placedAt');
+	let sortDir = $state<SortDir>('desc');
 
 	let view = $state<BetLogView | null>(null);
-	let sports = $state<string[]>([]);
+	let facets = $state<BetLogFacets | null>(null);
 	let mix = $state<LedgerMix | null>(null);
 	let error = $state<string | null>(null);
 	let saving = $state(false);
+	let importing = $state(false);
+	let importStatus = $state<string | null>(null);
 	let ephemeral = $state<string | null>(null);
 	/** Armed by a first click on delete, so nothing is destroyed by one tap. */
 	let confirmingDelete = $state<number | null>(null);
@@ -79,12 +107,27 @@
 	 */
 	let generation = 0;
 
+	function optionalStake(value: string): number | null {
+		const trimmed = value.trim();
+		if (trimmed === '') return null;
+		const n = Number.parseFloat(trimmed);
+		return Number.isFinite(n) ? n : null;
+	}
+
 	const filter = $derived<BetFilter>({
 		outcome: filterOutcome === '' ? null : filterOutcome,
 		sport: filterSport === '' ? null : filterSport,
+		book: filterBook === '' ? null : filterBook,
+		market: filterMarket === '' ? null : filterMarket,
+		year: filterYear === '' ? null : Number.parseInt(filterYear, 10),
+		minStake: optionalStake(filterMinStake),
+		maxStake: optionalStake(filterMaxStake),
+		kind: filterKind === '' ? null : filterKind,
 		fromDate: null,
 		toDate: null
 	});
+
+	const sports = $derived(facets?.sports ?? []);
 
 	function fail(e: LogError | BetLogError | string) {
 		error = typeof e === 'string' ? e : 'source' in e ? describeBetLogError(e) : describeLogError(e);
@@ -92,9 +135,9 @@
 
 	async function refresh() {
 		const mine = ++generation;
-		const [analysis, sportList, derived, status] = await Promise.all([
+		const [analysis, facetList, derived, status] = await Promise.all([
 			commands.analyzeBetLog(filter),
-			commands.betLogSports(),
+			commands.betLogFacets(),
 			// A mix needs bets with both closing prices, so a young log has
 			// none. That is a normal state, not a failure worth showing.
 			commands.betLogMix(filter, 100),
@@ -109,9 +152,10 @@
 			error = null;
 			view = analysis.data;
 		}
-		if (sportList.status === 'ok') sports = sportList.data;
+		if (facetList.status === 'ok') facets = facetList.data;
 		mix = derived.status === 'ok' ? derived.data : null;
 		ephemeral = status ?? null;
+		await betLog.refresh();
 	}
 
 	// Runs once on mount and again whenever the filter changes. `filter` is read
@@ -245,12 +289,162 @@
 		await goto('/calculators/season-simulator');
 	}
 
+	function isBetDraft(value: unknown): value is BetDraft {
+		if (!value || typeof value !== 'object') return false;
+		const row = value as Record<string, unknown>;
+		return (
+			typeof row.placedAt === 'string' &&
+			typeof row.selection === 'string' &&
+			typeof row.priceTaken === 'number' &&
+			typeof row.stake === 'number' &&
+			typeof row.outcome === 'string'
+		);
+	}
+
+	async function importJsonFile(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+
+		importing = true;
+		importStatus = null;
+		error = null;
+
+		try {
+			const text = await file.text();
+			const parsed: unknown = JSON.parse(text);
+			const drafts = Array.isArray(parsed) ? parsed : [parsed];
+			const valid = drafts.filter(isBetDraft);
+
+			if (valid.length === 0) {
+				error =
+					'That file did not contain any bet rows. Export from DraftKings with tools/draftkings-my-bets.js first.';
+				return;
+			}
+
+			const response = await commands.importBets(
+				valid.map((draft) => ({
+					placedAt: draft.placedAt,
+					sport: draft.sport ?? '',
+					market: draft.market ?? '',
+					selection: draft.selection,
+					book: draft.book ?? '',
+					priceTaken: draft.priceTaken,
+					closingPrice: draft.closingPrice ?? null,
+					opposingClosingPrice: draft.opposingClosingPrice ?? null,
+					stake: draft.stake,
+					outcome: draft.outcome,
+					notes: draft.notes ?? ''
+				}))
+			);
+
+			if (response.status === 'error') {
+				fail(response.error);
+				return;
+			}
+
+			const { imported, skipped, errors } = response.data;
+			importStatus =
+				skipped === 0
+					? `Imported ${imported} bet${imported === 1 ? '' : 's'}.`
+					: `Imported ${imported}; skipped ${skipped}. ${errors[0]?.message ?? ''}`;
+			await refresh();
+		} catch {
+			error = 'Could not read that file — it needs to be JSON exported from DraftKings My Bets.';
+		} finally {
+			importing = false;
+		}
+	}
+
 	const summary = $derived(view?.ledger.summary ?? null);
 
 	/** Bets and their analysis travel together, so index alignment is the API's. */
 	const rows = $derived(
 		(view?.bets ?? []).map((bet, i) => ({ bet, analysis: view?.ledger.bets[i] ?? null }))
 	);
+
+	function compareRows(
+		a: { bet: Bet; analysis: BetLogView['ledger']['bets'][number] | null },
+		b: { bet: Bet; analysis: BetLogView['ledger']['bets'][number] | null }
+	): number {
+		const dir = sortDir === 'asc' ? 1 : -1;
+
+		const text = (left: string, right: string) => left.localeCompare(right) * dir;
+		const number = (left: number | null | undefined, right: number | null | undefined) => {
+			const l = left ?? Number.NEGATIVE_INFINITY;
+			const r = right ?? Number.NEGATIVE_INFINITY;
+			return (l - r) * dir;
+		};
+
+		switch (sortColumn) {
+			case 'selection':
+				return text(a.bet.selection, b.bet.selection);
+			case 'book':
+				return text(a.bet.book, b.bet.book);
+			case 'sport':
+				return text(a.bet.sport, b.bet.sport);
+			case 'market':
+				return text(a.bet.market, b.bet.market);
+			case 'priceTaken':
+				return number(a.bet.priceTaken, b.bet.priceTaken);
+			case 'stake':
+				return number(a.bet.stake, b.bet.stake);
+			case 'outcome':
+				return text(a.bet.outcome, b.bet.outcome);
+			case 'profit':
+				return number(a.analysis?.profit, b.analysis?.profit);
+			case 'clvPoints':
+				return number(a.analysis?.clvPoints, b.analysis?.clvPoints);
+			case 'ev':
+				return number(a.analysis?.ev, b.analysis?.ev);
+			default:
+				return text(a.bet.placedAt, b.bet.placedAt) || (a.bet.id - b.bet.id) * dir;
+		}
+	}
+
+	const displayRows = $derived([...rows].sort(compareRows));
+
+	const activeFilterCount = $derived(
+		[
+			filterOutcome,
+			filterSport,
+			filterBook,
+			filterMarket,
+			filterYear,
+			filterKind,
+			filterMinStake,
+			filterMaxStake
+		].filter((value) => value !== '').length
+	);
+
+	function toggleSort(column: SortColumn) {
+		if (sortColumn === column) {
+			sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+			return;
+		}
+		sortColumn = column;
+		sortDir =
+			column === 'selection' || column === 'book' || column === 'sport' || column === 'market'
+				? 'asc'
+				: 'desc';
+	}
+
+	function sortLabel(column: SortColumn): string {
+		if (sortColumn !== column) return '';
+		return sortDir === 'asc' ? ' ↑' : ' ↓';
+	}
+
+	function clearFilters() {
+		filterOutcome = '';
+		filterSport = '';
+		filterBook = '';
+		filterMarket = '';
+		filterYear = '';
+		filterKind = '';
+		filterMinStake = '';
+		filterMaxStake = '';
+	}
 
 	function outcomeClass(outcome: BetOutcome): string {
 		if (outcome === 'won') return 'won';
@@ -281,6 +475,27 @@
 	{#if error}
 		<div class="note" role="alert">{error}</div>
 	{/if}
+
+	{#if importStatus}
+		<div class="note ok" role="status">{importStatus}</div>
+	{/if}
+
+	<div class="import-bar">
+		<div>
+			<strong>Import from DraftKings</strong>
+			<p>
+				Your login lives in the browser, not here. On
+				<a href="https://sportsbook.draftkings.com/mybets" target="_blank" rel="noreferrer"
+					>My Bets</a
+				>, open DevTools → Console, paste <code>tools/draftkings-my-bets.js</code>, scroll to load every
+				card, then import the downloaded JSON below.
+			</p>
+		</div>
+		<label class="import-button">
+			<input type="file" accept="application/json,.json" onchange={importJsonFile} disabled={importing} />
+			{importing ? 'Importing…' : 'Import JSON'}
+		</label>
+	</div>
 
 	<div class="split">
 		<div>
@@ -459,38 +674,104 @@
 				<option value="">All results</option>
 				{#each OUTCOMES as o (o.value)}<option value={o.value}>{o.label}</option>{/each}
 			</select>
+			<select bind:value={filterKind} aria-label="Filter by ticket type">
+				<option value="">Singles & parlays</option>
+				<option value="single">Singles only</option>
+				<option value="parlay">Parlays only</option>
+			</select>
+			<select bind:value={filterYear} aria-label="Filter by year">
+				<option value="">All years</option>
+				{#each facets?.years ?? [] as year (year)}<option value={String(year)}>{year}</option>{/each}
+			</select>
 			<select bind:value={filterSport} aria-label="Filter by sport">
 				<option value="">All sports</option>
-				{#each sports as s (s)}<option value={s}>{s}</option>{/each}
+				{#each facets?.sports ?? [] as s (s)}<option value={s}>{s}</option>{/each}
 			</select>
+			<select bind:value={filterBook} aria-label="Filter by sportsbook">
+				<option value="">All sportsbooks</option>
+				{#each facets?.books ?? [] as book (book)}<option value={book}>{book}</option>{/each}
+			</select>
+			<select bind:value={filterMarket} aria-label="Filter by market type">
+				<option value="">All market types</option>
+				{#each facets?.markets ?? [] as market (market)}<option value={market}>{market}</option>{/each}
+			</select>
+			<label class="stake-filter">
+				<span>Min stake</span>
+				<input
+					type="text"
+					inputmode="decimal"
+					bind:value={filterMinStake}
+					placeholder="any"
+					aria-label="Minimum stake"
+				/>
+			</label>
+			<label class="stake-filter">
+				<span>Max stake</span>
+				<input
+					type="text"
+					inputmode="decimal"
+					bind:value={filterMaxStake}
+					placeholder="any"
+					aria-label="Maximum stake"
+				/>
+			</label>
+			{#if activeFilterCount > 0}
+				<button type="button" class="clear-filters" onclick={clearFilters}>
+					Clear filters ({activeFilterCount})
+				</button>
+			{/if}
 		</div>
 
-		{#if rows.length > 0}
+		{#if displayRows.length > 0}
+			<p class="table-meta">{count(displayRows.length)} bets shown</p>
 			<div class="table-wrap">
 				<table>
 					<thead>
 						<tr>
-							<th>Date</th>
-							<th>Selection</th>
-							<th>Price</th>
-							<th>Stake</th>
-							<th>Result</th>
-							<th>Profit</th>
-							<th>CLV</th>
-							<th>Edge</th>
+							<th class="sortable left" onclick={() => toggleSort('placedAt')}>
+								Date{sortLabel('placedAt')}
+							</th>
+							<th class="sortable left" onclick={() => toggleSort('selection')}>
+								Selection{sortLabel('selection')}
+							</th>
+							<th class="sortable left" onclick={() => toggleSort('book')}>
+								Book{sortLabel('book')}
+							</th>
+							<th class="sortable left" onclick={() => toggleSort('sport')}>
+								Sport{sortLabel('sport')}
+							</th>
+							<th class="sortable left" onclick={() => toggleSort('market')}>
+								Market{sortLabel('market')}
+							</th>
+							<th class="sortable" onclick={() => toggleSort('priceTaken')}>
+								Price{sortLabel('priceTaken')}
+							</th>
+							<th class="sortable" onclick={() => toggleSort('stake')}>
+								Stake{sortLabel('stake')}
+							</th>
+							<th class="sortable" onclick={() => toggleSort('outcome')}>
+								Result{sortLabel('outcome')}
+							</th>
+							<th class="sortable" onclick={() => toggleSort('profit')}>
+								Profit{sortLabel('profit')}
+							</th>
+							<th class="sortable" onclick={() => toggleSort('clvPoints')}>
+								CLV{sortLabel('clvPoints')}
+							</th>
+							<th class="sortable" onclick={() => toggleSort('ev')}>
+								Edge{sortLabel('ev')}
+							</th>
 							<th></th>
 						</tr>
 					</thead>
 					<tbody>
-						{#each rows as { bet, analysis } (bet.id)}
+						{#each displayRows as { bet, analysis } (bet.id)}
 							<tr class:editing={editingId === bet.id}>
 								<td class="left">{bet.placedAt}</td>
-								<td class="left">
-									{bet.selection}
-									{#if bet.sport || bet.book}
-										<span class="meta">{[bet.sport, bet.book].filter(Boolean).join(' · ')}</span>
-									{/if}
-								</td>
+								<td class="left">{bet.selection}</td>
+								<td class="left meta-cell">{bet.book || '—'}</td>
+								<td class="left meta-cell">{bet.sport || '—'}</td>
+								<td class="left meta-cell">{bet.market || '—'}</td>
 								<td class="price">{american(bet.priceTaken)}</td>
 								<td>{money(bet.stake, 0)}</td>
 								<td class={outcomeClass(bet.outcome)}>{bet.outcome}</td>
@@ -595,6 +876,60 @@
 		margin-bottom: 1rem;
 	}
 
+	.note.ok {
+		border-color: var(--accent-green);
+		background: color-mix(in srgb, var(--accent-green) 10%, transparent);
+		color: var(--accent-green);
+	}
+
+	.import-bar {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+		padding: 1rem 1.1rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		background: var(--surface-raised);
+	}
+
+	.import-bar p {
+		margin-top: 0.35rem;
+		color: var(--text-secondary);
+		font-size: 0.85rem;
+		max-width: 62ch;
+	}
+
+	.import-bar code {
+		font-family: var(--font-mono);
+		font-size: 0.82rem;
+	}
+
+	.import-button {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 8.5rem;
+		padding: 0.55rem 0.9rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		background: var(--surface);
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.import-button input {
+		display: none;
+	}
+
+	.import-button:has(input:disabled) {
+		opacity: 0.6;
+		cursor: wait;
+	}
+
 	.split {
 		display: grid;
 		grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
@@ -616,14 +951,41 @@
 
 	.filters {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.75rem;
-		margin-bottom: 1rem;
+		margin-bottom: 0.75rem;
+		align-items: flex-end;
 	}
 
-	.filters select {
+	.filters select,
+	.stake-filter input {
 		width: auto;
-		min-width: 10rem;
+		min-width: 9rem;
 		max-width: none;
+	}
+
+	.stake-filter {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.72rem;
+		color: var(--text-muted);
+	}
+
+	.stake-filter input {
+		min-width: 6rem;
+	}
+
+	.clear-filters {
+		color: var(--accent-cyan);
+		font-size: 0.8rem;
+		white-space: nowrap;
+	}
+
+	.table-meta {
+		margin-bottom: 0.5rem;
+		font-size: 0.78rem;
+		color: var(--text-muted);
 	}
 
 	.block {
@@ -676,8 +1038,20 @@
 	}
 
 	th:first-child,
-	th:nth-child(2) {
+	th:nth-child(2),
+	th:nth-child(3),
+	th:nth-child(4),
+	th:nth-child(5) {
 		text-align: left;
+	}
+
+	th.sortable {
+		cursor: pointer;
+		user-select: none;
+	}
+
+	th.sortable:hover {
+		color: var(--text-secondary);
 	}
 
 	td {
@@ -706,6 +1080,14 @@
 		display: block;
 		font-size: 0.68rem;
 		color: var(--text-muted);
+	}
+
+	.meta-cell {
+		font-family: var(--font-sans);
+		font-size: 0.72rem;
+		color: var(--text-secondary);
+		max-width: 10rem;
+		white-space: normal;
 	}
 
 	.won {

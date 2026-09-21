@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { commands, type Kelly, type MathError, type OddsFormat } from '$lib/bindings';
 	import { Async, positive } from '$lib/async.svelte';
+	import { betLog } from '$lib/betlog-store.svelte';
 	import { parseOdds, SIMPLE_FORMAT_OPTIONS, ODDS_PLACEHOLDER } from '$lib/odds';
 	import { money, pct, pctSigned, points, signColor } from '$lib/format';
 	import {
@@ -13,7 +15,8 @@
 		ResultLarge,
 		EmptyState,
 		InfoSection,
-		ErrorNote
+		ErrorNote,
+		BetLogNote
 	} from '$lib/ui';
 
 	const FRACTIONS = [
@@ -28,6 +31,17 @@
 	let odds = $state('');
 	let winProbPct = $state('');
 	let multiplier = $state('1');
+	let fromBetLog = $state(false);
+
+	onMount(async () => {
+		await betLog.ensureLoaded();
+		const snapshot = betLog.snapshot;
+		if (!snapshot || snapshot.summary.settled === 0) return;
+		odds = String(Math.round(snapshot.avgAmerican));
+		winProbPct = (snapshot.summary.winRate * 100).toFixed(1);
+		bankroll = Math.max(snapshot.avgStake * 50, 1000).toFixed(0);
+		fromBetLog = true;
+	});
 
 	const result = new Async<
 		{ bankroll: string; odds: string; winProbPct: string; multiplier: string; format: OddsFormat },
@@ -68,6 +82,12 @@
 
 	const shouldBet = $derived((result.current?.data?.adjustedFraction ?? 0) > 0);
 </script>
+
+{#if fromBetLog}
+	<BetLogNote
+		message="Prefilled from your bet log — average price, realised win rate, and a bankroll sized to your typical stake."
+	/>
+{/if}
 
 <InputCard title="Input">
 	<FormRow>

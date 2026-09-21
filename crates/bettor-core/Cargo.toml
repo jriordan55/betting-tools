@@ -16,14 +16,17 @@ thiserror = "2"
 rand = "0.9"
 rand_chacha = "0.9"
 rand_distr = "0.5"
-rayon = "1"
+rayon = { version = "1", optional = true }
 # Optional: type export for the IPC layer. NOT a Tauri dependency — the core
 # still has no idea a desktop app exists, and `cargo test -p bettor-core`
 # does not build it.
 specta = { version = "=2.0.0-rc.22", optional = true, features = ["derive"] }
 
 [features]
-default = []
+default = ["parallel"]
+# Off for the WebAssembly build Streamlit runs. Each simulated path already
+# has its own seed, so dropping rayon does not change a result.
+parallel = ["dep:rayon"]
 specta = ["dep:specta"]
 
 [dev-dependencies]

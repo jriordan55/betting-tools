@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { commands, type LadderRung, type MathError } from '$lib/bindings';
 	import { Async, numeric } from '$lib/async.svelte';
+	import { betLog } from '$lib/betlog-store.svelte';
 	import { american, count, num, pct } from '$lib/format';
 	import LineChart from '$lib/charts/LineChart.svelte';
 	import {
@@ -12,7 +14,8 @@
 		ResultRow,
 		EmptyState,
 		InfoSection,
-		ErrorNote
+		ErrorNote,
+		BetLogNote
 	} from '$lib/ui';
 
 	const STEP_OPTIONS = [
@@ -25,6 +28,17 @@
 	let toPrice = $state('600');
 	let step = $state('50');
 	let edgePct = $state('5');
+	let fromBetLog = $state(false);
+
+	onMount(async () => {
+		await betLog.ensureLoaded();
+		const snapshot = betLog.snapshot;
+		if (!snapshot || snapshot.summary.settled === 0) return;
+		fromPrice = String(Math.round(snapshot.priceMin));
+		toPrice = String(Math.round(snapshot.priceMax));
+		edgePct = (snapshot.summary.roi * 100).toFixed(2);
+		fromBetLog = true;
+	});
 
 	let error = $state<MathError | string | null>(null);
 
@@ -88,6 +102,12 @@
 		}
 	]);
 </script>
+
+{#if fromBetLog}
+	<BetLogNote
+		message="Price range and edge prefilled from your bet log's realised ROI across your price buckets."
+	/>
+{/if}
 
 <InputCard title="Price range">
 	<FormRow>

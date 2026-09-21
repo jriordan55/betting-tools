@@ -12,6 +12,7 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { byCategory, CATEGORY_LABELS } from '$lib/calculators';
+	import { betLog } from '$lib/betlog-store.svelte';
 	import { theme } from '$lib/theme.svelte';
 
 	let { children } = $props();
@@ -19,7 +20,12 @@
 	let filter = $state('');
 	let collapsed = $state(false);
 
-	onMount(() => theme.load());
+	onMount(() => {
+		theme.load();
+		void betLog.refresh();
+	});
+
+	const summary = $derived(betLog.snapshot?.summary ?? null);
 
 	const groups = $derived.by(() => {
 		const needle = filter.trim().toLowerCase();
@@ -80,6 +86,15 @@
 					<span class="nav-icon">$</span>
 					<span class="nav-label">Bet Log</span>
 				</a>
+				{#if summary && summary.bets > 0}
+					<div class="nav-record">
+						<span class={summary.profit >= 0 ? 'won' : 'lost'}>
+							{summary.profit >= 0 ? '+' : ''}{summary.profit.toFixed(0)}
+						</span>
+						<span>{summary.won}–{summary.lost}</span>
+						<span>{summary.bets} bets</span>
+					</div>
+				{/if}
 				<a
 					class="nav-link"
 					class:active={page.url.pathname.startsWith('/docs')}
@@ -307,6 +322,24 @@
 	.nav-label {
 		flex: 1;
 		min-width: 0;
+	}
+
+	.nav-record {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 0.55rem;
+		padding: 0.35rem 0.55rem 0.15rem 2rem;
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		color: var(--text-muted);
+	}
+
+	.nav-record .won {
+		color: var(--accent-green);
+	}
+
+	.nav-record .lost {
+		color: var(--accent-red);
 	}
 
 	.no-match {

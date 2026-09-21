@@ -21,7 +21,6 @@
 use crate::{MathError, Result};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Parameters for a survival simulation.
@@ -232,8 +231,16 @@ pub fn simulate_ruin(input: &RuinInput, seed: u64) -> Result<RuinResult> {
 
     // Each path gets its own stream derived from the run seed, so the result is
     // identical no matter how rayon schedules the work.
+    #[cfg(feature = "parallel")]
+    let paths: Vec<Path> = {
+        use rayon::prelude::*;
+        (0..input.num_sims)
+            .into_par_iter()
+            .map(|i| simulate_path(input, &points, seed.wrapping_add(i as u64)))
+            .collect()
+    };
+    #[cfg(not(feature = "parallel"))]
     let paths: Vec<Path> = (0..input.num_sims)
-        .into_par_iter()
         .map(|i| simulate_path(input, &points, seed.wrapping_add(i as u64)))
         .collect();
 

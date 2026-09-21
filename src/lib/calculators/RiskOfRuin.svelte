@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { commands, type MathError, type OddsFormat, type RuinResult } from '$lib/bindings';
 	import { numeric, positive } from '$lib/async.svelte';
+	import { betLog } from '$lib/betlog-store.svelte';
 	import { parseOdds, SIMPLE_FORMAT_OPTIONS, ODDS_PLACEHOLDER } from '$lib/odds';
 	import { count, money, moneySigned, pct, pctSigned, signColor } from '$lib/format';
 	import LineChart from '$lib/charts/LineChart.svelte';
@@ -14,7 +16,8 @@
 		ResultLarge,
 		EmptyState,
 		InfoSection,
-		ErrorNote
+		ErrorNote,
+		BetLogNote
 	} from '$lib/ui';
 
 	const SIM_OPTIONS = [
@@ -36,6 +39,20 @@
 	let result = $state<RuinResult | null>(null);
 	let error = $state<MathError | string | null>(null);
 	let running = $state(false);
+	let fromBetLog = $state(false);
+
+	onMount(async () => {
+		await betLog.ensureLoaded();
+		const snapshot = betLog.snapshot;
+		if (!snapshot || snapshot.summary.settled === 0) return;
+		const { summary } = snapshot;
+		winRate = (summary.winRate * 100).toFixed(1);
+		avgOdds = String(Math.round(snapshot.avgAmerican));
+		betSize = snapshot.avgStake.toFixed(0);
+		numBets = String(summary.settled);
+		bankroll = Math.max(snapshot.avgStake * 50, 1000).toFixed(0);
+		fromBetLog = true;
+	});
 
 	async function run() {
 		running = true;
@@ -108,6 +125,10 @@
 		return 'positive' as const;
 	});
 </script>
+
+{#if fromBetLog}
+	<BetLogNote message="Prefilled from your bet log — win rate, average price, stake, and bet count." />
+{/if}
 
 <InputCard title="Settings">
 	<FormRow>

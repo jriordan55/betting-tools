@@ -38,7 +38,6 @@ use crate::{MathError, Result};
 use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Standard errors a result must clear to be called real.
@@ -78,9 +77,12 @@ fn moments(decimal: f64, win_prob: f64) -> (f64, f64) {
 }
 
 /// The win probability that produces `edge` at decimal price `decimal`.
+///
+/// `edge = p * decimal - 1`, so `p = (1 + edge) / decimal`. Endpoints are
+/// allowed: `edge = -1` is a 0% win rate; `edge = decimal - 1` is 100%.
 fn win_prob_for_edge(decimal: f64, edge: f64) -> Result<f64> {
     let p = (1.0 + edge) / decimal;
-    if !p.is_finite() || p <= 0.0 || p >= 1.0 {
+    if !p.is_finite() || p < 0.0 || p > 1.0 {
         return Err(MathError::ProbabilityOutOfRange {
             value: p,
             reason: "no win rate produces that edge at that price",
@@ -102,10 +104,10 @@ fn detection_horizon(ev: f64, sd: f64, bets: f64) -> Option<f64> {
 }
 
 fn check_edge(edge: f64) -> Result<()> {
-    if !edge.is_finite() || edge <= -1.0 || edge >= 1.0 {
+    if !edge.is_finite() || edge < -1.0 {
         return Err(MathError::DomainError {
             param: "edge",
-            constraint: "between -1 and 1 (a fraction of stake, not a percentage)",
+            constraint: "at least -1 (a fraction of stake, not a percentage)",
             value: edge,
         });
     }
@@ -367,7 +369,7 @@ pub struct BetMix {
 ///
 /// [`MathError::ShapeError`] for an empty mix or a leg with a zero count,
 /// [`MathError::DomainError`] for a non-positive stake, a price under 100 in
-/// magnitude, or an edge outside `(-1, 1)`,
+/// magnitude, or an edge below -1,
 /// [`MathError::ProbabilityOutOfRange`] if a leg's edge is unreachable at its
 /// price.
 pub fn bet_mix(legs: &[MixLeg]) -> Result<BetMix> {
@@ -393,7 +395,13 @@ pub fn bet_mix(legs: &[MixLeg]) -> Result<BetMix> {
         .iter()
         .map(|leg| {
             let decimal = american_to_decimal(leg.american)?;
-            check_edge(leg.edge)?;
+            if leg.edge < -1.0 || !leg.edge.is_finite() {
+                return Err(MathError::DomainError {
+                    param: "edge",
+                    constraint: "at least -1 (a fraction of stake, not a percentage)",
+                    value: leg.edge,
+                });
+            }
             if !leg.stake.is_finite() || leg.stake <= 0.0 {
                 return Err(MathError::DomainError {
                     param: "stake",
@@ -755,8 +763,24 @@ pub fn simulate_season(input: &SeasonInput, seed: u64) -> Result<SeasonResult> {
     }
 
     let points = sample_points(mix.bets);
+    #[cfg(feature = "parallel")]
+    let seasons: Vec<Season> = {
+        use rayon::prelude::*;
+        (0..input.num_sims)
+            .into_par_iter()
+            .map(|i| {
+                run_one_season(
+                    &schedule,
+                    input.bankroll,
+                    input.stop_at_ruin,
+                    &points,
+                    seed.wrapping_add(i as u64),
+                )
+            })
+            .collect()
+    };
+    #[cfg(not(feature = "parallel"))]
     let seasons: Vec<Season> = (0..input.num_sims)
-        .into_par_iter()
         .map(|i| {
             run_one_season(
                 &schedule,
@@ -921,6 +945,32 @@ mod tests {
         assert!(breakeven_ladder(&[], 0.05).is_err());
         assert!(breakeven_ladder(&[-110.0], 1.5).is_err());
         assert!(breakeven_ladder(&[-50.0], 0.05).is_err());
+    }
+
+    #[test]
+    fn a_realised_bucket_can_sit_on_the_minus_one_boundary() {
+        // Every bet in the bucket lost — realised edge is exactly -1.
+        let mix = bet_mix(&[leg(-110.0, -1.0, 40)]).unwrap();
+        assert_relative_eq!(mix.legs[0].win_prob, 0.0, epsilon = 1e-12);
+
+        let result = simulate_season(
+            &SeasonInput {
+                legs: vec![leg(-110.0, -1.0, 40)],
+                bankroll: 10_000.0,
+                num_sims: 100,
+                stop_at_ruin: false,
+            },
+            1,
+        )
+        .unwrap();
+        assert_relative_eq!(result.losing_season_prob, 1.0, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn a_longshot_bucket_can_carry_an_edge_above_one() {
+        // 100% wins at +600 → edge = decimal − 1 = 6.
+        let mix = bet_mix(&[leg(600.0, 6.0, 10)]).unwrap();
+        assert_relative_eq!(mix.legs[0].win_prob, 1.0, epsilon = 1e-12);
     }
 
     // --- CLV translator ----------------------------------------------------

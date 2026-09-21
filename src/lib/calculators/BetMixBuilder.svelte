@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { commands, type BetMix, type MathError, type MixLeg } from '$lib/bindings';
 	import { Async, numeric, positive } from '$lib/async.svelte';
+	import { betLog } from '$lib/betlog-store.svelte';
+	import { mixLegsToBuckets, mixSourceLabel } from '$lib/betlog-prefill';
+	import { takeMix } from '$lib/handoff';
 	import { american, count, money, moneySigned, num, pct, pctSigned, signColor } from '$lib/format';
 	import {
 		InputCard,
@@ -9,7 +13,8 @@
 		ResultLarge,
 		EmptyState,
 		InfoSection,
-		ErrorNote
+		ErrorNote,
+		BetLogNote
 	} from '$lib/ui';
 
 	const MAX_BUCKETS = 8;
@@ -30,6 +35,26 @@
 		bucket('150', '100', '3', '100'),
 		bucket('600', '100', '5', '40')
 	]);
+
+	let fromBetLog = $state(false);
+	let logNote = $state('');
+
+	onMount(async () => {
+		const handed = takeMix();
+		if (handed && handed.length > 0) {
+			buckets = mixLegsToBuckets(handed);
+			fromBetLog = true;
+			logNote = 'Loaded from a handoff on the bet log page.';
+			return;
+		}
+		await betLog.ensureLoaded();
+		const legs = betLog.mixLegs();
+		if (legs.length > 0 && betLog.snapshot) {
+			buckets = mixLegsToBuckets(legs);
+			fromBetLog = true;
+			logNote = `Loaded from your bet log (${mixSourceLabel(betLog.snapshot)}).`;
+		}
+	});
 
 	let error = $state<MathError | string | null>(null);
 
@@ -83,6 +108,10 @@
 		return stakeShare > 0 ? varianceShare / stakeShare : Number.NaN;
 	}
 </script>
+
+{#if fromBetLog}
+	<BetLogNote message={logNote} />
+{/if}
 
 <InputCard title="Your bet mix">
 	<div class="grid head">

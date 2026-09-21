@@ -2,14 +2,21 @@
 	import { onMount } from 'svelte';
 	import { commands, type EngineInfo } from '$lib/bindings';
 	import { byCategory, CATEGORY_LABELS, CALCULATORS } from '$lib/calculators';
+	import { betLog } from '$lib/betlog-store.svelte';
+	import { mixSourceLabel } from '$lib/betlog-prefill';
+	import { count, moneySigned, pct, pctSigned, signColor } from '$lib/format';
+	import { ResultRow } from '$lib/ui';
 
 	let info = $state<EngineInfo | null>(null);
 
 	onMount(async () => {
 		info = await commands.engineInfo();
+		await betLog.ensureLoaded();
 	});
 
 	const groups = byCategory();
+	const summary = $derived(betLog.snapshot?.summary ?? null);
+	const snapshot = $derived(betLog.snapshot);
 </script>
 
 <div class="container-wide">
@@ -27,6 +34,45 @@
 			</p>
 		{/if}
 	</header>
+
+	{#if summary && summary.bets > 0 && snapshot}
+		<section class="book">
+			<div class="book-head">
+				<h2>Your book</h2>
+				<p>
+					{count(summary.bets)} bets loaded from the log. Variance tools below are pre-filled from
+					your {mixSourceLabel(snapshot)} mix.
+				</p>
+			</div>
+			<div class="book-grid">
+				<ResultRow
+					label="Profit"
+					value={moneySigned(summary.profit)}
+					color={signColor(summary.profit)}
+					hint="{count(summary.settled)} settled"
+				/>
+				<ResultRow label="ROI" value={pctSigned(summary.roi)} color={signColor(summary.roi)} />
+				<ResultRow
+					label="Record"
+					value="{summary.won}–{summary.lost}"
+					hint="{pct(summary.winRate)} of decided bets"
+				/>
+				<ResultRow
+					label="Avg stake"
+					value={moneySigned(snapshot.avgStake, 0)}
+					hint="Across settled bets"
+				/>
+			</div>
+			<div class="quick-links">
+				<a href="/calculators/bet-mix">Bet Mix Builder →</a>
+				<a href="/calculators/season-simulator">Season Simulator →</a>
+				<a href="/calculators/risk-of-ruin">Risk of Ruin →</a>
+				<a href="/calculators/breakeven-ladder">Breakeven Ladder →</a>
+				<a href="/calculators/kelly-criterion">Kelly Criterion →</a>
+				<a href="/bet-log">Full bet log →</a>
+			</div>
+		</section>
+	{/if}
 
 	{#each groups as group (group.category)}
 		<section>
@@ -49,6 +95,46 @@
 <style>
 	.hero {
 		margin-bottom: 2.5rem;
+	}
+
+	.book {
+		margin-bottom: 2.5rem;
+		padding: 1.25rem 1.35rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		background: var(--bg-secondary);
+	}
+
+	.book-head h2 {
+		font-size: 1rem;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+	}
+
+	.book-head p {
+		margin-top: 0.35rem;
+		color: var(--text-secondary);
+		font-size: 0.85rem;
+		max-width: 62ch;
+	}
+
+	.book-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 0.5rem 1.5rem;
+		margin-top: 1rem;
+	}
+
+	.quick-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 1.25rem;
+		margin-top: 1.25rem;
+		font-size: 0.85rem;
+	}
+
+	.quick-links a {
+		color: var(--accent-cyan);
 	}
 
 	h1 {

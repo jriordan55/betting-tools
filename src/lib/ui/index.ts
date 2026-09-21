@@ -7,5 +7,6 @@ export { default as ResultRow } from './ResultRow.svelte';
 export { default as ResultLarge } from './ResultLarge.svelte';
 export { default as EmptyState } from './EmptyState.svelte';
 export { default as InfoSection } from './InfoSection.svelte';
+export { default as BetLogNote } from './BetLogNote.svelte';
 export { default as ErrorNote } from './ErrorNote.svelte';
 export type { ResultColor } from './types';

@@ -22,6 +22,30 @@ pnpm install
 pnpm tauri dev
 ```
 
+## Use it in a browser
+
+The same Rust engine also runs as a [Streamlit](https://streamlit.io) app, so
+you can open it from any computer without installing the desktop shell. Upload
+a Pikkit `transactions.csv` on the **Your book** page; the file stays in the
+session and is not written to a database.
+
+Locally:
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+On Streamlit Community Cloud, point a new app at this repository with main file
+`streamlit_app.py`. The math is `web/bettor.wasm` (a `wasm32-wasip1` build of
+`bettor-cli`). Rebuild that file after engine changes:
+
+```bash
+cargo build -p bettor-cli --release --target wasm32-wasip1 --no-default-features
+```
+
+Copy `target/wasm32-wasip1/release/bettor-cli.wasm` to `web/bettor.wasm`.
+
 This requires the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/)
 for your operating system, Rust stable, Node 22+, and pnpm. See
 [Build from source](#build-from-source) for verification and bundle commands.

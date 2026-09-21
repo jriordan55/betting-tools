@@ -635,7 +635,7 @@
 		{#if displayRows.length > 0}
 			<p class="table-meta">{count(displayRows.length)} bets shown</p>
 			<div class="table-wrap">
-				<table>
+				<table class="bets-table">
 					<thead>
 						<tr>
 							<th class="sortable left" onclick={() => toggleSort('placedAt')}>
@@ -1035,5 +1035,109 @@
 	.row-actions button.armed {
 		color: var(--accent-red);
 		border-color: var(--accent-red);
+	}
+
+	@media (max-width: 768px) {
+		.page {
+			padding: 0.5rem 0 2.5rem;
+		}
+
+		h1 {
+			font-size: 1.35rem;
+		}
+
+		.head {
+			margin-bottom: 1.15rem;
+		}
+
+		.head p {
+			font-size: 0.82rem;
+		}
+
+		.split {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+		}
+
+		.filters {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 0.55rem;
+			align-items: stretch;
+		}
+
+		.filters select,
+		.stake-filter,
+		.stake-filter input,
+		.clear-filters {
+			width: 100%;
+			min-width: 0;
+			max-width: none;
+		}
+
+		.clear-filters {
+			grid-column: 1 / -1;
+			justify-self: start;
+			white-space: normal;
+		}
+
+		.table-wrap {
+			margin-inline: -0.15rem;
+			padding-bottom: 0.25rem;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.bets-table {
+			font-size: 0.74rem;
+			min-width: 36rem;
+		}
+
+		/* Drop secondary columns so the useful ones fit without endless scroll. */
+		.bets-table th:nth-child(3),
+		.bets-table th:nth-child(4),
+		.bets-table th:nth-child(5),
+		.bets-table th:nth-child(10),
+		.bets-table th:nth-child(11),
+		.bets-table td:nth-child(3),
+		.bets-table td:nth-child(4),
+		.bets-table td:nth-child(5),
+		.bets-table td:nth-child(10),
+		.bets-table td:nth-child(11) {
+			display: none;
+		}
+
+		.bets-table th,
+		.bets-table td {
+			padding: 0.4rem 0.45rem;
+		}
+
+		.bets-table td.left:nth-child(2) {
+			max-width: 9.5rem;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.meta-cell {
+			max-width: 6rem;
+		}
+
+		.actions {
+			flex-wrap: wrap;
+		}
+
+		.save {
+			flex: 1 1 100%;
+		}
+	}
+
+	@media (max-width: 420px) {
+		.filters {
+			grid-template-columns: 1fr;
+		}
+
+		.bets-table {
+			min-width: 28rem;
+		}
 	}
 </style>

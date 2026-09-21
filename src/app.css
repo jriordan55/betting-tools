@@ -401,7 +401,7 @@ button:disabled {
 
 @media (max-width: 640px) {
   main {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
   }
 }

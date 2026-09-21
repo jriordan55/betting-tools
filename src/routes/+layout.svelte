@@ -9,6 +9,7 @@
 	import '@fontsource/jetbrains-mono/700.css';
 	import 'katex/dist/katex.min.css';
 	import '../app.css';
+	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { byCategory, CATEGORY_LABELS } from '$lib/calculators';
@@ -18,11 +19,29 @@
 	let { children } = $props();
 
 	let filter = $state('');
-	let collapsed = $state(false);
+	/** Phone/web: start collapsed so the calculator fills the viewport. */
+	let collapsed = $state(
+		typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
+	);
 
 	onMount(() => {
 		theme.load();
 		void betLog.refresh();
+		const mq = window.matchMedia('(max-width: 768px)');
+		const sync = () => {
+			if (mq.matches) collapsed = true;
+		};
+		sync();
+		mq.addEventListener('change', sync);
+		return () => mq.removeEventListener('change', sync);
+	});
+
+	// Close the drawer after picking a page on a narrow screen.
+	$effect(() => {
+		void page.url.pathname;
+		if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+			collapsed = true;
+		}
 	});
 
 	const summary = $derived(betLog.snapshot?.summary ?? null);
@@ -49,7 +68,7 @@
 <div class="shell" class:collapsed>
 	<aside class="sidebar">
 		<div class="top">
-			<a href="/" class="logo">
+			<a href="{base}/" class="logo">
 				<span class="logo-mark">B</span>
 				<span class="logo-text">Bettor<span class="logo-dim"> Desktop</span></span>
 			</a>
@@ -79,8 +98,8 @@
 				<div class="group-title">Your book</div>
 				<a
 					class="nav-link"
-					class:active={page.url.pathname === '/bet-log'}
-					href="/bet-log"
+					class:active={page.route.id === '/bet-log'}
+					href="{base}/bet-log"
 					title="Every bet you record, priced against its closing line"
 				>
 					<span class="nav-icon">$</span>
@@ -97,8 +116,8 @@
 				{/if}
 				<a
 					class="nav-link"
-					class:active={page.url.pathname.startsWith('/docs')}
-					href="/docs"
+					class:active={page.route.id?.startsWith('/docs') ?? false}
+					href="{base}/docs"
 					title="Explainers for every calculator, bundled with the app"
 				>
 					<span class="nav-icon">?</span>
@@ -113,7 +132,7 @@
 						<a
 							class="nav-link"
 							class:active={currentSlug === calc.slug}
-							href="/calculators/{calc.slug}"
+							href="{base}/calculators/{calc.slug}"
 							title={calc.description}
 						>
 							<span class="nav-icon">{calc.icon}</span>
@@ -131,6 +150,15 @@
 		</button>
 	</aside>
 
+	{#if !collapsed}
+		<button
+			type="button"
+			class="backdrop"
+			aria-label="Close the calculator list"
+			onclick={() => (collapsed = true)}
+		></button>
+	{/if}
+
 	<main>
 		{#if collapsed}
 			<button
@@ -147,9 +175,8 @@
 </div>
 
 <style>
-	/* A desktop window is never a phone. The sidebar stays a sidebar at every
-	   width — it narrows, and it can be collapsed outright, but it never
-	   stacks above the content, which pushed every calculator below the fold. */
+	/* Desktop keeps a persistent sidebar. On phone/web the shell collapses to
+	   one column and the nav becomes a drawer (see the media query below). */
 	.shell {
 		display: grid;
 		grid-template-columns: clamp(190px, 20vw, 260px) minmax(0, 1fr);
@@ -359,5 +386,53 @@
 		padding-top: 1.75rem;
 		padding-bottom: 4rem;
 		min-width: 0;
+	}
+
+	.backdrop {
+		display: none;
+	}
+
+	/* Web / phone: sidebar becomes a drawer so content can use the full width. */
+	@media (max-width: 768px) {
+		.shell {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.sidebar {
+			position: fixed;
+			inset: 0 auto 0 0;
+			z-index: 40;
+			width: min(18rem, 86vw);
+			height: 100dvh;
+			box-shadow: var(--shadow-md, 0 8px 28px rgb(0 0 0 / 0.35));
+		}
+
+		.shell.collapsed .sidebar {
+			display: none;
+		}
+
+		.backdrop {
+			display: block;
+			position: fixed;
+			inset: 0;
+			z-index: 30;
+			border: none;
+			border-radius: 0;
+			padding: 0;
+			background: rgb(0 0 0 / 0.45);
+			cursor: pointer;
+		}
+
+		main {
+			padding-top: 1rem;
+			padding-bottom: 3rem;
+		}
+
+		.reveal {
+			position: sticky;
+			top: 0.5rem;
+			z-index: 5;
+			margin-bottom: 0.75rem;
+		}
 	}
 </style>

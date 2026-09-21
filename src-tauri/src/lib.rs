@@ -12,6 +12,7 @@
 
 pub mod betlog;
 pub mod commands;
+pub mod seed;
 
 use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
@@ -113,7 +114,11 @@ pub fn run() {
                 .app_data_dir()
                 .map(|dir| dir.join("betlog.sqlite3"))
                 .unwrap_or_else(|_| std::path::PathBuf::from("betlog.sqlite3"));
-            app.manage(betlog::BetLog::open_or_ephemeral(&path));
+            let log = betlog::BetLog::open_or_ephemeral(&path);
+            if let Err(error) = seed::ensure_seeded(&log) {
+                eprintln!("could not load the bundled bet book: {error}");
+            }
+            app.manage(log);
             Ok(())
         })
         .run(tauri::generate_context!())

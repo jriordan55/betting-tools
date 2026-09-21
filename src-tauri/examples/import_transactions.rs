@@ -155,6 +155,7 @@ fn row_to_draft(
         stake,
         outcome: parse_outcome(&status),
         notes: notes.join(" · "),
+        realized_profit: get("profit").parse().ok().filter(|value: &f64| value.is_finite()),
     })
 }
 

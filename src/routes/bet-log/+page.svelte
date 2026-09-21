@@ -90,8 +90,6 @@
 	let mix = $state<LedgerMix | null>(null);
 	let error = $state<string | null>(null);
 	let saving = $state(false);
-	let importing = $state(false);
-	let importStatus = $state<string | null>(null);
 	let ephemeral = $state<string | null>(null);
 	/** Armed by a first click on delete, so nothing is destroyed by one tap. */
 	let confirmingDelete = $state<number | null>(null);
@@ -202,6 +200,7 @@
 			opposingClosingPrice: opposing,
 			stake,
 			outcome: form.outcome,
+			realizedProfit: null,
 			notes: form.notes.trim()
 		};
 	}
@@ -287,74 +286,6 @@
 		if (!mix) return;
 		offerMix(mix.legs);
 		await goto('/calculators/season-simulator');
-	}
-
-	function isBetDraft(value: unknown): value is BetDraft {
-		if (!value || typeof value !== 'object') return false;
-		const row = value as Record<string, unknown>;
-		return (
-			typeof row.placedAt === 'string' &&
-			typeof row.selection === 'string' &&
-			typeof row.priceTaken === 'number' &&
-			typeof row.stake === 'number' &&
-			typeof row.outcome === 'string'
-		);
-	}
-
-	async function importJsonFile(event: Event) {
-		const input = event.currentTarget as HTMLInputElement;
-		const file = input.files?.[0];
-		input.value = '';
-		if (!file) return;
-
-		importing = true;
-		importStatus = null;
-		error = null;
-
-		try {
-			const text = await file.text();
-			const parsed: unknown = JSON.parse(text);
-			const drafts = Array.isArray(parsed) ? parsed : [parsed];
-			const valid = drafts.filter(isBetDraft);
-
-			if (valid.length === 0) {
-				error =
-					'That file did not contain any bet rows. Export from DraftKings with tools/draftkings-my-bets.js first.';
-				return;
-			}
-
-			const response = await commands.importBets(
-				valid.map((draft) => ({
-					placedAt: draft.placedAt,
-					sport: draft.sport ?? '',
-					market: draft.market ?? '',
-					selection: draft.selection,
-					book: draft.book ?? '',
-					priceTaken: draft.priceTaken,
-					closingPrice: draft.closingPrice ?? null,
-					opposingClosingPrice: draft.opposingClosingPrice ?? null,
-					stake: draft.stake,
-					outcome: draft.outcome,
-					notes: draft.notes ?? ''
-				}))
-			);
-
-			if (response.status === 'error') {
-				fail(response.error);
-				return;
-			}
-
-			const { imported, skipped, errors } = response.data;
-			importStatus =
-				skipped === 0
-					? `Imported ${imported} bet${imported === 1 ? '' : 's'}.`
-					: `Imported ${imported}; skipped ${skipped}. ${errors[0]?.message ?? ''}`;
-			await refresh();
-		} catch {
-			error = 'Could not read that file — it needs to be JSON exported from DraftKings My Bets.';
-		} finally {
-			importing = false;
-		}
 	}
 
 	const summary = $derived(view?.ledger.summary ?? null);
@@ -460,8 +391,8 @@
 	<header class="head">
 		<h1>Bet Log</h1>
 		<p>
-			Every bet you record, priced against its closing line. The record tells you what happened;
-			the closing lines tell you whether it should have.
+			Your book opens with every bet already recorded. Add the next one below — it stays in the
+			list on this machine.
 		</p>
 	</header>
 
@@ -475,27 +406,6 @@
 	{#if error}
 		<div class="note" role="alert">{error}</div>
 	{/if}
-
-	{#if importStatus}
-		<div class="note ok" role="status">{importStatus}</div>
-	{/if}
-
-	<div class="import-bar">
-		<div>
-			<strong>Import from DraftKings</strong>
-			<p>
-				Your login lives in the browser, not here. On
-				<a href="https://sportsbook.draftkings.com/mybets" target="_blank" rel="noreferrer"
-					>My Bets</a
-				>, open DevTools → Console, paste <code>tools/draftkings-my-bets.js</code>, scroll to load every
-				card, then import the downloaded JSON below.
-			</p>
-		</div>
-		<label class="import-button">
-			<input type="file" accept="application/json,.json" onchange={importJsonFile} disabled={importing} />
-			{importing ? 'Importing…' : 'Import JSON'}
-		</label>
-	</div>
 
 	<div class="split">
 		<div>

@@ -95,6 +95,9 @@ pub struct Bet {
     pub stake: f64,
     /// How it finished.
     pub outcome: Outcome,
+    /// What the book actually paid, when the record says so.
+    #[serde(default)]
+    pub realized_profit: Option<f64>,
     /// Anything else worth remembering.
     pub notes: String,
 }
@@ -126,6 +129,9 @@ pub struct BetDraft {
     pub stake: f64,
     /// How it finished.
     pub outcome: Outcome,
+    /// What the book actually paid, when known.
+    #[serde(default)]
+    pub realized_profit: Option<f64>,
     /// Free-text notes.
     pub notes: String,
 }
@@ -248,6 +254,12 @@ const MIGRATIONS: &[&str] = &[
      );
      CREATE INDEX bets_placed_at ON bets (placed_at);
      CREATE INDEX bets_outcome   ON bets (outcome);",
+    // v2 — recorded payouts and a seed marker for the bundled book.
+    "ALTER TABLE bets ADD COLUMN realized_profit REAL;
+     CREATE TABLE app_meta (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+     );",
 ];
 
 /// The bet log.
@@ -414,8 +426,8 @@ impl BetLog {
             "INSERT INTO bets (
                 placed_at, sport, market, selection, book,
                 price_taken, closing_price, opposing_closing_price,
-                stake, outcome, notes
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                stake, outcome, notes, realized_profit
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 draft.placed_at,
                 draft.sport,
@@ -428,6 +440,7 @@ impl BetLog {
                 draft.stake,
                 outcome_to_text(draft.outcome),
                 draft.notes,
+                draft.realized_profit,
             ],
         )?;
         let id = connection.last_insert_rowid();
@@ -448,7 +461,7 @@ impl BetLog {
             "UPDATE bets SET
                 placed_at = ?2, sport = ?3, market = ?4, selection = ?5, book = ?6,
                 price_taken = ?7, closing_price = ?8, opposing_closing_price = ?9,
-                stake = ?10, outcome = ?11, notes = ?12
+                stake = ?10, outcome = ?11, notes = ?12, realized_profit = ?13
              WHERE id = ?1",
             params![
                 id,
@@ -463,6 +476,7 @@ impl BetLog {
                 draft.stake,
                 outcome_to_text(draft.outcome),
                 draft.notes,
+                draft.realized_profit,
             ],
         )?;
         drop(connection);
@@ -480,6 +494,38 @@ impl BetLog {
     pub fn clear_all(&self) -> Result<u32> {
         let changed = self.lock().execute("DELETE FROM bets", [])?;
         Ok(u32::try_from(changed).unwrap_or(u32::MAX))
+    }
+
+    /// Which bundled book this file has already imported, if any.
+    ///
+    /// # Errors
+    ///
+    /// [`LogError::Storage`] if the query fails.
+    pub fn seed_id(&self) -> Result<Option<String>> {
+        let connection = self.lock();
+        let value: Option<String> = connection
+            .query_row(
+                "SELECT value FROM app_meta WHERE key = 'seed_id'",
+                [],
+                |row| row.get(0),
+            )
+            .optional()?;
+        Ok(value)
+    }
+
+    /// Records that the bundled book has been applied.
+    ///
+    /// # Errors
+    ///
+    /// [`LogError::Storage`] if the write fails.
+    pub fn set_seed_id(&self, seed_id: &str) -> Result<()> {
+        let connection = self.lock();
+        connection.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('seed_id', ?1)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            params![seed_id],
+        )?;
+        Ok(())
     }
 
     /// Deletes a bet.
@@ -508,7 +554,7 @@ impl BetLog {
             .query_row(
                 "SELECT id, placed_at, sport, market, selection, book,
                         price_taken, closing_price, opposing_closing_price,
-                        stake, outcome, notes
+                        stake, outcome, notes, realized_profit
                  FROM bets WHERE id = ?1",
                 params![id],
                 row_to_bet,
@@ -567,7 +613,7 @@ fn filter_query(filter: &BetFilter) -> (String, Vec<Box<dyn rusqlite::ToSql>>) {
     let mut sql = String::from(
         "SELECT id, placed_at, sport, market, selection, book,
                 price_taken, closing_price, opposing_closing_price,
-                stake, outcome, notes
+                stake, outcome, notes, realized_profit
          FROM bets WHERE 1 = 1",
     );
     let mut values: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -647,7 +693,7 @@ pub fn to_logged(bet: &Bet) -> LoggedBet {
         opposing_closing_price: bet.opposing_closing_price,
         stake: bet.stake,
         outcome: bet.outcome,
-        realized_profit: None,
+        realized_profit: bet.realized_profit,
     }
 }
 
@@ -665,6 +711,7 @@ fn row_to_bet(row: &rusqlite::Row<'_>) -> rusqlite::Result<Bet> {
         stake: row.get(9)?,
         outcome: outcome_from_text(&row.get::<_, String>(10)?),
         notes: row.get(11)?,
+        realized_profit: row.get(12)?,
     })
 }
 
@@ -722,6 +769,7 @@ mod tests {
             opposing_closing_price: None,
             stake: 100.0,
             outcome,
+            realized_profit: None,
             notes: String::new(),
         }
     }

@@ -702,6 +702,10 @@ stake: number;
  */
 outcome: BetOutcome; 
 /**
+ * What the book actually paid, when the record says so.
+ */
+realizedProfit: number | null; 
+/**
  * Anything else worth remembering.
  */
 notes: string }
@@ -791,6 +795,10 @@ stake: number;
  * How it finished.
  */
 outcome: BetOutcome; 
+/**
+ * What the book actually paid, when known.
+ */
+realizedProfit: number | null; 
 /**
  * Free-text notes.
  */

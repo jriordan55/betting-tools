@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<title>Bettor Desktop</title>
+	<meta name="description" content="Your betting book — same Rust engine as the desktop app, in the browser.">
+	<link rel="canonical" href="https://jriordan55.github.io/betting-tools/">
+	<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="theme-color" content="#0f1117">
+	<link rel="stylesheet" href="app.css">
+</head>
+<body>
+	<header class="top">
+		<div>
+			<strong>Bettor Desktop</strong>
+			<span class="tag">Rust engine</span>
+		</div>
+		<nav>
+			<button type="button" data-page="book" class="active">Book</button>
+			<button type="button" data-page="log">Log</button>
+			<button type="button" data-page="add">Add</button>
+		</nav>
+	</header>
+
+	<main>
+		<section id="page-book" class="page active">
+			<p id="status" class="status">Loading your book…</p>
+			<div id="summary" class="metrics" hidden></div>
+			<p id="caption" class="caption" hidden></p>
+		</section>
+
+		<section id="page-log" class="page">
+			<div class="filters">
+				<select id="filter-outcome">
+					<option value="">All results</option>
+					<option value="won">Won</option>
+					<option value="lost">Lost</option>
+					<option value="push">Push</option>
+					<option value="void">Void</option>
+					<option value="pending">Pending</option>
+				</select>
+			</div>
+			<div id="log" class="log"></div>
+		</section>
+
+		<section id="page-add" class="page">
+			<form id="add-form" class="form">
+				<label>Selection
+					<input name="selection" required placeholder="Lakers moneyline" autocomplete="off">
+				</label>
+				<div class="row">
+					<label>Date
+						<input name="placedAt" type="date" required>
+					</label>
+					<label>Sport
+						<input name="sport" value="NBA">
+					</label>
+				</div>
+				<div class="row">
+					<label>Market
+						<input name="market" value="moneyline">
+					</label>
+					<label>Book
+						<input name="book" value="DraftKings">
+					</label>
+				</div>
+				<div class="row">
+					<label>American odds
+						<input name="odds" value="-110" required>
+					</label>
+					<label>Stake
+						<input name="stake" type="number" min="0.01" step="0.01" value="25" required>
+					</label>
+				</div>
+				<label>Result
+					<select name="outcome">
+						<option value="pending">Pending</option>
+						<option value="won">Won</option>
+						<option value="lost">Lost</option>
+						<option value="push">Push</option>
+						<option value="void">Void</option>
+					</select>
+				</label>
+				<button type="submit">Add bet</button>
+				<p id="add-status" class="status"></p>
+			</form>
+			<p class="footnote">
+				Windows install:
+				<a href="https://github.com/jriordan55/betting-tools/releases/latest">Releases</a>
+			</p>
+		</section>
+	</main>
+
+	<script type="module" src="app.js"></script>
+</body>
+</html>

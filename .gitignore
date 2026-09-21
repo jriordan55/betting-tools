@@ -15,9 +15,11 @@ vite.config.ts.timestamp-*
 __pycache__/
 *.py[cod]
 
-# Uploaded betting history for the Streamlit app — never commit.
 /data/*
 !/data/.gitkeep
+
+# Local copies of exports — the shipped seed lives under seed/
+/transactions*.csv
 
 # NOTE: golden-vector fixtures under crates/bettor-core/tests/fixtures/ are
 # deliberately NOT ignored. They are the reference contract captured from the

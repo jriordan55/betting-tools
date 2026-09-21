@@ -7,6 +7,8 @@ Numbers come from bettor-core via web/bettor.wasm — this file only formats the
 
 from __future__ import annotations
 
+import csv
+import io
 import sys
 from pathlib import Path
 
@@ -63,44 +65,175 @@ def logged_bets(book: dict) -> list[dict]:
     return rows
 
 
+def refresh_snapshot(book: dict) -> None:
+    book["snapshot"] = call({"cmd": "snapshot", "bets": logged_bets(book)})
+
+
+def empty_book() -> dict:
+    return {"bets": [], "skipped": [], "snapshot": None}
+
+
+OUTCOME_STATUS = {
+    "won": "SETTLED_WIN",
+    "lost": "SETTLED_LOSS",
+    "push": "SETTLED_PUSH",
+    "void": "SETTLED_VOID",
+    "pending": "PENDING",
+}
+
+
+def bet_from_fields(
+    placed_at: str,
+    sport: str,
+    market: str,
+    selection: str,
+    book_name: str,
+    american_odds: str,
+    stake: float,
+    outcome: str,
+) -> dict:
+    """One bet, priced by the engine. Odds stay American after a decimal round-trip."""
+    price = call({"cmd": "convertOdds", "value": american_odds.strip(), "format": "american"})
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "bet_id",
+            "sportsbook",
+            "type",
+            "status",
+            "odds",
+            "closing_line",
+            "amount",
+            "profit",
+            "time_placed_iso",
+            "bet_info",
+            "sports",
+            "leagues",
+        ]
+    )
+    writer.writerow(
+        [
+            "",
+            book_name,
+            "parlay" if market.strip().lower() == "parlay" else "single",
+            OUTCOME_STATUS[outcome],
+            price["decimal"],
+            "",
+            stake,
+            "",
+            f"{placed_at}T12:00:00Z",
+            selection,
+            sport,
+            "",
+        ]
+    )
+    parsed = call({"cmd": "importCsv", "csv": buffer.getvalue()})
+    if not parsed["bets"]:
+        reason = parsed["skipped"][0]["message"] if parsed["skipped"] else "the engine skipped it"
+        raise EngineError(reason)
+    bet = parsed["bets"][0]
+    bet["market"] = market.strip() or bet.get("market") or "other"
+    return bet
+
+
+def add_bets_one_by_one(incoming: list[dict], skipped: list[dict]) -> None:
+    book = empty_book()
+    book["skipped"] = skipped
+    progress = st.progress(0, text="Starting…")
+    total = len(incoming)
+    if total == 0:
+        refresh_snapshot(book)
+        st.session_state["book"] = book
+        progress.empty()
+        return
+    for index, bet in enumerate(incoming, start=1):
+        book["bets"].append(bet)
+        label = str(bet.get("selection") or "bet")
+        if len(label) > 72:
+            label = label[:69] + "…"
+        progress.progress(index / total, text=f"Added {index} of {total} · {label}")
+        if index == total or index % 100 == 0:
+            refresh_snapshot(book)
+    st.session_state["book"] = book
+    progress.empty()
+
+
 def page_book() -> None:
     st.header("Your book")
     st.write(
         "Upload the same `transactions.csv` Pikkit export the desktop app imports. "
-        "Nothing is stored on the server after you close the tab."
+        "Each row is added as its own bet. Nothing is stored after you close the tab."
     )
     upload = st.file_uploader("transactions.csv", type=["csv"])
-    if upload is not None and st.button("Load bets", type="primary"):
+    if upload is not None and st.button("Add bets from CSV", type="primary"):
         text = upload.getvalue().decode("utf-8-sig", errors="replace")
-        with st.spinner("Reading the file in the Rust engine…"):
-            try:
-                result = call({"cmd": "importCsv", "csv": text})
-            except EngineError as error:
-                st.error(str(error))
-                return
-        st.session_state["book"] = result
-        skipped = len(result.get("skipped") or [])
-        loaded = len(result.get("bets") or [])
-        st.success(f"Loaded {loaded} bets. Skipped {skipped}.")
+        try:
+            parsed = call({"cmd": "importCsv", "csv": text})
+        except EngineError as error:
+            st.error(str(error))
+            return
+        try:
+            add_bets_one_by_one(parsed.get("bets") or [], parsed.get("skipped") or [])
+        except EngineError as error:
+            st.error(str(error))
+            return
+        book = st.session_state["book"]
+        st.success(
+            f"Added {len(book['bets'])} bets, one at a time. Skipped {len(book['skipped'])}."
+        )
 
     book = st.session_state.get("book")
-    if not book:
-        return
+    if book and book.get("snapshot"):
+        summary = book["snapshot"]["summary"]
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Profit", money(summary["profit"]))
+        c2.metric("ROI", pct_signed(summary["roi"]))
+        c3.metric("Record", f"{summary['won']}–{summary['lost']}")
+        c4.metric("Bets", f"{summary['bets']}")
+        st.caption(
+            f"Settled {summary['settled']} · win rate {pct(summary['winRate'])} of decided bets · "
+            f"average stake ${book['snapshot']['avgStake']:,.0f} · "
+            f"average price {american(book['snapshot']['avgAmerican'])}"
+        )
+        if book.get("skipped"):
+            with st.expander(f"Skipped rows ({len(book['skipped'])})"):
+                st.dataframe(book["skipped"], hide_index=True, width="stretch")
 
-    summary = book["snapshot"]["summary"]
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Profit", money(summary["profit"]))
-    c2.metric("ROI", pct_signed(summary["roi"]))
-    c3.metric("Record", f"{summary['won']}–{summary['lost']}")
-    c4.metric("Bets", f"{summary['bets']}")
-    st.caption(
-        f"Settled {summary['settled']} · win rate {pct(summary['winRate'])} of decided bets · "
-        f"average stake ${book['snapshot']['avgStake']:,.0f} · "
-        f"average price {american(book['snapshot']['avgAmerican'])}"
-    )
-    if book.get("skipped"):
-        with st.expander(f"Skipped rows ({len(book['skipped'])})"):
-            st.dataframe(book["skipped"], hide_index=True, width="stretch")
+    st.subheader("Add one bet")
+    with st.form("add-one-bet", clear_on_submit=True):
+        selection = st.text_input("Selection", placeholder="Lakers moneyline")
+        left, right = st.columns(2)
+        placed = left.date_input("Date")
+        sport = right.text_input("Sport", value="NBA")
+        market = left.text_input("Market", value="moneyline")
+        book_name = right.text_input("Book", value="DraftKings")
+        odds = left.text_input("American odds", value="-110")
+        stake = right.number_input("Stake", min_value=0.01, value=25.0, step=1.0)
+        outcome = st.selectbox("Result", ["pending", "won", "lost", "push", "void"])
+        submitted = st.form_submit_button("Add bet", type="primary")
+    if submitted:
+        if not selection.strip():
+            st.error("Enter a selection.")
+        else:
+            try:
+                bet = bet_from_fields(
+                    placed.isoformat(),
+                    sport,
+                    market,
+                    selection.strip(),
+                    book_name.strip() or "Unknown",
+                    odds,
+                    float(stake),
+                    outcome,
+                )
+                book = st.session_state.get("book") or empty_book()
+                book["bets"].append(bet)
+                refresh_snapshot(book)
+                st.session_state["book"] = book
+                st.success(f"Added {selection.strip()} at {american(bet['priceTaken'])}.")
+            except EngineError as error:
+                st.error(str(error))
 
 
 def page_log() -> None:

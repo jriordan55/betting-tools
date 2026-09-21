@@ -20,6 +20,9 @@ __pycache__/
 
 # Local copies of exports — the shipped seed lives under seed/
 /transactions*.csv
+site/node_modules/
+site/package-lock.json
+site/smoke.mjs
 
 # NOTE: golden-vector fixtures under crates/bettor-core/tests/fixtures/ are
 # deliberately NOT ignored. They are the reference contract captured from the

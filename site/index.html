@@ -4,163 +4,95 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<title>Bettor Desktop</title>
-	<meta name="description" content="Open your betting book on your phone or install the Rust desktop app.">
+	<meta name="description" content="Your betting book — same Rust engine as the desktop app, in the browser.">
 	<link rel="canonical" href="https://jriordan55.github.io/betting-tools/">
 	<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="theme-color" content="#0f1117">
-	<style>
-		:root {
-			--bg: #0f1117;
-			--panel: #161922;
-			--border: #2c3344;
-			--text: #e8eaf0;
-			--muted: #9aa3b5;
-			--accent: #2dd4bf;
-			--sans: "Segoe UI", system-ui, sans-serif;
-		}
-		* { box-sizing: border-box; }
-		body {
-			margin: 0;
-			min-height: 100vh;
-			display: grid;
-			place-items: center;
-			padding: 1.5rem 1rem;
-			font-family: var(--sans);
-			background:
-				radial-gradient(circle at top, #1a2338 0%, transparent 45%),
-				var(--bg);
-			color: var(--text);
-		}
-		main {
-			width: min(34rem, 100%);
-			padding: 1.75rem 1.35rem;
-			border: 1px solid var(--border);
-			border-radius: 14px;
-			background: color-mix(in srgb, var(--panel) 92%, transparent);
-		}
-		h1 {
-			margin: 0;
-			font-size: clamp(1.6rem, 5vw, 1.85rem);
-			letter-spacing: -0.03em;
-		}
-		p {
-			margin: 0.85rem 0 0;
-			color: var(--muted);
-			line-height: 1.55;
-			font-size: 0.98rem;
-		}
-		.actions {
-			display: grid;
-			gap: 0.75rem;
-			margin-top: 1.45rem;
-		}
-		a.button {
-			display: block;
-			text-align: center;
-			text-decoration: none;
-			padding: 1rem 1rem;
-			border-radius: 10px;
-			font-weight: 650;
-			border: 1px solid transparent;
-			font-size: 1.02rem;
-		}
-		a.primary {
-			background: var(--accent);
-			color: #042f2e;
-		}
-		a.secondary {
-			background: transparent;
-			color: var(--text);
-			border-color: var(--border);
-		}
-		.status {
-			margin-top: 1rem;
-			font-size: 0.85rem;
-			color: var(--muted);
-		}
-		small {
-			display: block;
-			margin-top: 0.35rem;
-			color: var(--muted);
-			font-size: 0.8rem;
-		}
-	</style>
+	<link rel="stylesheet" href="app.css">
 </head>
 <body>
-	<main>
-		<h1>Bettor Desktop</h1>
-		<p>
-			Your book is already loaded (~$866, 429–772). Use it on your phone in the
-			browser, or install the Rust app on a Windows PC.
-		</p>
-		<div class="actions">
-			<a
-				class="button primary"
-				id="phone"
-				href="https://share.streamlit.io/deploy?repository=jriordan55%2Fbetting-tools&branch=main&mainModule=streamlit_app.py&appName=betting-tools"
-			>
-				Open on phone
-			</a>
-			<small>First visit: sign in with GitHub and click Deploy once. After that, your app URL stays on this page.</small>
-			<a class="button secondary" id="download" href="https://github.com/jriordan55/betting-tools/releases/latest">
-				Download for Windows
-			</a>
-			<a class="button secondary" href="https://github.com/jriordan55/betting-tools">
-				Source on GitHub
-			</a>
+	<header class="top">
+		<div>
+			<strong>Bettor Desktop</strong>
+			<span class="tag">Rust engine</span>
 		</div>
-		<p class="status" id="status">Checking for a live phone app…</p>
+		<nav>
+			<button type="button" data-page="book" class="active">Book</button>
+			<button type="button" data-page="log">Log</button>
+			<button type="button" data-page="add">Add</button>
+		</nav>
+	</header>
+
+	<main>
+		<section id="page-book" class="page active">
+			<p id="status" class="status">Loading your book…</p>
+			<div id="summary" class="metrics" hidden></div>
+			<p id="caption" class="caption" hidden></p>
+		</section>
+
+		<section id="page-log" class="page">
+			<div class="filters">
+				<select id="filter-outcome">
+					<option value="">All results</option>
+					<option value="won">Won</option>
+					<option value="lost">Lost</option>
+					<option value="push">Push</option>
+					<option value="void">Void</option>
+					<option value="pending">Pending</option>
+				</select>
+			</div>
+			<div id="log" class="log"></div>
+		</section>
+
+		<section id="page-add" class="page">
+			<form id="add-form" class="form">
+				<label>Selection
+					<input name="selection" required placeholder="Lakers moneyline" autocomplete="off">
+				</label>
+				<div class="row">
+					<label>Date
+						<input name="placedAt" type="date" required>
+					</label>
+					<label>Sport
+						<input name="sport" value="NBA">
+					</label>
+				</div>
+				<div class="row">
+					<label>Market
+						<input name="market" value="moneyline">
+					</label>
+					<label>Book
+						<input name="book" value="DraftKings">
+					</label>
+				</div>
+				<div class="row">
+					<label>American odds
+						<input name="odds" value="-110" required>
+					</label>
+					<label>Stake
+						<input name="stake" type="number" min="0.01" step="0.01" value="25" required>
+					</label>
+				</div>
+				<label>Result
+					<select name="outcome">
+						<option value="pending">Pending</option>
+						<option value="won">Won</option>
+						<option value="lost">Lost</option>
+						<option value="push">Push</option>
+						<option value="void">Void</option>
+					</select>
+				</label>
+				<button type="submit">Add bet</button>
+				<p id="add-status" class="status"></p>
+			</form>
+			<p class="footnote">
+				Windows install:
+				<a href="https://github.com/jriordan55/betting-tools/releases/latest">Releases</a>
+			</p>
+		</section>
 	</main>
-	<script>
-		const status = document.getElementById("status");
-		const phone = document.getElementById("phone");
-		const download = document.getElementById("download");
-		const deploy =
-			"https://share.streamlit.io/deploy?repository=jriordan55%2Fbetting-tools&branch=main&mainModule=streamlit_app.py&appName=betting-tools";
 
-		// Preferred live URL once Community Cloud has deployed the app.
-		const candidates = [
-			"https://betting-tools.streamlit.app",
-			"https://jriordan55-betting-tools-streamlit-app-xyz.streamlit.app"
-		];
-
-		async function probe(url) {
-			try {
-				const response = await fetch(url, { method: "HEAD", mode: "no-cors" });
-				return true;
-			} catch {
-				return false;
-			}
-		}
-
-		fetch("https://api.github.com/repos/jriordan55/betting-tools/releases/latest")
-			.then((response) => (response.ok ? response.json() : null))
-			.then((release) => {
-				if (!release) return;
-				const assets = release.assets || [];
-				const setup =
-					assets.find((asset) => /setup\.exe$/i.test(asset.name)) ||
-					assets.find((asset) => /\.msi$/i.test(asset.name));
-				if (setup) {
-					download.href = setup.browser_download_url;
-					download.textContent = "Download " + setup.name;
-				}
-			})
-			.catch(() => {});
-
-		// If a custom subdomain is live, send phones straight there.
-		fetch("https://betting-tools.streamlit.app", { method: "GET", mode: "no-cors" })
-			.then(() => {
-				phone.href = "https://betting-tools.streamlit.app";
-				phone.textContent = "Open on phone";
-				status.textContent = "Phone app: https://betting-tools.streamlit.app";
-			})
-			.catch(() => {
-				phone.href = deploy;
-				status.innerHTML =
-					'Phone app not live yet — tap <strong>Open on phone</strong>, sign in with GitHub, set the subdomain to <code>betting-tools</code>, then Deploy. After that use <a href="https://betting-tools.streamlit.app">https://betting-tools.streamlit.app</a>.';
-			});
-	</script>
+	<script type="module" src="app.js"></script>
 </body>
 </html>

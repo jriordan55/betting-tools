@@ -19,8 +19,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from web.engine import EngineError, call
+from web.persist import clear_saved, has_saved_csv, load_book, load_csv, save_book, save_csv
 
 st.set_page_config(page_title="Bettor Desktop", page_icon="B", layout="wide")
+
+
+def remember_book(book: dict) -> None:
+    st.session_state["book"] = book
+    save_book(book)
 
 
 def money(value: float) -> str:
@@ -68,6 +74,33 @@ def logged_bets(book: dict) -> list[dict]:
 
 def refresh_snapshot(book: dict) -> None:
     book["snapshot"] = call({"cmd": "snapshot", "bets": logged_bets(book)})
+
+
+def restore_book_if_needed() -> None:
+    if st.session_state.get("book"):
+        return
+    saved = load_book()
+    if saved and saved.get("bets") is not None:
+        if not saved.get("snapshot") and saved.get("bets"):
+            try:
+                refresh_snapshot(saved)
+            except EngineError:
+                pass
+        st.session_state["book"] = saved
+        return
+    text = load_csv()
+    if not text:
+        return
+    try:
+        parsed = call({"cmd": "importCsv", "csv": text})
+        book = {
+            "bets": parsed.get("bets") or [],
+            "skipped": parsed.get("skipped") or [],
+            "snapshot": parsed.get("snapshot"),
+        }
+        remember_book(book)
+    except EngineError:
+        return
 
 
 def empty_book() -> dict:
@@ -145,7 +178,7 @@ def add_bets_one_by_one(incoming: list[dict], skipped: list[dict]) -> None:
     total = len(incoming)
     if total == 0:
         refresh_snapshot(book)
-        st.session_state["book"] = book
+        remember_book(book)
         progress.empty()
         return
     for index, bet in enumerate(incoming, start=1):
@@ -156,7 +189,7 @@ def add_bets_one_by_one(incoming: list[dict], skipped: list[dict]) -> None:
         progress.progress(index / total, text=f"Added {index} of {total} · {label}")
         if index == total or index % 100 == 0:
             refresh_snapshot(book)
-    st.session_state["book"] = book
+    remember_book(book)
     progress.empty()
 
 
@@ -164,11 +197,20 @@ def page_book() -> None:
     st.header("Your book")
     st.write(
         "Upload the same `transactions.csv` Pikkit export the desktop app imports. "
-        "Each row is added as its own bet. Nothing is stored after you close the tab."
+        "Each row is added as its own bet. The file is kept under `data/` and reloads "
+        "the next time you open the app."
     )
+    if has_saved_csv():
+        st.caption("A saved CSV is already on disk — open any tool and your book is ready.")
+        if st.button("Clear saved book"):
+            clear_saved()
+            st.session_state.pop("book", None)
+            st.rerun()
+
     upload = st.file_uploader("transactions.csv", type=["csv"])
     if upload is not None and st.button("Add bets from CSV", type="primary"):
         text = upload.getvalue().decode("utf-8-sig", errors="replace")
+        save_csv(text)
         try:
             parsed = call({"cmd": "importCsv", "csv": text})
         except EngineError as error:
@@ -197,6 +239,14 @@ def page_book() -> None:
             f"average stake ${book['snapshot']['avgStake']:,.0f} · "
             f"average price {american(book['snapshot']['avgAmerican'])}"
         )
+        saved = load_csv()
+        if saved:
+            st.download_button(
+                "Download saved CSV",
+                data=saved,
+                file_name="transactions.csv",
+                mime="text/csv",
+            )
         if book.get("skipped"):
             with st.expander(f"Skipped rows ({len(book['skipped'])})"):
                 st.dataframe(book["skipped"], hide_index=True, width="stretch")
@@ -231,7 +281,7 @@ def page_book() -> None:
                 book = st.session_state.get("book") or empty_book()
                 book["bets"].append(bet)
                 refresh_snapshot(book)
-                st.session_state["book"] = book
+                remember_book(book)
                 st.success(f"Added {selection.strip()} at {american(bet['priceTaken'])}.")
             except EngineError as error:
                 st.error(str(error))
@@ -567,5 +617,6 @@ PAGES = {
 
 st.sidebar.title("Bettor Desktop")
 st.sidebar.caption("Same Rust engine as the desktop app, running in the browser tab's server.")
+restore_book_if_needed()
 choice = st.sidebar.radio("Tool", list(PAGES))
 PAGES[choice]()

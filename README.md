@@ -12,22 +12,25 @@ offline.
 
 ## Follow or run the project
 
-There are no packaged releases yet. To follow development, watch or star the
-repository. To try the current work locally, build it from source:
+There are no packaged releases yet on the upstream fork. On
+[`jriordan55/betting-tools`](https://github.com/jriordan55/betting-tools), the
+Rust desktop app is the main product: run **Actions → Release desktop app** to
+build a Windows installer, then download it from
+[Releases](https://github.com/jriordan55/betting-tools/releases). Or build from
+source:
 
 ```bash
-git clone https://github.com/WalrusQuant/bettor-desktop.git
-cd bettor-desktop
+git clone https://github.com/jriordan55/betting-tools.git
+cd betting-tools
 pnpm install
-pnpm tauri dev
+pnpm tauri build
 ```
 
-## Use it in a browser
+## Use it in a browser (optional)
 
-The same Rust engine also runs as a [Streamlit](https://streamlit.io) app, so
-you can open it from any computer without installing the desktop shell. Upload
-a Pikkit `transactions.csv` on the **Your book** page; the file stays in the
-session and is not written to a database.
+The same Rust engine also runs as a [Streamlit](https://streamlit.io) app. Upload
+a Pikkit `transactions.csv` on **Your book**; the file is kept under `data/`
+(gitignored) and reloads the next time you open the app.
 
 Locally:
 

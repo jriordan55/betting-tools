@@ -1,0 +1,53 @@
+name: Release desktop app
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: src-tauri
+          tagName: app-v__VERSION__
+          releaseName: Bettor Desktop v__VERSION__
+          releaseBody: |
+            Windows installer for Bettor Desktop — the original Rust / Tauri app.
+
+            Download the `.msi` or `.exe`, install it, then import your Pikkit
+            `transactions.csv` from the bet log page. Your bet history stays on
+            that machine under the app's local SQLite database.
+          releaseDraft: false
+          prerelease: false
+          args: --bundles msi,nsis

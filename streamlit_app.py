@@ -60,6 +60,7 @@ def logged_bets(book: dict) -> list[dict]:
                 "opposingClosingPrice": bet.get("opposingClosingPrice"),
                 "stake": bet["stake"],
                 "outcome": bet["outcome"],
+                "realizedProfit": bet.get("profit"),
             }
         )
     return rows
@@ -189,7 +190,7 @@ def page_book() -> None:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Profit", money(summary["profit"]))
         c2.metric("ROI", pct_signed(summary["roi"]))
-        c3.metric("Record", f"{summary['won']}–{summary['lost']}")
+        c3.metric("Record", f"{summary['won']}–{summary['lost']}–{summary['pushed']}")
         c4.metric("Bets", f"{summary['bets']}")
         st.caption(
             f"Settled {summary['settled']} · win rate {pct(summary['winRate'])} of decided bets · "

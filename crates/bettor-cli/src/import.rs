@@ -92,8 +92,9 @@ fn row_to_bet(row: &csv::StringRecord, headers: &csv::StringRecord) -> Result<Im
         return Err(format!("stake must be positive: {stake}"));
     }
 
-    let price_taken = decimal_to_american(&get("odds"))
-        .ok_or_else(|| format!("invalid odds: {}", get("odds")))?;
+    let outcome = parse_outcome(&get("status"));
+    let realized = parse_profit(&get("profit"));
+    let price_taken = price_taken(&get("odds"), stake, realized, outcome)?;
 
     let closing_line = get("closing_line");
     let closing_price = if closing_line.is_empty() {
@@ -107,11 +108,10 @@ fn row_to_bet(row: &csv::StringRecord, headers: &csv::StringRecord) -> Result<Im
         closing_price,
         opposing_closing_price: None,
         stake,
-        outcome: parse_outcome(&get("status")),
+        outcome,
+        realized_profit: realized,
     };
-    let profit = analyze_bet(&logged)
-        .map_err(|error| error.to_string())?
-        .profit;
+    let profit = realized.or_else(|| analyze_bet(&logged).ok().and_then(|row| row.profit));
 
     Ok(ImportedBet {
         placed_at: placed_date(&get("time_placed_iso")),
@@ -126,6 +126,33 @@ fn row_to_bet(row: &csv::StringRecord, headers: &csv::StringRecord) -> Result<Im
         outcome: logged.outcome,
         profit,
     })
+}
+
+fn parse_profit(value: &str) -> Option<f64> {
+    let parsed: f64 = value.trim().parse().ok()?;
+    parsed.is_finite().then_some(parsed)
+}
+
+/// American price for a row. A blank price with a recorded payout still counts:
+/// Pikkit keeps those bets, and dropping them moves the record and the profit.
+fn price_taken(odds: &str, stake: f64, profit: Option<f64>, outcome: Outcome) -> Result<f64, String> {
+    if let Some(price) = decimal_to_american(odds) {
+        return Ok(price);
+    }
+    if !odds.trim().is_empty() {
+        return Err(format!("invalid odds: {odds}"));
+    }
+    if outcome == Outcome::Won {
+        if let Some(paid) = profit {
+            if stake > 0.0 && paid > 0.0 {
+                let decimal = 1.0 + paid / stake;
+                if let Some(price) = odds::to_american(decimal).ok().map(f64::from) {
+                    return Ok(price);
+                }
+            }
+        }
+    }
+    Ok(-110.0)
 }
 
 fn decimal_to_american(value: &str) -> Option<f64> {

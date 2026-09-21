@@ -647,6 +647,7 @@ pub fn to_logged(bet: &Bet) -> LoggedBet {
         opposing_closing_price: bet.opposing_closing_price,
         stake: bet.stake,
         outcome: bet.outcome,
+        realized_profit: None,
     }
 }
 

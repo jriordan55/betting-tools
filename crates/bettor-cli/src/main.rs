@@ -173,6 +173,7 @@ fn logged_from_imported(bets: &[import::ImportedBet]) -> Vec<LoggedBet> {
             opposing_closing_price: bet.opposing_closing_price,
             stake: bet.stake,
             outcome: bet.outcome,
+            realized_profit: bet.profit,
         })
         .collect()
 }

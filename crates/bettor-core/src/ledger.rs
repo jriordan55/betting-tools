@@ -89,6 +89,13 @@ pub struct LoggedBet {
     pub stake: f64,
     /// How it finished.
     pub outcome: Outcome,
+    /// What the book actually paid, when the record says so.
+    ///
+    /// Absent, profit is derived from the price and the outcome. Present, that
+    /// paid amount wins: a cash-out, a round robin, or a partial loss is not
+    /// the full win or the full loss the price implies.
+    #[serde(default)]
+    pub realized_profit: Option<f64>,
 }
 
 /// What one bet was worth, in every sense that can be measured.
@@ -205,11 +212,16 @@ pub fn analyze_bet(bet: &LoggedBet) -> Result<BetAnalysis> {
     let decimal_taken = american_to_decimal(bet.price_taken)?;
     let implied_taken = 1.0 / decimal_taken;
 
-    let profit = match bet.outcome {
+    let formula = match bet.outcome {
         Outcome::Pending => None,
         Outcome::Won => Some(bet.stake * (decimal_taken - 1.0)),
         Outcome::Lost => Some(-bet.stake),
         Outcome::Push | Outcome::Void => Some(0.0),
+    };
+    let profit = match (bet.outcome, bet.realized_profit) {
+        (Outcome::Pending, _) => None,
+        (_, Some(paid)) if paid.is_finite() => Some(paid),
+        _ => formula,
     };
 
     let (clv_points, clv_cents, closing_implied) = match bet.closing_price {
@@ -587,6 +599,7 @@ mod tests {
             opposing_closing_price: None,
             stake: 100.0,
             outcome,
+            realized_profit: None,
         }
     }
 
@@ -616,6 +629,19 @@ mod tests {
             epsilon = 1e-9
         );
         assert!(analyze_bet(&bet(-110.0, Outcome::Pending)).unwrap().profit.is_none());
+    }
+
+    #[test]
+    fn a_recorded_payout_replaces_the_price_formula() {
+        let mut cashed = bet(-110.0, Outcome::Void);
+        cashed.realized_profit = Some(12.5);
+        assert_relative_eq!(analyze_bet(&cashed).unwrap().profit.unwrap(), 12.5, epsilon = 1e-9);
+
+        let mut partial = bet(-110.0, Outcome::Lost);
+        partial.realized_profit = Some(-23.0);
+        let summary = analyze(&[partial]).unwrap().summary;
+        assert_relative_eq!(summary.profit, -23.0, epsilon = 1e-9);
+        assert_eq!(summary.lost, 1);
     }
 
     #[test]

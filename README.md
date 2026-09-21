@@ -1,9 +1,6 @@
 # betting-tools
 
-**Use it on your phone or any browser (works now):**  
-https://cdn.jsdelivr.net/gh/jriordan55/betting-tools@gh-pages/index.html
-
-GitHub Pages mirror (may take a few minutes after each publish):  
+**Use it on your phone or any browser:**  
 https://jriordan55.github.io/betting-tools/
 
 That is the Rust math engine in the browser (same `bettor-core` as the desktop
